@@ -1,0 +1,9 @@
+spring:
+  jpa:
+    show-sql: true
+
+logging:
+  level:
+    root: INFO
+    com.alirizakaygusuz: DEBUG
+    org.hibernate.SQL: DEBUG

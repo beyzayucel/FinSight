@@ -4,6 +4,7 @@ package com.akademi.finsight.common.exception;
 import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.common.response.ErrorDetail;
 import com.akademi.finsight.common.response.FieldError;
+import com.akademi.finsight.common.web.RequestIdFilter;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,7 +14,6 @@ import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -96,15 +96,7 @@ public class GlobalExceptionHandler {
                 resolveMessage(ErrorType.MISSING_PARAMETER, ex.getParameterName()), request);
     }
 
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<ApiStandardResponse<Void>> handleBadCredentials(
-            BadCredentialsException ex, HttpServletRequest request) {
 
-        log.warn("Authentication failed: event=LOGIN_FAILED, reason=INVALID_CREDENTIALS");
-
-        return buildResponse(AuthErrorType.INVALID_CREDENTIALS,
-                resolveMessage(AuthErrorType.INVALID_CREDENTIALS), request);
-    }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ApiStandardResponse<Void>> handleDataIntegrityViolation(

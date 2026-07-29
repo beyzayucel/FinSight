@@ -5,6 +5,9 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   config:
     import: optional:file:.env[.properties]
+  docker:
+    compose:
+      enabled: false
 
   jackson:
     default-property-inclusion: non_null

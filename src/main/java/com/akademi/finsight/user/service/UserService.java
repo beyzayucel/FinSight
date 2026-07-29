@@ -21,4 +21,5 @@ public interface UserService {
 
     UserResponse updateCurrentUser(String email, UpdateProfileRequest request);
 
+    void deleteCurrentUser(String email);
 }

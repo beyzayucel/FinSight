@@ -1,5 +1,4 @@
-package com.akademi.finsight.auth.dto.exception;
-
+package com.akademi.finsight.auth.exception;
 
 import com.akademi.finsight.common.exception.BaseException;
 

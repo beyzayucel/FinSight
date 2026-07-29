@@ -1,6 +1,6 @@
 package com.akademi.finsight.auth.dto.login;
 
-import com.akademi.finsight.auth.dto.validation.IdentifierFormat;
+import com.akademi.finsight.auth.validation.IdentifierFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 

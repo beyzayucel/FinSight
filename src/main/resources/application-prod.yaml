@@ -5,4 +5,4 @@ spring:
 logging:
   level:
     root: WARN
-    com.alirizakaygusuz: INFO
+    com.akademi: DEBUG

@@ -1,6 +1,7 @@
 package com.akademi.finsight.user.service.impl;
 
 
+import com.akademi.finsight.auth.refreshtoken.service.RefreshTokenService;
 import com.akademi.finsight.common.masking.MaskType;
 import com.akademi.finsight.user.dto.CreateUserRequest;
 import com.akademi.finsight.user.dto.CreateUserResponse;
@@ -32,6 +33,7 @@ public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
+    private final RefreshTokenService refreshTokenService;
 
     @Override
     @Transactional
@@ -118,6 +120,15 @@ public class UserServiceImpl implements UserService {
         return userMapper.toResponse(savedUser);
     }
 
+
+    @Override
+    @Transactional
+    public void deleteCurrentUser(String email) {
+        User user = findByEmail(email);
+        refreshTokenService.revokeAllByUser(user);
+        userRepository.delete(user);
+        log.info("User self-deleted: event=USER_SELF_DELETED, email={}", MaskType.EMAIL.mask(user.getEmail()));
+    }
 
     private void checkDuplicateUser(String email, String phoneNumber) {
         if (userRepository.existsByEmail(email)) {

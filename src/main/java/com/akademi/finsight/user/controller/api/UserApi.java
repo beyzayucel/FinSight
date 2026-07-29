@@ -53,5 +53,12 @@ public interface UserApi {
     ResponseEntity<ApiStandardResponse<UserResponse>> updateCurrentUser(@Valid @RequestBody UpdateProfileRequest request,
                                                                 @AuthenticationPrincipal String email);
 
-
+    @Operation(
+            summary = "Delete current user account",
+            description = "Soft-deletes the authenticated user's account and revokes all sessions."
+    )
+    @ApiResponse(responseCode = "200", description = "Account deleted successfully")
+    @ApiResponse(responseCode = "401", description = "Not authenticated")
+    @DeleteMapping(ApiEndpoints.Users.ME)
+    ResponseEntity<ApiStandardResponse<Void>> deleteCurrentUser(@AuthenticationPrincipal String email);
 }

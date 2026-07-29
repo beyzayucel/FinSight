@@ -39,5 +39,9 @@ public class UserController extends BaseController implements UserApi {
         return ok(userService.updateCurrentUser(email, request));
     }
 
-
+    @Override
+    public ResponseEntity<ApiStandardResponse<Void>> deleteCurrentUser(@AuthenticationPrincipal String email) {
+        userService.deleteCurrentUser(email);
+        return ok();
+    }
 }

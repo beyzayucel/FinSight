@@ -1,4 +1,4 @@
-package com.akademi.finsight.auth.dto.validation;
+package com.akademi.finsight.auth.validation;
 
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;

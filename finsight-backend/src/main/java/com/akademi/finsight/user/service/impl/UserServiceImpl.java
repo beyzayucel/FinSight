@@ -2,9 +2,9 @@ package com.akademi.finsight.user.service.impl;
 
 
 import com.akademi.finsight.auth.refreshtoken.service.RefreshTokenService;
+import com.akademi.finsight.auth.verificationtoken.service.VerificationTokenService;
 import com.akademi.finsight.common.masking.MaskType;
 import com.akademi.finsight.user.dto.CreateUserRequest;
-import com.akademi.finsight.user.dto.CreateUserResponse;
 import com.akademi.finsight.user.dto.UpdateProfileRequest;
 import com.akademi.finsight.user.dto.UserResponse;
 import com.akademi.finsight.user.entity.User;
@@ -34,10 +34,11 @@ public class UserServiceImpl implements UserService {
     private final UserMapper userMapper;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
+    private final VerificationTokenService tokenService;
 
     @Override
     @Transactional
-    public CreateUserResponse createUser(CreateUserRequest request) {
+    public void createUser(CreateUserRequest request) {
         String normalizedEmail = EmailNormalizer.normalize(request.email());
         checkDuplicateUser(normalizedEmail, request.phoneNumber());
 
@@ -49,10 +50,8 @@ public class UserServiceImpl implements UserService {
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(temporaryPassword));
         User savedUser = userRepository.save(user);
-
+        tokenService.createAndSendVerificationToken(savedUser, temporaryPassword);
         log.info("User created: event=USER_CREATED, email={}", MaskType.EMAIL.mask(savedUser.getEmail()));
-
-        return new CreateUserResponse(savedUser.getEmail(), username, temporaryPassword);
     }
 
     private String generateUniqueUsername(String firstName, String lastName) {

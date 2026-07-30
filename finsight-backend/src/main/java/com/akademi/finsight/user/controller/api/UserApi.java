@@ -4,7 +4,6 @@ package com.akademi.finsight.user.controller.api;
 import com.akademi.finsight.common.constants.ApiEndpoints;
 import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.user.dto.CreateUserRequest;
-import com.akademi.finsight.user.dto.CreateUserResponse;
 import com.akademi.finsight.user.dto.UpdateProfileRequest;
 import com.akademi.finsight.user.dto.UserResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -31,7 +30,7 @@ public interface UserApi {
     @ApiResponse(responseCode = "403", description = "Access denied — requires ADMIN role")
     @ApiResponse(responseCode = "409", description = "Email or phone number already exists")
     @PostMapping
-    ResponseEntity<ApiStandardResponse<CreateUserResponse>> createUser(@Valid @RequestBody CreateUserRequest request);
+    ResponseEntity<ApiStandardResponse<Void>> createUser(@Valid @RequestBody CreateUserRequest request);
 
     @Operation(
             summary = "Get current user profile",

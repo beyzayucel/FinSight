@@ -2,14 +2,13 @@ package com.akademi.finsight.user.service;
 
 
 import com.akademi.finsight.user.dto.CreateUserRequest;
-import com.akademi.finsight.user.dto.CreateUserResponse;
 import com.akademi.finsight.user.dto.UpdateProfileRequest;
 import com.akademi.finsight.user.dto.UserResponse;
 import com.akademi.finsight.user.entity.User;
 
 public interface UserService {
 
-    CreateUserResponse createUser(CreateUserRequest request);
+    void createUser(CreateUserRequest request);
 
     UserResponse getCurrentUser(String email);
 

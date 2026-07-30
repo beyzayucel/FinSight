@@ -1,5 +1,6 @@
 package com.akademi.finsight.news.service.impl;
 
+import com.akademi.finsight.common.constants.SupportedLanguage;
 import com.akademi.finsight.news.dto.client.NewsItem;
 import com.akademi.finsight.news.service.TranslationService;
 import lombok.RequiredArgsConstructor;
@@ -14,11 +15,11 @@ public class TranslationServiceImpl implements TranslationService {
 
     private final DeepLServiceImpl deepLService;
 
-    public List<NewsItem> translateToEnglish(List<NewsItem> news) {
+    public List<NewsItem> translate(List<NewsItem> news, SupportedLanguage language) {
         return news.stream()
                 .map(item -> {
                     String translatedTitle = (Objects.nonNull(item.title()) && !item.title().isBlank())
-                            ? deepLService.translateToEnglish(item.title())
+                            ? deepLService.translate(item.title(), language)
                             : item.title();
                     return new NewsItem(translatedTitle, item.url(), item.publishDate());
                 })

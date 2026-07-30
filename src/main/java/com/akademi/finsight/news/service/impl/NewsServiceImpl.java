@@ -84,7 +84,7 @@ public class NewsServiceImpl implements NewsService {
                 return;
             }
             List<NewsItem> latestNews = getLatestNews(response.news());
-            List<NewsItem> englishNews = translationService.translateToEnglish(latestNews);
+            List<NewsItem> englishNews = translationService.translate(latestNews, SupportedLanguage.EN);
 
             redisTemplate.opsForValue().set(
                     REDIS_NEWS_KEY + SupportedLanguage.TR.getCode(),

@@ -30,11 +30,11 @@ public class DeepLServiceImpl implements DeepLService {
     private String apiKey;
 
     @Override
-    public String translateToEnglish(String text) {
+    public String translate(String text, SupportedLanguage language) {
 
         Map<String, Object> requestBody = Map.of(
                 TEXT_KEY, List.of(text),
-                "target_lang", SupportedLanguage.EN.getCode());
+                "target_lang", language.getCode());
 
         DeepLResponse responseBody = restClient.post()
                 .uri(apiUrl)

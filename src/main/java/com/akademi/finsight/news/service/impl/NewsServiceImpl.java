@@ -10,6 +10,7 @@ import com.akademi.finsight.news.service.TranslationService;
 import com.akademi.finsight.news.util.DateUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
 import java.net.URI;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -47,16 +48,12 @@ public class NewsServiceImpl implements NewsService {
     @Value("${news.api.cache-size}")
     private int newsCacheSize;
 
+    @Value("${news.api.max-news-age-hours}")
+    private int maxNewsAgeHours;
+
     @Override
     public List<NewsResponse> getNews(Locale locale) {
         List<NewsItem> news = getCachedNews(locale);
-        if (news.isEmpty()) {
-            fetchAndSaveNews();
-            news = getCachedNews(locale);
-            if (news.isEmpty()) {
-                log.info("No recent news found.");
-            }
-        }
         return newsMapper.toResponseList(news);
     }
 
@@ -71,8 +68,6 @@ public class NewsServiceImpl implements NewsService {
                     .queryParam("sort-direction", "DESC")
                     .build()
                     .toUri();
-
-            log.debug("Requesting News API URL: {}", uri);
 
             NewsApiResponse response = restClient.get()
                     .uri(uri)
@@ -98,8 +93,12 @@ public class NewsServiceImpl implements NewsService {
 
             log.info("Cached {} news items in Redis for locales: tr, en.", latestNews.size());
 
+        } catch (HttpClientErrorException.TooManyRequests e) {
+            log.error("API Quota exceeded (HTTP 429 Too Many Requests).", e);
+            throw new RuntimeException("API quota exceeded", e);
         } catch (Exception e) {
-            log.error("Error while fetching news", e);
+            log.error("Unexpected error while fetching news", e);
+            throw new RuntimeException("Failed to fetch and save news", e);
         }
     }
 
@@ -109,7 +108,7 @@ public class NewsServiceImpl implements NewsService {
                 .filter(item -> Objects.nonNull(item.publishDate()))
                 .filter(item -> {
                     Long hoursAgo = DateUtil.getHoursAgo(item.publishDate());
-                    return hoursAgo != null && hoursAgo < 15;
+                    return hoursAgo != null && hoursAgo < maxNewsAgeHours;
                 })
                 .sorted(Comparator.comparing(NewsItem::publishDate).reversed())
                 .limit(newsCacheSize)

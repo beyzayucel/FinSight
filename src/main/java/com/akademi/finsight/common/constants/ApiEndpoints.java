@@ -23,9 +23,15 @@ public final class ApiEndpoints {
         public static final String ME = "/me";
     }
 
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static final class News {
+        public static final String BASE = API_V1 + "/news";
+    }
+
     private static final String[] PUBLIC_ENDPOINTS = {
             Auth.BASE + Auth.LOGIN,
             Auth.BASE + Auth.REFRESH,
+            News.BASE,
             "/swagger-ui/**",
             "/v3/api-docs/**"
     };

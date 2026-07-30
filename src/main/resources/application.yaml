@@ -54,7 +54,6 @@ news:
     url: ${NEWS_API_URL}
     token: ${NEWS_API_TOKEN}
     search-text: "borsa OR faiz OR fed OR \"döviz kuru\" OR \"merkez bankası\""
-    lookback-days: 7
     cache-size: 3
 
 deepl:

@@ -20,6 +20,7 @@ public class DeepLServiceImpl implements DeepLService {
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String AUTHORIZATION_PREFIX = "DeepL-Auth-Key ";
     private static final String TEXT_KEY = "text";
+    private static final String TARGET_LANGUAGE_KEY = "target_lang";
 
     private final RestClient restClient;
 
@@ -34,7 +35,7 @@ public class DeepLServiceImpl implements DeepLService {
 
         Map<String, Object> requestBody = Map.of(
                 TEXT_KEY, List.of(text),
-                "target_lang", language.getCode());
+                TARGET_LANGUAGE_KEY, language.getCode());
 
         DeepLResponse responseBody = restClient.post()
                 .uri(apiUrl)

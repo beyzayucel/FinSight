@@ -47,7 +47,7 @@ public class LoginBlockListServiceImpl implements LoginBlocklistService {
         if (isBlocked(hashedIdentifier)) {
             Long timeRemaining = getRemainingBlockTimeInSeconds(hashedIdentifier);
             log.warn("Blocked user attempted to log in. Remaining block time: {} seconds. User: {}", timeRemaining, hashedIdentifier);
-            throw new RateLimitException(RateLimitErrorType.REQUEST_NOT_WRAPPED, timeRemaining);
+            throw new RateLimitException(RateLimitErrorType.RATE_LIMIT_EXCEEDED, timeRemaining);
         }
 
     }

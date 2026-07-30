@@ -57,6 +57,10 @@ news:
     cache-size: 3
     max-news-age-hours: 15
 
+  cache:
+    key-prefix: "infina:latest_news:"
+    ttl: ${NEWS_CACHE_TTL:1h}
+
 deepl:
   api:
     url: ${DEEPL_API_URL}

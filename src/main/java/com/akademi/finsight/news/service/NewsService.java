@@ -7,6 +7,6 @@ import java.util.Locale;
 
 public interface NewsService {
     List<NewsResponse> getNews(Locale locale);
-    void fetchAndSaveNews();
+    void fetchAndCacheNews();
 
 }

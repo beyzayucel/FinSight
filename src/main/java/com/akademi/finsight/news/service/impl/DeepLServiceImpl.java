@@ -1,10 +1,10 @@
 package com.akademi.finsight.news.service.impl;
 
 import com.akademi.finsight.common.constants.SupportedLanguage;
+import com.akademi.finsight.news.config.DeepLProperties;
 import com.akademi.finsight.news.dto.client.DeepLResponse;
 import com.akademi.finsight.news.service.DeepLService;
 import lombok.RequiredArgsConstructor;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
@@ -23,12 +23,7 @@ public class DeepLServiceImpl implements DeepLService {
     private static final String TARGET_LANGUAGE_KEY = "target_lang";
 
     private final RestClient restClient;
-
-    @Value("${deepl.api.url}")
-    private String apiUrl;
-
-    @Value("${deepl.api.key}")
-    private String apiKey;
+    private final DeepLProperties deepLProperties;
 
     @Override
     public String translate(String text, SupportedLanguage language) {
@@ -38,9 +33,9 @@ public class DeepLServiceImpl implements DeepLService {
                 TARGET_LANGUAGE_KEY, language.getCode());
 
         DeepLResponse responseBody = restClient.post()
-                .uri(apiUrl)
+                .uri(deepLProperties.getUrl())
                 .contentType(MediaType.APPLICATION_JSON)
-                .header(AUTHORIZATION_HEADER, AUTHORIZATION_PREFIX + apiKey)
+                .header(AUTHORIZATION_HEADER, AUTHORIZATION_PREFIX + deepLProperties.getKey())
                 .body(requestBody)
                 .retrieve()
                 .body(DeepLResponse.class);

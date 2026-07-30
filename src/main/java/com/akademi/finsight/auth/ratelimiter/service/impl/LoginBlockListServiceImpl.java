@@ -1,7 +1,8 @@
 package com.akademi.finsight.auth.ratelimiter.service.impl;
 
 import com.akademi.finsight.auth.ratelimiter.config.LoginRateLimitProperties;
-import com.akademi.finsight.auth.ratelimiter.exception.RateLimitExceededException;
+import com.akademi.finsight.auth.ratelimiter.exception.RateLimitErrorType;
+import com.akademi.finsight.auth.ratelimiter.exception.RateLimitException;
 import com.akademi.finsight.auth.ratelimiter.keygenerator.RateLimitKeyGenerator;
 import com.akademi.finsight.auth.ratelimiter.service.LoginBlocklistService;
 import lombok.RequiredArgsConstructor;
@@ -42,11 +43,11 @@ public class LoginBlockListServiceImpl implements LoginBlocklistService {
     }
 
     @Override
-    public void checkBlockedOrThrow(String hashedIdentifier) throws RateLimitExceededException {
+    public void checkBlockedOrThrow(String hashedIdentifier) throws RateLimitException {
         if (isBlocked(hashedIdentifier)) {
             Long timeRemaining = getRemainingBlockTimeInSeconds(hashedIdentifier);
             log.warn("Blocked user attempted to log in. Remaining block time: {} seconds. User: {}", timeRemaining, hashedIdentifier);
-            throw new RateLimitExceededException("error.rate.limit.exceeded", timeRemaining);
+            throw new RateLimitException(RateLimitErrorType.REQUEST_NOT_WRAPPED, timeRemaining);
         }
 
     }

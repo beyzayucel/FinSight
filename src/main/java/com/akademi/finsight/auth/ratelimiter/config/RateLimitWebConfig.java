@@ -9,13 +9,13 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @Configuration
 @RequiredArgsConstructor
-public class WebConfig implements WebMvcConfigurer {
+public class RateLimitWebConfig implements WebMvcConfigurer {
     private final RateLimitInterceptor rateLimitInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(rateLimitInterceptor)
-                .addPathPatterns(ApiEndpoints.Auth.LOGIN);
+                .addPathPatterns(ApiEndpoints.Auth.BASE + ApiEndpoints.Auth.LOGIN);
     }
 
 }

@@ -13,7 +13,8 @@ public record ErrorDetail(
         String path,
         Instant timestamp,
         List<FieldError> fieldErrors,
-        String requestId
+        String requestId,
+        Long remainingTime
 ) {
 
     public static Builder builder(int status, String code, String message, String path) {
@@ -27,6 +28,7 @@ public record ErrorDetail(
         private final String path;
         private List<FieldError> fieldErrors;
         private String requestId;
+        private Long remainingTime;
 
         private Builder(int status, String code, String message, String path) {
             this.status = status;
@@ -45,9 +47,14 @@ public record ErrorDetail(
             return this;
         }
 
+        public Builder remainingTime(Long remainingTime) {
+            this.remainingTime = remainingTime;
+            return this;
+        }
+
         public ErrorDetail build() {
             return new ErrorDetail(status, code, message, path,
-                    Instant.now(), fieldErrors, requestId);
+                    Instant.now(), fieldErrors, requestId, remainingTime);
         }
     }
 }

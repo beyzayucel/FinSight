@@ -1,7 +1,7 @@
 package com.akademi.finsight.auth.ratelimiter.service.impl;
 
 import com.akademi.finsight.auth.ratelimiter.config.LoginRateLimitProperties;
-import com.akademi.finsight.auth.ratelimiter.exception.RateLimitExceededException;
+import com.akademi.finsight.auth.ratelimiter.exception.RateLimitException;
 import com.akademi.finsight.auth.ratelimiter.keygenerator.RateLimitKeyGenerator;
 import com.akademi.finsight.auth.ratelimiter.service.LoginBlocklistService;
 import com.akademi.finsight.auth.ratelimiter.service.LoginRateLimitService;
@@ -36,7 +36,7 @@ public class LoginRateLimitServiceImpl implements LoginRateLimitService {
     }
 
     @Override
-    public void checkAttemptsOrThrow(String hashedIdentifier) throws RateLimitExceededException {
+    public void checkAttemptsOrThrow(String hashedIdentifier) {
         blocklistService.checkBlockedOrThrow(hashedIdentifier);
     }
 

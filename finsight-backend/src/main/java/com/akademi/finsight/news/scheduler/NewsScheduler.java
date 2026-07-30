@@ -21,8 +21,12 @@ public class NewsScheduler{
         newsService.fetchAndCacheNews();
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    public void loadNewsAtStartup() {
-        newsService.fetchAndCacheNews();
-    }
+	@EventListener(ApplicationReadyEvent.class)
+	public void loadNewsAtStartup() {
+		try {
+			newsService.fetchAndCacheNews();
+		} catch (Exception e) {
+			log.warn("Failed to load news at startup; application will continue without cached news.", e);
+		}
+	}
 }

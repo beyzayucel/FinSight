@@ -4,7 +4,6 @@ import com.akademi.finsight.common.controller.BaseController;
 import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.user.controller.api.UserApi;
 import com.akademi.finsight.user.dto.CreateUserRequest;
-import com.akademi.finsight.user.dto.CreateUserResponse;
 import com.akademi.finsight.user.dto.UpdateProfileRequest;
 import com.akademi.finsight.user.dto.UserResponse;
 import com.akademi.finsight.user.service.UserService;
@@ -24,8 +23,9 @@ public class UserController extends BaseController implements UserApi {
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiStandardResponse<CreateUserResponse>> createUser(@Valid @RequestBody CreateUserRequest request) {
-        return created(userService.createUser(request));
+    public ResponseEntity<ApiStandardResponse<Void>> createUser(@Valid @RequestBody CreateUserRequest request) {
+        userService.createUser(request);
+        return created();
     }
 
     @Override

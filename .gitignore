@@ -1,0 +1,25 @@
+### IntelliJ IDEA ###
+.idea
+*.iws
+*.iml
+*.ipr
+
+### VS Code ###
+.vscode/
+
+### OS ###
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+### Environment & Secrets ###
+.env
+!.env.example
+*.pem
+*.key
+*.p12
+*.jks
+
+### Logs ###
+*.log
+logs/

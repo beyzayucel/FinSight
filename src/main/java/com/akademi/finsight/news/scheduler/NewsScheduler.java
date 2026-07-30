@@ -1,0 +1,21 @@
+package com.akademi.finsight.news.scheduler;
+
+import com.akademi.finsight.news.service.NewsService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
+
+@Component
+@RequiredArgsConstructor
+@Slf4j
+public class NewsScheduler{
+
+    private final NewsService newsService;
+
+    @Scheduled(cron = "0 0 * * * *")
+    public void fetchNewsHourly() {
+        log.info("Scheduled task triggered: refreshing news cache.");
+        newsService.fetchAndSaveNews();
+    }
+}

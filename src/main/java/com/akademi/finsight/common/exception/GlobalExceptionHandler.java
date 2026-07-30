@@ -2,6 +2,7 @@ package com.akademi.finsight.common.exception;
 
 
 import com.akademi.finsight.auth.exception.AuthErrorType;
+import com.akademi.finsight.auth.ratelimiter.exception.RateLimitException;
 import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.common.response.ErrorDetail;
 import com.akademi.finsight.common.response.FieldError;
@@ -134,6 +135,30 @@ public class GlobalExceptionHandler {
     private String resolveMessage(BaseErrorType errorType, Object... args) {
         Locale locale = LocaleContextHolder.getLocale();
         return messageSource.getMessage(errorType.getMessageKey(), args, locale);
+    }
+
+    @ExceptionHandler(RateLimitException.class)
+    public ResponseEntity<ApiStandardResponse<Void>> handleRateLimitExceeded(
+            RateLimitException ex,
+            HttpServletRequest request) {
+
+        log.warn("Rate limit exceeded: path={}, remainingTime={}s",
+                request.getRequestURI(),
+                ex.getRemainingTime());
+
+        BaseErrorType errorType = ex.getErrorType();
+        String message = resolveMessage(errorType);
+
+        return ResponseEntity.status(errorType.getHttpStatus())
+                .body(ApiStandardResponse.error(
+                        ErrorDetail.builder(
+                                        errorType.getHttpStatus().value(),
+                                        errorType.getCode(),
+                                        message,
+                                        request.getRequestURI())
+                                .requestId(MDC.get(RequestIdFilter.REQUEST_ID_MDC_KEY))
+                                .remainingTime(ex.getRemainingTime())
+                                .build()));
     }
 
     private ResponseEntity<ApiStandardResponse<Void>> buildResponse(

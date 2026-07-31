@@ -5,6 +5,8 @@ import com.akademi.finsight.auth.dto.login.LoginResponse;
 import com.akademi.finsight.auth.dto.password.ChangePasswordRequest;
 import com.akademi.finsight.auth.exception.AuthErrorType;
 import com.akademi.finsight.auth.exception.AuthException;
+import com.akademi.finsight.auth.ratelimiter.service.LoginRateLimitService;
+import com.akademi.finsight.auth.ratelimiter.util.IdentifierHasher;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenRequest;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenResponse;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenResult;
@@ -19,6 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -36,14 +39,26 @@ public class AuthServiceImpl implements AuthService {
     private final JwtService jwtService;
     private final UserDetailsService userDetailsService;
     private final RefreshTokenService refreshTokenService;
+    private final LoginRateLimitService loginRateLimitService;
+    private final IdentifierHasher identifierHasher;
 
     @Override
     @Transactional
     public LoginResponse login(LoginRequest request) {
-        Authentication authentication = authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(request.identifier(), request.password()));
+        String hashedIdentifier = identifierHasher.hash(request.identifier());
+
+        Authentication authentication;
+        try {
+            authentication = authenticationManager.authenticate(
+                    new UsernamePasswordAuthenticationToken(request.identifier(), request.password()));
+        } catch (AuthenticationException exception) {
+            // RateLimitInterceptor sadece bloklu mu diye bakiyor, sayaci burada artiriyoruz.
+            loginRateLimitService.incrementFailedAttempts(hashedIdentifier);
+            throw exception;
+        }
 
         if (!(authentication.getPrincipal() instanceof UserDetails userDetails)) {
+            loginRateLimitService.incrementFailedAttempts(hashedIdentifier);
             throw new AuthException(AuthErrorType.INVALID_CREDENTIALS);
         }
 
@@ -51,6 +66,7 @@ public class AuthServiceImpl implements AuthService {
         String accessToken = jwtService.generateAccessToken(userDetails, user.isFirstLogin());
         userService.updateLastLogin(user);
         RefreshTokenResult result = refreshTokenService.createAndSave(user);
+        loginRateLimitService.resetAttempts(hashedIdentifier);
 
         log.info("User logged in: event=USER_LOGGED_IN, email={}", MaskType.EMAIL.mask(user.getEmail()));
 

@@ -1,75 +1,47 @@
-# React + TypeScript + Vite
+# FINSIGHT — Frontend Getting started
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+npm install
+npm run dev      # start the dev server
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Project structure
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Code is organized **feature-first**: each product area owns its screens and logic under `src/features/<area>`. Cross-cutting building blocks shared across pages — the design-system primitives and icons — live in `src/components`. The `@/` alias maps to `src/`.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+src/
+├── main.tsx                     # App entry — mounts <App> into the DOM
+├── App.tsx                      # Root component / routing shell
+├── index.css                    # Global styles + Tailwind theme tokens
+│
+├── components/                  # Shared across pages/features
+│   └── ui/                      # Reusable design-system primitives
+│       ├── TextField.tsx            # Labeled input with optional icon/trailing slot
+│       ├── PasswordField.tsx        # Password input with show/hide toggle
+│       ├── Checkbox.tsx             # Labeled checkbox
+│       ├── Button.tsx               # Primary full-width action button
+│       └── index.ts                 # Barrel → import from `@/components/ui`
+│
+├── features/                    # Product features (self-contained)
+│   ├── auth/
+│   │   ├── LoginPage.tsx        # Login screen composition
+│   │   └── components/          # Page sections specific to auth
+│   │       ├── BrandPanel.tsx       # Left hero panel (photo + headline)
+│   │       ├── LanguageSwitcher.tsx # TR | EN language toggle
+│   │       └── LoginForm.tsx        # Email + password sign-in form
+│   └── news/
+│       ├── NewsHighlights.tsx   # "Today's highlights" list
+│       └── newsService.ts       # News data access (placeholder → API)
+│
+├── i18n/
+│   └── translations.ts          # TR/EN copy + Lang / Translations types
+│
+└── lib/
+    └── utils.ts                 # Generic helpers
 
+public/                          # Static assets served as-is
+├── favicon.svg
+├── hero-bg.png                  # Login hero background
+└── logo.png                     # FINSIGHT logo
 ```

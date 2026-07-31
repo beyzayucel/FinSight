@@ -19,8 +19,19 @@ public record NotificationProperties(
     public record Kafka(
             @DefaultValue("finsight.notification.requested.v1") String topic,
             @DefaultValue("notification-service") String groupId,
-            @DefaultValue("30d") Duration deadLetterRetention
+            @DefaultValue("30d") Duration deadLetterRetention,
+            @DefaultValue(".DLT") String deadLetterSuffix,
+            @DefaultValue("3") int partitions,
+            @DefaultValue("1") int replicas,
+            @DefaultValue Retry retry
     ) {
+        public record Retry(
+                @DefaultValue("3") int maxAttempts,
+                @DefaultValue("1s") Duration initialInterval,
+                @DefaultValue("2") double multiplier,
+                @DefaultValue("4s") Duration maxInterval
+        ) {
+        }
     }
 
     public record Idempotency(

@@ -1,14 +1,14 @@
 package com.akademi.finsight.notification.config;
 
+import com.akademi.finsight.common.masking.MaskType;
+import com.akademi.finsight.notification.exception.InvalidNotificationException;
 import com.akademi.finsight.notification.messaging.RawKafkaTemplate;
-import com.akademi.finsight.notification.service.InvalidNotificationException;
 import io.micrometer.core.instrument.MeterRegistry;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.config.TopicConfig;
 import org.apache.kafka.common.errors.SerializationException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.kafka.config.TopicBuilder;
@@ -18,25 +18,24 @@ import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
 import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.ExponentialBackOffWithMaxRetries;
 
+@Slf4j
 @Configuration
 public class KafkaConfiguration {
-
-    private static final Logger log = LoggerFactory.getLogger(KafkaConfiguration.class);
 
     @Bean
     NewTopic notificationTopic(NotificationProperties properties) {
         return TopicBuilder.name(properties.kafka().topic())
-                .partitions(3)
-                .replicas(1)
+                .partitions(properties.kafka().partitions())
+                .replicas(properties.kafka().replicas())
                 .build();
     }
 
     /** DLT saklama suresi acikca verilir, broker varsayilaninda (7 gun) zehirli kayitlar sessizce silinirdi. */
     @Bean
     NewTopic notificationDeadLetterTopic(NotificationProperties properties) {
-        return TopicBuilder.name(properties.kafka().topic() + ".DLT")
-                .partitions(3)
-                .replicas(1)
+        return TopicBuilder.name(properties.kafka().topic() + properties.kafka().deadLetterSuffix())
+                .partitions(properties.kafka().partitions())
+                .replicas(properties.kafka().replicas())
                 .config(TopicConfig.RETENTION_MS_CONFIG,
                         String.valueOf(properties.kafka().deadLetterRetention().toMillis()))
                 .build();
@@ -50,17 +49,19 @@ public class KafkaConfiguration {
     @Bean
     DefaultErrorHandler kafkaErrorHandler(
             RawKafkaTemplate rawKafkaTemplate,
-            MeterRegistry meterRegistry
+            MeterRegistry meterRegistry,
+            NotificationProperties properties
     ) {
+        String deadLetterSuffix = properties.kafka().deadLetterSuffix();
         DeadLetterPublishingRecoverer deadLetterRecoverer = new DeadLetterPublishingRecoverer(
                 rawKafkaTemplate.template(),
-                (record, exception) -> new TopicPartition(record.topic() + ".DLT", record.partition())
+                (record, exception) -> new TopicPartition(record.topic() + deadLetterSuffix, record.partition())
         );
 
         ConsumerRecordRecoverer recoverer = (record, exception) -> {
             Throwable cause = exception.getCause() == null ? exception : exception.getCause();
-            log.error("Bildirim islenemedi, DLT'ye tasiniyor: topic={} partition={} offset={} key={} sebep={}",
-                    record.topic(), record.partition(), record.offset(), record.key(),
+            log.error("Failed to process notification, moving to DLT: topic={} partition={} offset={} key={} reason={}",
+                    record.topic(), record.partition(), record.offset(), MaskType.mask(MaskType.FULL, String.valueOf(record.key())),
                     cause.getClass().getSimpleName(), exception);
             meterRegistry.counter("notification.dead_letter",
                     "topic", record.topic(),
@@ -68,10 +69,11 @@ public class KafkaConfiguration {
             deadLetterRecoverer.accept(record, exception);
         };
 
-        ExponentialBackOffWithMaxRetries backOff = new ExponentialBackOffWithMaxRetries(3);
-        backOff.setInitialInterval(1_000L);
-        backOff.setMultiplier(2);
-        backOff.setMaxInterval(4_000L);
+        NotificationProperties.Kafka.Retry retry = properties.kafka().retry();
+        ExponentialBackOffWithMaxRetries backOff = new ExponentialBackOffWithMaxRetries(retry.maxAttempts());
+        backOff.setInitialInterval(retry.initialInterval().toMillis());
+        backOff.setMultiplier(retry.multiplier());
+        backOff.setMaxInterval(retry.maxInterval().toMillis());
 
         DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, backOff);
         handler.addNotRetryableExceptions(InvalidNotificationException.class, SerializationException.class);

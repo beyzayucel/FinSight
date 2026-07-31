@@ -5,6 +5,7 @@ import com.akademi.finsight.auth.ratelimiter.exception.RateLimitException;
 import com.akademi.finsight.auth.ratelimiter.keygenerator.RateLimitKeyGenerator;
 import com.akademi.finsight.auth.ratelimiter.service.LoginBlocklistService;
 import com.akademi.finsight.auth.ratelimiter.service.LoginRateLimitService;
+import com.akademi.finsight.auth.ratelimiter.util.IdentifierHasher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
@@ -21,10 +22,11 @@ public class LoginRateLimitServiceImpl implements LoginRateLimitService {
     private final RateLimitKeyGenerator rateLimitKeyGenerator;
     private final LoginRateLimitProperties loginRateLimitProperties;
     private final LoginBlocklistService blocklistService;
+    private final IdentifierHasher identifierHasher;
 
     @Override
-    public void incrementFailedAttempts(String hashedIdentifier) {
-
+    public void incrementFailedAttempts(String identifier) {
+        String hashedIdentifier = identifierHasher.hash(identifier);
         String attemptKey = rateLimitKeyGenerator.createAttemptKey(hashedIdentifier);
         Long attempts = Optional.ofNullable(redisTemplate.opsForValue().increment(attemptKey)).orElse(0L) ;
 
@@ -36,17 +38,20 @@ public class LoginRateLimitServiceImpl implements LoginRateLimitService {
     }
 
     @Override
-    public void checkAttemptsOrThrow(String hashedIdentifier) {
-        blocklistService.checkBlockedOrThrow(hashedIdentifier);
+    public void checkAttemptsOrThrow(String identifier) {
+        blocklistService.checkBlockedOrThrow(identifierHasher.hash(identifier));
     }
 
     @Override
-    public void resetAttempts(String hashedIdentifier) {
+    public void resetAttempts(String identifier) {
+        resetAttemptsByHash(identifierHasher.hash(identifier));
+    }
+
+    private void resetAttemptsByHash(String hashedIdentifier) {
         String key = rateLimitKeyGenerator.createAttemptKey(hashedIdentifier);
         Optional.ofNullable(redisTemplate.delete(key))
                 .filter(Boolean::booleanValue)
-                .ifPresent(ignored ->log.debug("Reset login attempts for user: {}", hashedIdentifier));
-
+                .ifPresent(ignored -> log.debug("Reset login attempts for user: {}", hashedIdentifier));
     }
 
     private void initializeExpirationIfNeeded(String attemptKey, Long attempts){
@@ -59,7 +64,7 @@ public class LoginRateLimitServiceImpl implements LoginRateLimitService {
         if(attempts >= loginRateLimitProperties.getMaxAttempts()){
             log.warn("User exceeded maximum login attempts ({}). Blocking user: {}", attempts, hashedIdentifier);
             blocklistService.blockUser(hashedIdentifier);
-            resetAttempts(hashedIdentifier);
+            resetAttemptsByHash(hashedIdentifier);
         }
     }
 }

@@ -6,10 +6,12 @@ import com.akademi.finsight.auth.verificationtoken.mapper.VerificationTokenMappe
 import com.akademi.finsight.auth.verificationtoken.repository.VerificationTokenRepository;
 import com.akademi.finsight.auth.verificationtoken.service.VerificationTokenService;
 import com.akademi.finsight.common.masking.MaskType;
+import com.akademi.finsight.notification.service.EmailService;
 import com.akademi.finsight.user.entity.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -28,6 +30,7 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
     private final VerificationTokenMapper tokenMapper;
     private final PasswordEncoder passwordEncoder;
     private final VerificationTokenRepository repository;
+    private final EmailService emailService;
 
 
     public void createAndSendVerificationToken(User user, String temporaryPassword) {
@@ -41,7 +44,7 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
         VerificationTokenRequest tokenRequest = new VerificationTokenRequest(user.getUsername(), user.getEmail(), temporaryPassword, verificationUrl);
         log.info("Verification mail is being sent to {}", MaskType.EMAIL.mask(user.getEmail()));
 
-//        emailService.sendVerificationEmail(tokenRequest, LocaleContextHolder.getLocale()); devamına mehmet kafka entegre edilecek
+        emailService.sendVerificationEmail(tokenRequest, LocaleContextHolder.getLocale());
     }
 
     @Override

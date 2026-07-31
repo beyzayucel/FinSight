@@ -32,15 +32,15 @@ spring:
       value-serializer: org.springframework.kafka.support.serializer.JacksonJsonSerializer
       acks: all
       properties:
-        max.block.ms: 5000
-        request.timeout.ms: 5000
-        delivery.timeout.ms: 10000
+        max.block.ms: ${KAFKA_PRODUCER_MAX_BLOCK_MS:5000}
+        request.timeout.ms: ${KAFKA_PRODUCER_REQUEST_TIMEOUT_MS:5000}
+        delivery.timeout.ms: ${KAFKA_PRODUCER_DELIVERY_TIMEOUT_MS:10000}
     admin:
       properties:
-        request.timeout.ms: 5000
-        default.api.timeout.ms: 5000
+        request.timeout.ms: ${KAFKA_ADMIN_REQUEST_TIMEOUT_MS:5000}
+        default.api.timeout.ms: ${KAFKA_ADMIN_DEFAULT_API_TIMEOUT_MS:5000}
     listener:
-      concurrency: 3
+      concurrency: ${KAFKA_LISTENER_CONCURRENCY:3}
     consumer:
       auto-offset-reset: earliest
       key-deserializer: org.springframework.kafka.support.serializer.ErrorHandlingDeserializer
@@ -57,8 +57,8 @@ spring:
     username: ${MAIL_USERNAME:}
     password: ${MAIL_PASSWORD:}
     properties:
-      mail.smtp.auth: false
-      mail.smtp.starttls.enable: false
+      mail.smtp.auth: ${MAIL_SMTP_AUTH:false}
+      mail.smtp.starttls.enable: ${MAIL_SMTP_STARTTLS_ENABLE:false}
   jpa:
     hibernate:
       ddl-auto: validate
@@ -78,6 +78,14 @@ notification:
     topic: ${NOTIFICATION_TOPIC:finsight.notification.requested.v1}
     group-id: ${NOTIFICATION_GROUP_ID:notification-service}
     dead-letter-retention: ${NOTIFICATION_DLT_RETENTION:30d}
+    dead-letter-suffix: ${NOTIFICATION_DLT_SUFFIX:.DLT}
+    partitions: ${NOTIFICATION_TOPIC_PARTITIONS:3}
+    replicas: ${NOTIFICATION_TOPIC_REPLICAS:1}
+    retry:
+      max-attempts: ${NOTIFICATION_RETRY_MAX_ATTEMPTS:3}
+      initial-interval: ${NOTIFICATION_RETRY_INITIAL_INTERVAL:1s}
+      multiplier: ${NOTIFICATION_RETRY_MULTIPLIER:2}
+      max-interval: ${NOTIFICATION_RETRY_MAX_INTERVAL:4s}
   idempotency:
     ttl: ${NOTIFICATION_IDEMPOTENCY_TTL:24h}
   mail:

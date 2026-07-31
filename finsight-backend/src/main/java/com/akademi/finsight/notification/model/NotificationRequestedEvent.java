@@ -9,6 +9,7 @@ import lombok.ToString;
 import java.time.Instant;
 import java.util.Map;
 import java.util.Objects;
+import java.util.UUID;
 
 /** Kafka'da JSON olarak tasinan mesaj sozlesmesi; dil de (locale) event icinde tasinir. */
 @Getter
@@ -18,7 +19,7 @@ public class NotificationRequestedEvent {
 
     private final String eventId;
     private final NotificationType type;
-    private final Long userId;
+    private final UUID userId;
     private final String email;
     // gecici sifre/token tasiyabilir - toString'e (dolayisiyla loglara) sizmasin
     @ToString.Exclude
@@ -30,14 +31,14 @@ public class NotificationRequestedEvent {
     public NotificationRequestedEvent(
             @JsonProperty("eventId") String eventId,
             @JsonProperty("type") NotificationType type,
-            @JsonProperty("userId") Long userId,
+            @JsonProperty("userId") UUID userId,
             @JsonProperty("email") String email,
             @JsonProperty("params") Map<String, String> params,
             @JsonProperty("locale") String locale,
             @JsonProperty("occurredAt") Instant occurredAt
     ) {
-        Objects.requireNonNull(eventId, "eventId bos olamaz");
-        Objects.requireNonNull(type, "type bos olamaz");
+        Objects.requireNonNull(eventId, "eventId must not be null");
+        Objects.requireNonNull(type, "type must not be null");
         this.eventId = eventId;
         this.type = type;
         this.userId = userId;

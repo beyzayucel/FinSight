@@ -31,6 +31,7 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
 
 
     public void createAndSendVerificationToken(User user, String temporaryPassword) {
+        repository.deleteByUserId(user.getId());
         String token = UUID.randomUUID().toString();
         String hash = passwordEncoder.encode(token);
         VerificationToken verificationToken = tokenMapper.toEntity(user, hash);

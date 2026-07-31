@@ -14,5 +14,7 @@ public interface VerificationTokenRepository extends JpaRepository<VerificationT
     @Modifying
     @Query("DELETE FROM VerificationToken vt WHERE vt.expiresAt < :now")
     int deleteExpiredTokens(@Param("now") Instant now);
+
+    void deleteByUserId(UUID userId);
 }
 

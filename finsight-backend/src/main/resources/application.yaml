@@ -56,7 +56,7 @@ news:
   api:
     url: ${NEWS_API_URL}
     token: ${NEWS_API_TOKEN}
-    search-text: "borsa OR faiz OR fed OR \"döviz kuru\" OR \"merkez bankası\""
+    search-text: "hisse OR borsa OR BIST OR altın OR faiz OR TCMB OR tahvil OR repo OR fed OR \"döviz kuru\""
     cache-size: 3
     max-news-age-hours: 15
 

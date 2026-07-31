@@ -34,7 +34,18 @@ export default function NewsHighlights({ lang, title }: NewsHighlightsProps) {
         {items.map((item) => (
           <li key={item.id} className="border-b border-white/15 pb-3">
             <p className="text-sm font-light leading-relaxed text-white/80">
-              {item.text}
+              {item.url ? (
+                <a
+                  href={item.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hover:text-accent transition-colors duration-200"
+                >
+                  {item.text}
+                </a>
+              ) : (
+                item.text
+              )}
               <span className="ml-2 whitespace-nowrap text-xs text-accent/90">
                 — {item.time}
               </span>

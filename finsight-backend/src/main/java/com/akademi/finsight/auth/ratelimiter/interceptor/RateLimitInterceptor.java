@@ -4,7 +4,6 @@ import com.akademi.finsight.auth.ratelimiter.exception.RateLimitErrorType;
 import com.akademi.finsight.auth.ratelimiter.exception.RateLimitException;
 import com.akademi.finsight.auth.ratelimiter.filter.CachedBodyHttpServletRequest;
 import com.akademi.finsight.auth.ratelimiter.service.LoginRateLimitService;
-import com.akademi.finsight.auth.ratelimiter.util.IdentifierHasher;
 import com.fasterxml.jackson.core.JacksonException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -23,13 +22,11 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
     private final LoginRateLimitService loginRateLimitService;
     private final ObjectMapper objectMapper;
-    private final IdentifierHasher identifierHasher;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String email = extractIdentifier(request);
-        String hashedEmail = identifierHasher.hash(email);
-        loginRateLimitService.checkAttemptsOrThrow(hashedEmail);
+        loginRateLimitService.checkAttemptsOrThrow(email);
         return true;
     }
 

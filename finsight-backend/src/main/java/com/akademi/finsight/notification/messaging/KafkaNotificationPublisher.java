@@ -1,33 +1,23 @@
 package com.akademi.finsight.notification.messaging;
 
 import com.akademi.finsight.notification.config.NotificationProperties;
+import com.akademi.finsight.notification.exception.NotificationPublishException;
 import com.akademi.finsight.notification.model.NotificationRequestedEvent;
 import com.akademi.finsight.notification.service.NotificationEventPublisher;
-import com.akademi.finsight.notification.service.NotificationPublishException;
 import io.micrometer.core.instrument.MeterRegistry;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 
+@Slf4j
 @Component
+@RequiredArgsConstructor
 public class KafkaNotificationPublisher implements NotificationEventPublisher {
-
-    private static final Logger log = LoggerFactory.getLogger(KafkaNotificationPublisher.class);
 
     private final KafkaTemplate<String, NotificationRequestedEvent> kafkaTemplate;
     private final NotificationProperties properties;
     private final MeterRegistry meterRegistry;
-
-    public KafkaNotificationPublisher(
-            KafkaTemplate<String, NotificationRequestedEvent> kafkaTemplate,
-            NotificationProperties properties,
-            MeterRegistry meterRegistry
-    ) {
-        this.kafkaTemplate = kafkaTemplate;
-        this.properties = properties;
-        this.meterRegistry = meterRegistry;
-    }
 
     /** Bilerek ack beklenmez, caginin thread'i bloklanmaz; broker erisilemezse yalniz loglanir. */
     @Override
@@ -38,12 +28,13 @@ public class KafkaNotificationPublisher implements NotificationEventPublisher {
                         if (exception != null) {
                             meterRegistry.counter("notification.publish.failed",
                                     "type", event.getType().name()).increment();
-                            log.error("Bildirim kuyruga yazilamadi: event={} tip={}",
+                            log.error("Failed to publish notification to Kafka: event={} type={}",
                                     event.getEventId(), event.getType(), exception);
                         }
                     });
         } catch (RuntimeException exception) {
-            throw new NotificationPublishException(event.getEventId(), exception);
+            log.error("Failed to publish notification to Kafka synchronously: event={}", event.getEventId(), exception);
+            throw new NotificationPublishException(exception);
         }
     }
 

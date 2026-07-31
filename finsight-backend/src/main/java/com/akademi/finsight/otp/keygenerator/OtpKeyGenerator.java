@@ -1,0 +1,33 @@
+package com.akademi.finsight.otp.keygenerator;
+
+import com.akademi.finsight.auth.ratelimiter.util.IdentifierHasher;
+import lombok.NoArgsConstructor;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+
+import java.util.Locale;
+import java.util.Optional;
+
+import static com.akademi.finsight.otp.constant.OtpKeyConstants.*;
+
+@Component
+@RequiredArgsConstructor
+public class OtpKeyGenerator {
+    private final IdentifierHasher identifierHasher;
+
+    public String generateCodeKey(String email) {
+        return PREFIX + String.format(CODE_SUFFIX, hashEmail(email));
+    }
+    public String generateCooldownKey(String email) {
+        return PREFIX + String.format(COOLDOWN_SUFFIX, hashEmail(email));
+    }
+
+    private String hashEmail(String email){
+        return Optional.ofNullable(email)
+                .map(String::trim)
+                .map(String::toLowerCase)
+                .map(identifierHasher::hash)
+                .orElseThrow(() -> new IllegalArgumentException("Email address cannot be null or empty for key generation."));
+    }
+
+}

@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.ToString;
 
 import java.util.Map;
+import java.util.UUID;
 
 /** NotificationService cagrisinin parametre nesnesi; Kafka'ya gitmez, yalnizca modul ici kullanilir. */
 @Getter
@@ -13,14 +14,14 @@ import java.util.Map;
 public class NotificationCommand {
 
     private final NotificationType type;
-    private final Long userId;
+    private final UUID userId;
     private final String email;
     // gecici sifre/token tasiyabilir - toString'e (dolayisiyla loglara) sizmasin
     @ToString.Exclude
     private final Map<String, String> params;
     private final String locale;
 
-    public NotificationCommand(NotificationType type, Long userId, String email,
+    public NotificationCommand(NotificationType type, UUID userId, String email,
                                 Map<String, String> params, String locale) {
         this.type = type;
         this.userId = userId;

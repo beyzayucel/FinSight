@@ -16,15 +16,21 @@ public class OtpKeyGenerator {
     private final IdentifierHasher identifierHasher;
 
     public String generateCodeKey(String email) {
-        return PREFIX + String.format(CODE_SUFFIX, hashEmail(email));
+        return generateKey(CODE_SUFFIX, email);
     }
+
     public String generateCooldownKey(String email) {
-        return PREFIX + String.format(COOLDOWN_SUFFIX, hashEmail(email));
+        return generateKey(COOLDOWN_SUFFIX, email);
+    }
+
+    private String generateKey(String suffixPattern, String email) {
+        return PREFIX + String.format(suffixPattern, hashEmail(email));
     }
 
     private String hashEmail(String email){
         return Optional.ofNullable(email)
                 .map(String::trim)
+                .filter(trimmed -> !trimmed.isBlank())
                 .map(String::toLowerCase)
                 .map(identifierHasher::hash)
                 .orElseThrow(() -> new IllegalArgumentException("Email address cannot be null or empty for key generation."));

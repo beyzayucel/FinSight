@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import type { Lang } from '@/i18n/translations'
+import { translations, type Lang } from '@/i18n/translations'
 import { fetchHighlights, type NewsItem } from './newsService'
 import { FaArrowTrendUp } from 'react-icons/fa6'
 
@@ -30,29 +30,35 @@ export default function NewsHighlights({ lang, title }: NewsHighlightsProps) {
         </span>
       </div>
 
-      <ul className="space-y-3">
-        {items.map((item) => (
-          <li key={item.id} className="border-b border-white/15 pb-3">
-            <p className="text-sm font-light leading-relaxed text-white/80">
-              {item.url ? (
-                <a
-                  href={item.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-accent transition-colors duration-200"
-                >
-                  {item.text}
-                </a>
-              ) : (
-                item.text
-              )}
-              <span className="ml-2 whitespace-nowrap text-xs text-accent/90">
-                — {item.time}
-              </span>
-            </p>
-          </li>
-        ))}
-      </ul>
+      {items.length === 0 ? (
+        <p className="text-sm font-light text-white/50 italic py-2">
+          {translations[lang].noNews as string}
+        </p>
+      ) : (
+        <ul className="space-y-3">
+          {items.map((item) => (
+            <li key={item.id} className="border-b border-white/15 pb-3">
+              <p className="text-sm font-light leading-relaxed text-white/80">
+                {item.url ? (
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="hover:text-accent transition-colors duration-200"
+                  >
+                    {item.text}
+                  </a>
+                ) : (
+                  item.text
+                )}
+                <span className="ml-2 whitespace-nowrap text-xs text-accent/90">
+                  — {item.time}
+                </span>
+              </p>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   )
 }

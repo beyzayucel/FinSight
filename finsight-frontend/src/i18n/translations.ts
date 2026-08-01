@@ -17,6 +17,7 @@ export const translations = {
     rememberMe: 'Beni Hatırla',
     loginButton: 'Giriş Yap',
     ago: (s: string) => s,
+    noNews: 'Güncel bildirim yok.',
   },
   en: {
     tagline: 'Analyze with Data, Decide with Confidence',
@@ -34,6 +35,7 @@ export const translations = {
     rememberMe: 'Remember Me',
     loginButton: 'Sign In',
     ago: (s: string) => s,
+    noNews: 'No current notifications.',
   },
 } satisfies Record<Lang, Record<string, unknown>>
 

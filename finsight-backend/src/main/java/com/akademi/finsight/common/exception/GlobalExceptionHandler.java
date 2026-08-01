@@ -161,6 +161,18 @@ public class GlobalExceptionHandler {
                                 .build()));
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiStandardResponse<Void>> handleIllegalArgument(
+            IllegalArgumentException ex, HttpServletRequest request) {
+
+        log.warn("Invalid argument provided: path={}, message={}", request.getRequestURI(), ex.getMessage());
+
+        ErrorType errorType = ErrorType.INVALID_INPUT;
+        String message = ex.getMessage() != null ? ex.getMessage() : resolveMessage(errorType);
+
+        return buildResponse(errorType, message, request);
+    }
+
     private ResponseEntity<ApiStandardResponse<Void>> buildResponse(
             BaseErrorType errorType, String message, HttpServletRequest request) {
 

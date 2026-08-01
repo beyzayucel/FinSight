@@ -14,6 +14,6 @@ public class NotificationSendException extends BaseException {
     }
 
     public NotificationSendException(Throwable cause) {
-        super(NotificationErrorType.NOTIFICATION_SEND_FAILED, cause);
+        super(OtpErrorType.NOTIFICATION_SEND_FAILED, cause);
     }
 }

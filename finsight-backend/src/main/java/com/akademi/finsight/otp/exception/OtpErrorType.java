@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @RequiredArgsConstructor
-public enum NotificationErrorType implements BaseErrorType {
+public enum OtpErrorType implements BaseErrorType {
 
     NOTIFICATION_SEND_FAILED("error.notification.email.sending.failed", HttpStatus.INTERNAL_SERVER_ERROR);
 

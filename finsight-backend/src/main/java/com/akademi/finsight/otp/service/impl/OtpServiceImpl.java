@@ -1,10 +1,11 @@
 package com.akademi.finsight.otp.service.impl;
 
+import com.akademi.finsight.notification.exception.NotificationPublishException;
 import com.akademi.finsight.notification.model.NotificationCommand;
 import com.akademi.finsight.notification.model.NotificationType;
 import com.akademi.finsight.notification.service.NotificationService;
 import com.akademi.finsight.otp.config.OtpProperties;
-import com.akademi.finsight.otp.exception.NotificationSendException;
+import com.akademi.finsight.otp.exception.OtpSendException;
 import com.akademi.finsight.otp.model.OtpGenerateResult;
 import com.akademi.finsight.otp.keygenerator.OtpKeyGenerator;
 import com.akademi.finsight.otp.model.OtpVerificationResult;
@@ -20,6 +21,8 @@ import java.security.SecureRandom;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+
+import static com.akademi.finsight.otp.constant.OtpMessageConstants.*;
 
 
 @Slf4j
@@ -55,13 +58,13 @@ public class OtpServiceImpl implements OtpService {
 
         try{
             sendOtpNotification(email, otpCode, locale);
-        }catch (Exception e){
+        }catch (NotificationPublishException e){
             log.error("Failed to send OTP notification.");
             clearOtpKeysFromRedis(email, otpKey);
-            throw new NotificationSendException(e);
+            throw new OtpSendException(e);
         }
 
-        String successMessage = getMessage("otp.generate.success");
+        String successMessage = getMessage(GENERATE_SUCCESS);
         log.info("OTP generated successfully and dispatched to notification service.");
 
         return new OtpGenerateResult(true, successMessage, otpProperties.getCooldownSeconds());
@@ -75,19 +78,19 @@ public class OtpServiceImpl implements OtpService {
         String otpKey = otpKeyGenerator.generateCodeKey(email);
         Optional<String> storedOtpCode = Optional.ofNullable(redisTemplate.opsForValue().get(otpKey));
 
-        if (storedOtpCode.isEmpty()) {
-            log.warn("OTP verification failed: Code is expired or invalid.");
-            return new OtpVerificationResult(false, getMessage("otp.validate.invalid_or_expired"));
-        }
-
-        if (!storedOtpCode.get().equals(inputCode)) {
-            log.warn("OTP verification failed: Incorrect code provided.");
-            return new OtpVerificationResult(false, getMessage("otp.validate.incorrect"));
+        Optional<OtpVerificationResult> validationError = validateStoredOtp(storedOtpCode, inputCode);
+        if (validationError.isPresent()) {
+            return validationError.get();
         }
 
         clearOtpKeysFromRedis(email, otpKey);
         log.info("OTP verification successful, Redis keys cleared.");
-        return new OtpVerificationResult(true, getMessage("otp.validate.success"));
+        return new OtpVerificationResult(true, getMessage(GENERATE_SUCCESS));
+    }
+
+    private String generateOtpCode(){
+        int otpInt = 100000 + secureRandom.nextInt(900000);
+        return String.valueOf(otpInt);
     }
 
     private void clearOtpKeysFromRedis(String email, String otpKey) {
@@ -96,16 +99,11 @@ public class OtpServiceImpl implements OtpService {
         redisTemplate.delete(cooldownKey);
     }
 
-    private String generateOtpCode(){
-        int otpInt = 100000 + secureRandom.nextInt(900000);
-        return String.valueOf(otpInt);
-    }
-
     private Optional<OtpGenerateResult> checkCooldown(String cooldownKey) {
         if (Boolean.TRUE.equals(redisTemplate.hasKey(cooldownKey))) {
             Long expire = redisTemplate.getExpire(cooldownKey);
             Long remaining = (expire != null && expire > 0) ? expire : otpProperties.getCooldownSeconds();
-            return Optional.of(new OtpGenerateResult(false, getMessage("otp.generate.cooldown"), remaining));
+            return Optional.of(new OtpGenerateResult(false, getMessage(GENERATE_COOLDOWN), remaining));
         }
         return Optional.empty();
     }
@@ -131,6 +129,20 @@ public class OtpServiceImpl implements OtpService {
                 params,
                 language
         ));
+    }
+
+    private Optional<OtpVerificationResult> validateStoredOtp(Optional<String> storedOtpCode, String inputCode) {
+        if (storedOtpCode.isEmpty()) {
+            log.warn("OTP verification failed: Code is expired or invalid.");
+            return Optional.of(new OtpVerificationResult(false, getMessage(VALIDATE_INVALID_OR_EXPIRED)));
+        }
+
+        if (!storedOtpCode.get().equals(inputCode)) {
+            log.warn("OTP verification failed: Incorrect code provided.");
+            return Optional.of(new OtpVerificationResult(false, getMessage(VALIDATE_INCORRECT)));
+        }
+
+        return Optional.empty();
     }
 
     private void validateEmailInput(String email) {

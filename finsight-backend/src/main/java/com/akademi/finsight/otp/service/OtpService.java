@@ -8,5 +8,5 @@ import java.util.Locale;
 public interface OtpService {
     OtpGenerateResult generateOtp(String email, Locale locale);
 
-    OtpVerificationResult validateOtp(String identifier, String inputCode);
+    OtpVerificationResult validateOtp(String email, String inputCode);
 }

@@ -119,7 +119,7 @@ public class OtpServiceImpl implements OtpService {
 
 
     @Override
-    public boolean hasActiveOtp(String email) {
+    public boolean validateActiveOtp(String email) {
         checkMaxAttempts(email);
         boolean active = Boolean.TRUE.equals(redisTemplate.hasKey(otpKeyGenerator.generateCodeKey(email)));
         log.debug("OTP active check: email={}, active={}", MaskType.EMAIL.mask(email), active);

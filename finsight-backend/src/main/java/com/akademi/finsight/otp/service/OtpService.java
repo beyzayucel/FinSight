@@ -7,5 +7,5 @@ public interface OtpService {
 
     void validateOtp(String email, String inputCode);
 
-    boolean hasActiveOtp(String email);
+    boolean validateActiveOtp(String email);
 }

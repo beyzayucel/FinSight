@@ -183,7 +183,7 @@ public class AuthServiceImpl implements AuthService {
     public LoginResult.Authenticated otpLogin(OtpLoginRequest request) {
         User user = userService.findByIdentifier(request.identifier());
 
-        if (!otpService.hasActiveOtp(user.getEmail())) {
+        if (!otpService.validateActiveOtp(user.getEmail())) {
             log.warn("OTP login rejected, no active OTP: email={}", MaskType.EMAIL.mask(user.getEmail()));
             throw new AuthException(AuthErrorType.OTP_NOT_ELIGIBLE);
         }
@@ -198,7 +198,7 @@ public class AuthServiceImpl implements AuthService {
     public void resendOtp(ResendOtpRequest request) {
         User user = userService.findByIdentifier(request.identifier());
 
-        if (!otpService.hasActiveOtp(user.getEmail())) {
+        if (!otpService.validateActiveOtp(user.getEmail())) {
             log.warn("OTP resend rejected, no active OTP: email={}", MaskType.EMAIL.mask(user.getEmail()));
             throw new AuthException(AuthErrorType.OTP_NOT_ELIGIBLE);
         }

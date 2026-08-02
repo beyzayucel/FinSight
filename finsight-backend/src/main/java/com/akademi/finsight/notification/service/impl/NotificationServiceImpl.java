@@ -21,7 +21,6 @@ public class NotificationServiceImpl implements NotificationService {
         NotificationRequestedEvent event = new NotificationRequestedEvent(
                 UUID.randomUUID().toString(),
                 command.getType(),
-                command.getUserId(),
                 command.getEmail(),
                 command.getParams(),
                 command.getLocale(),

@@ -4,11 +4,13 @@ import jakarta.servlet.ReadListener;
 import jakarta.servlet.ServletInputStream;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletRequestWrapper;
+import lombok.Getter;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+@Getter
 public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
 
     private final byte[] cachedBody;
@@ -19,9 +21,7 @@ public class CachedBodyHttpServletRequest extends HttpServletRequestWrapper {
         this.cachedBody = inputStream.readAllBytes();
     }
 
-    public byte[] getCachedBody(){
-        return cachedBody;
-    }
+
 
     @Override
     public ServletInputStream getInputStream() throws IOException {

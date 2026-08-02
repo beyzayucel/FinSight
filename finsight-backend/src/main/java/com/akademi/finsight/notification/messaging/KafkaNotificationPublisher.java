@@ -38,8 +38,7 @@ public class KafkaNotificationPublisher implements NotificationEventPublisher {
         }
     }
 
-    /** userId varsa partition anahtari o, yoksa (VERIFICATION_EMAIL'de oldugu gibi) email. */
     private static String partitionKey(NotificationRequestedEvent event) {
-        return event.getUserId() != null ? String.valueOf(event.getUserId()) : event.getEmail();
+        return event.getEmail();
     }
 }

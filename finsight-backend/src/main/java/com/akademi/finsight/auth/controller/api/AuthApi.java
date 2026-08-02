@@ -2,7 +2,9 @@ package com.akademi.finsight.auth.controller.api;
 
 
 import com.akademi.finsight.auth.dto.login.LoginRequest;
-import com.akademi.finsight.auth.dto.login.LoginResponse;
+import com.akademi.finsight.auth.dto.login.LoginResult;
+import com.akademi.finsight.auth.dto.login.OtpLoginRequest;
+import com.akademi.finsight.auth.dto.login.ResendOtpRequest;
 import com.akademi.finsight.auth.dto.password.ChangePasswordRequest;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenRequest;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenResponse;
@@ -14,10 +16,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+
 
 @RequestMapping(ApiEndpoints.Auth.BASE)
 @Tag(
@@ -28,13 +28,13 @@ public interface AuthApi {
 
     @Operation(
             summary = "User login",
-            description = "Authenticates a user with email or username and returns access and refresh tokens."
+            description = "Authenticates a user. Returns JWT tokens on first login, or sends OTP for 2FA on subsequent logins."
     )
-    @ApiResponse(responseCode = "200", description = "Login successful")
+    @ApiResponse(responseCode = "200", description = "Login successful or OTP sent")
     @ApiResponse(responseCode = "400", description = "Invalid request")
     @ApiResponse(responseCode = "401", description = "Invalid credentials")
     @PostMapping(ApiEndpoints.Auth.LOGIN)
-    ResponseEntity<ApiStandardResponse<LoginResponse>> login(@Valid @RequestBody LoginRequest request);
+    ResponseEntity<ApiStandardResponse<LoginResult>> login(@Valid @RequestBody LoginRequest request);
 
     @Operation(
             summary = "Refresh access token",
@@ -66,4 +66,34 @@ public interface AuthApi {
     @PatchMapping(ApiEndpoints.Auth.CHANGE_PASSWORD)
     ResponseEntity<ApiStandardResponse<Void>> changePassword(@Valid @RequestBody ChangePasswordRequest request,
                                                               @AuthenticationPrincipal String email);
+
+    @Operation(
+            summary = "Verify email",
+            description = "Verifies a user's email address using the token sent via verification email."
+    )
+    @ApiResponse(responseCode = "200", description = "Email verified successfully")
+    @ApiResponse(responseCode = "400", description = "Token is invalid or expired")
+    @GetMapping(ApiEndpoints.Auth.VERIFY)
+    ResponseEntity<ApiStandardResponse<Void>> verifyEmail(@RequestParam String token);
+
+    @Operation(
+            summary = "OTP login",
+            description = "Completes 2FA login by validating the OTP code sent to the user's email. Returns JWT tokens on success."
+    )
+    @ApiResponse(responseCode = "200", description = "OTP verified, login successful")
+    @ApiResponse(responseCode = "401", description = "OTP code is invalid or expired")
+    @ApiResponse(responseCode = "403", description = "No active OTP session")
+    @ApiResponse(responseCode = "429", description = "Too many failed OTP attempts")
+    @PostMapping(ApiEndpoints.Auth.OTP_VERIFY)
+    ResponseEntity<ApiStandardResponse<LoginResult.Authenticated>> otpLogin(@Valid @RequestBody OtpLoginRequest request);
+
+    @Operation(
+            summary = "Resend OTP",
+            description = "Resends the OTP code to the user's email. Requires an active OTP session from a prior login attempt."
+    )
+    @ApiResponse(responseCode = "200", description = "OTP resent successfully")
+    @ApiResponse(responseCode = "403", description = "No active OTP session")
+    @ApiResponse(responseCode = "429", description = "Too many failed OTP attempts")
+    @PostMapping(ApiEndpoints.Auth.OTP_RESEND)
+    ResponseEntity<ApiStandardResponse<Void>> resendOtp(@Valid @RequestBody ResendOtpRequest request);
 }

@@ -20,7 +20,9 @@ public class WebMvcConfig implements WebMvcConfigurer {
                 .excludePathPatterns(
                         ApiEndpoints.Auth.BASE + ApiEndpoints.Auth.LOGIN,
                         ApiEndpoints.Auth.BASE + ApiEndpoints.Auth.REFRESH,
-                        ApiEndpoints.Auth.BASE + ApiEndpoints.Auth.CHANGE_PASSWORD
+                        ApiEndpoints.Auth.BASE + ApiEndpoints.Auth.CHANGE_PASSWORD,
+                        ApiEndpoints.Auth.BASE + ApiEndpoints.Auth.OTP_VERIFY,
+                        ApiEndpoints.Auth.BASE + ApiEndpoints.Auth.OTP_RESEND
                 );
     }
 }

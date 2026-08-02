@@ -49,6 +49,7 @@ public class UserServiceImpl implements UserService {
         user.setEmail(normalizedEmail);
         user.setUsername(username);
         user.setPassword(passwordEncoder.encode(temporaryPassword));
+
         User savedUser = userRepository.save(user);
         tokenService.createAndSendVerificationToken(savedUser, temporaryPassword);
         log.info("User created: event=USER_CREATED, email={}", MaskType.EMAIL.mask(savedUser.getEmail()));
@@ -79,6 +80,20 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional(readOnly = true)
     public User findByEmail(String email) {
+        return findByEmailOrThrow(email);
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public User findByIdentifier(String identifier) {
+        String normalized = identifier.contains("@")
+                ? EmailNormalizer.normalize(identifier)
+                : identifier;
+        return userRepository.findByIdentifier(normalized)
+                .orElseThrow(UserNotFoundException::new);
+    }
+
+    private User findByEmailOrThrow(String email) {
         return userRepository.findByEmail(EmailNormalizer.normalize(email))
                 .orElseThrow(UserNotFoundException::new);
     }
@@ -107,7 +122,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public UserResponse updateCurrentUser(String email, UpdateProfileRequest request) {
-        User user = findByEmail(email);
+        User user = findByEmailOrThrow(email);
         checkPhoneNumberAvailability(request.phoneNumber(), user.getId());
 
         user.setFirstName(request.firstName());
@@ -123,7 +138,7 @@ public class UserServiceImpl implements UserService {
     @Override
     @Transactional
     public void deleteCurrentUser(String email) {
-        User user = findByEmail(email);
+        User user = findByEmailOrThrow(email);
         refreshTokenService.revokeAllByUser(user);
         userRepository.delete(user);
         log.info("User self-deleted: event=USER_SELF_DELETED, email={}", MaskType.EMAIL.mask(user.getEmail()));

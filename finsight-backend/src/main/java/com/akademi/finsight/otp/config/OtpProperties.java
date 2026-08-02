@@ -14,6 +14,7 @@ import java.time.Duration;
 public class OtpProperties {
     private Duration expireDuration;
     private Duration cooldownDuration;
+    private int maxAttempts;
 
     public long getCooldownSeconds() {
         return cooldownDuration != null ? cooldownDuration.getSeconds() : 60L;

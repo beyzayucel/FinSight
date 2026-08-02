@@ -106,6 +106,10 @@ app:
   otp:
     expire-duration: ${OTP_EXPIRE_DURATION}
     cooldown-duration: ${OTP_COOLDOWN_DURATION}
+    max-attempts: ${OTP_MAX_ATTEMPTS}
+
+  verification:
+    url: ${VERIFICATION_BASE_URL}
 
 jwt:
   secret: ${JWT_SECRET}

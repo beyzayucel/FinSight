@@ -9,7 +9,11 @@ import org.springframework.http.HttpStatus;
 @RequiredArgsConstructor
 public enum OtpErrorType implements BaseErrorType {
 
-    NOTIFICATION_SEND_FAILED("error.notification.email.sending.failed", HttpStatus.INTERNAL_SERVER_ERROR);
+    OTP_SEND_FAILED("error.otp.send.failed", HttpStatus.INTERNAL_SERVER_ERROR),
+    OTP_EXPIRED_OR_INVALID("error.otp.expired.or.invalid", HttpStatus.UNAUTHORIZED),
+    OTP_INCORRECT("error.otp.incorrect", HttpStatus.UNAUTHORIZED),
+    OTP_COOLDOWN_ACTIVE("error.otp.cooldown.active", HttpStatus.TOO_MANY_REQUESTS),
+    OTP_MAX_ATTEMPTS_EXCEEDED("error.otp.max.attempts.exceeded", HttpStatus.TOO_MANY_REQUESTS);
 
     private final String messageKey;
     private final HttpStatus httpStatus;

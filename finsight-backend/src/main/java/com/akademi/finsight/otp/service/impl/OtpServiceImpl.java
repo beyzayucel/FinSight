@@ -5,145 +5,168 @@ import com.akademi.finsight.notification.model.NotificationCommand;
 import com.akademi.finsight.notification.model.NotificationType;
 import com.akademi.finsight.notification.service.NotificationService;
 import com.akademi.finsight.otp.config.OtpProperties;
-import com.akademi.finsight.otp.exception.OtpSendException;
-import com.akademi.finsight.otp.model.OtpGenerateResult;
+import com.akademi.finsight.otp.exception.OtpErrorType;
+import com.akademi.finsight.otp.exception.OtpException;
+import com.akademi.finsight.common.masking.MaskType;
 import com.akademi.finsight.otp.keygenerator.OtpKeyGenerator;
-import com.akademi.finsight.otp.model.OtpVerificationResult;
 import com.akademi.finsight.otp.service.OtpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.MessageSource;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Optional;
-
-import static com.akademi.finsight.otp.constant.OtpMessageConstants.*;
 
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class OtpServiceImpl implements OtpService {
+
     private final StringRedisTemplate redisTemplate;
-    private final SecureRandom secureRandom = new SecureRandom();
     private final OtpKeyGenerator otpKeyGenerator;
     private final NotificationService notificationService;
     private final OtpProperties otpProperties;
-    private final MessageSource messageSource;
+
+    private final SecureRandom secureRandom = new SecureRandom();
+
 
 
     @Override
-    public OtpGenerateResult generateOtp(String email, Locale locale) {
-
+    public void generateOtp(String email, String firstName, Locale locale) {
         validateEmailInput(email);
-        log.info("OTP generation request received.");
+        log.info("OTP generation request received: email={}", MaskType.EMAIL.mask(email));
 
-        String cooldownKey = otpKeyGenerator.generateCooldownKey(email);
-        String otpKey = otpKeyGenerator.generateCodeKey(email);
-
-        Optional<OtpGenerateResult> cooldownResult = checkCooldown(cooldownKey);
-
-        if (cooldownResult.isPresent()) {
-            log.warn("OTP generation rejected, cooldown active.");
-            return cooldownResult.get();
-        }
+        checkCooldown(email);
+        clearAllOtpKeys(email);
 
         String otpCode = generateOtpCode();
-        saveOtpToRedis(otpKey, cooldownKey, otpCode);
+        saveOtpToRedis(email, otpCode);
 
-        try{
-            sendOtpNotification(email, otpCode, locale);
-        }catch (NotificationPublishException e){
-            log.error("Failed to send OTP notification.");
-            clearOtpKeysFromRedis(email, otpKey);
-            throw new OtpSendException(e);
+        try {
+            sendOtpNotification(email, firstName, otpCode, locale);
+        } catch (NotificationPublishException e) {
+            log.error("Failed to send OTP notification: email={}", MaskType.EMAIL.mask(email));
+            invalidateOtp(email);
+            throw new OtpException(OtpErrorType.OTP_SEND_FAILED, e);
         }
 
-        String successMessage = getMessage(GENERATE_SUCCESS);
-        log.info("OTP generated successfully and dispatched to notification service.");
+        log.info("OTP generated and dispatched: email={}", MaskType.EMAIL.mask(email));
+    }
 
-        return new OtpGenerateResult(true, successMessage, otpProperties.getCooldownSeconds());
+    private void checkCooldown(String email) {
+        String cooldownKey = otpKeyGenerator.generateCooldownKey(email);
+        if (Boolean.TRUE.equals(redisTemplate.hasKey(cooldownKey))) {
+            Long expire = redisTemplate.getExpire(cooldownKey);
+            Long remaining = (expire != null && expire > 0) ? expire : otpProperties.getCooldownSeconds();
+            log.warn("OTP generation rejected, cooldown active: email={}, remaining={}s", MaskType.EMAIL.mask(email), remaining);
+            throw new OtpException(OtpErrorType.OTP_COOLDOWN_ACTIVE, remaining);
+        }
     }
 
     @Override
-    public OtpVerificationResult validateOtp(String email, String inputCode) {
+    public void validateOtp(String email, String inputCode) {
         validateEmailInput(email);
-        log.info("OTP verification request received.");
+        log.info("OTP verification request received: email={}", MaskType.EMAIL.mask(email));
 
-        String otpKey = otpKeyGenerator.generateCodeKey(email);
-        Optional<String> storedOtpCode = Optional.ofNullable(redisTemplate.opsForValue().get(otpKey));
+        checkMaxAttempts(email);
+        String storedOtpCode = redisTemplate.opsForValue()
+                .get(otpKeyGenerator.generateCodeKey(email));
+        verifyOtpCode(storedOtpCode, inputCode, email);
 
-        Optional<OtpVerificationResult> validationError = validateStoredOtp(storedOtpCode, inputCode);
-        if (validationError.isPresent()) {
-            return validationError.get();
-        }
-
-        clearOtpKeysFromRedis(email, otpKey);
-        log.info("OTP verification successful, Redis keys cleared.");
-        return new OtpVerificationResult(true, getMessage(GENERATE_SUCCESS));
+        clearAllOtpKeys(email);
+        log.info("OTP verification successful: email={}", MaskType.EMAIL.mask(email));
     }
 
-    private String generateOtpCode(){
+    private void checkMaxAttempts(String email) {
+        String attemptsKey = otpKeyGenerator.generateAttemptsKey(email);
+        String attemptsStr = redisTemplate.opsForValue().get(attemptsKey);
+        if (attemptsStr != null && Long.parseLong(attemptsStr) >= otpProperties.getMaxAttempts()) {
+            invalidateOtp(email);
+            log.warn("OTP max attempts already exceeded: email={}", MaskType.EMAIL.mask(email));
+            throw new OtpException(OtpErrorType.OTP_MAX_ATTEMPTS_EXCEEDED);
+        }
+    }
+
+    private void verifyOtpCode(String storedOtpCode, String inputCode, String email) {
+        if (storedOtpCode == null) {
+            log.warn("OTP verification failed, code expired or invalid: email={}", MaskType.EMAIL.mask(email));
+            throw new OtpException(OtpErrorType.OTP_EXPIRED_OR_INVALID);
+        }
+
+        if (!storedOtpCode.equals(inputCode)) {
+            handleFailedAttempt(email);
+        }
+    }
+
+    private void handleFailedAttempt(String email) {
+        String attemptsKey = otpKeyGenerator.generateAttemptsKey(email);
+        Long attempts = redisTemplate.opsForValue().increment(attemptsKey);
+        if (attempts == 1L) {
+            redisTemplate.expire(attemptsKey, otpProperties.getExpireDuration());
+        }
+        if (attempts >= otpProperties.getMaxAttempts()) {
+            invalidateOtp(email);
+            log.warn("OTP max attempts exceeded, OTP invalidated: email={}, attempt={}/{}", MaskType.EMAIL.mask(email), attempts, otpProperties.getMaxAttempts());
+            throw new OtpException(OtpErrorType.OTP_MAX_ATTEMPTS_EXCEEDED);
+        }
+        log.warn("OTP verification failed, incorrect code: email={}, attempt={}/{}", MaskType.EMAIL.mask(email), attempts, otpProperties.getMaxAttempts());
+        throw new OtpException(OtpErrorType.OTP_INCORRECT);
+    }
+
+
+
+    @Override
+    public boolean validateActiveOtp(String email) {
+        checkMaxAttempts(email);
+        boolean active = Boolean.TRUE.equals(redisTemplate.hasKey(otpKeyGenerator.generateCodeKey(email)));
+        log.debug("OTP active check: email={}, active={}", MaskType.EMAIL.mask(email), active);
+        return active;
+    }
+
+    private String generateOtpCode() {
         int otpInt = 100000 + secureRandom.nextInt(900000);
         return String.valueOf(otpInt);
     }
 
-    private void clearOtpKeysFromRedis(String email, String otpKey) {
+    private void invalidateOtp(String email) {
+        redisTemplate.delete(otpKeyGenerator.generateCodeKey(email));
+        redisTemplate.delete(otpKeyGenerator.generateCooldownKey(email));
+    }
+
+    private void clearAllOtpKeys(String email) {
+        redisTemplate.delete(otpKeyGenerator.generateCodeKey(email));
+        redisTemplate.delete(otpKeyGenerator.generateCooldownKey(email));
+        redisTemplate.delete(otpKeyGenerator.generateAttemptsKey(email));
+    }
+
+    private void saveOtpToRedis(String email, String otpCode) {
+        String otpKey = otpKeyGenerator.generateCodeKey(email);
         String cooldownKey = otpKeyGenerator.generateCooldownKey(email);
-        redisTemplate.delete(otpKey);
-        redisTemplate.delete(cooldownKey);
-    }
-
-    private Optional<OtpGenerateResult> checkCooldown(String cooldownKey) {
-        if (Boolean.TRUE.equals(redisTemplate.hasKey(cooldownKey))) {
-            Long expire = redisTemplate.getExpire(cooldownKey);
-            Long remaining = (expire != null && expire > 0) ? expire : otpProperties.getCooldownSeconds();
-            return Optional.of(new OtpGenerateResult(false, getMessage(GENERATE_COOLDOWN), remaining));
-        }
-        return Optional.empty();
-    }
-
-    private void saveOtpToRedis(String otpKey, String cooldownKey, String otpCode) {
         redisTemplate.opsForValue().set(otpKey, otpCode, otpProperties.getExpireDuration());
         redisTemplate.opsForValue().set(cooldownKey, "1", otpProperties.getCooldownDuration());
         log.debug("OTP and cooldown keys saved to Redis.");
     }
 
-    private void sendOtpNotification(String email, String otpCode, Locale locale) {
+    private void sendOtpNotification(String email, String firstName, String otpCode, Locale locale) {
         Map<String, String> params = Map.of(
-                "username", email,
-                "otpCode", otpCode
+                "firstName", firstName,
+                "otpCode", otpCode,
+                "expireMinutes", String.valueOf(otpProperties.getExpireDuration().toMinutes())
         );
 
         String language = (locale != null) ? locale.getLanguage() : null;
 
         notificationService.notify(new NotificationCommand(
                 NotificationType.OTP_EMAIL,
-                null,
                 email,
                 params,
                 language
         ));
     }
 
-    private Optional<OtpVerificationResult> validateStoredOtp(Optional<String> storedOtpCode, String inputCode) {
-        if (storedOtpCode.isEmpty()) {
-            log.warn("OTP verification failed: Code is expired or invalid.");
-            return Optional.of(new OtpVerificationResult(false, getMessage(VALIDATE_INVALID_OR_EXPIRED)));
-        }
-
-        if (!storedOtpCode.get().equals(inputCode)) {
-            log.warn("OTP verification failed: Incorrect code provided.");
-            return Optional.of(new OtpVerificationResult(false, getMessage(VALIDATE_INCORRECT)));
-        }
-
-        return Optional.empty();
-    }
 
     private void validateEmailInput(String email) {
         if (email == null || email.isBlank()) {
@@ -151,10 +174,5 @@ public class OtpServiceImpl implements OtpService {
         }
     }
 
-    private String getMessage(String code) {
-        return messageSource.getMessage(code, null, LocaleContextHolder.getLocale());
-    }
-
 
 }
-

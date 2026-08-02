@@ -25,7 +25,7 @@ public class LoginRateLimitServiceImpl implements LoginRateLimitService {
     private final IdentifierHasher identifierHasher;
 
     @Override
-    public void incrementFailedAttempts(String identifier) {
+    public boolean incrementFailedAttempts(String identifier) {
         String hashedIdentifier = identifierHasher.hash(identifier);
         String attemptKey = rateLimitKeyGenerator.createAttemptKey(hashedIdentifier);
         Long attempts = Optional.ofNullable(redisTemplate.opsForValue().increment(attemptKey)).orElse(0L) ;
@@ -34,7 +34,7 @@ public class LoginRateLimitServiceImpl implements LoginRateLimitService {
 
         initializeExpirationIfNeeded(attemptKey,attempts);
 
-        handleMaxAttempts(hashedIdentifier, attempts);
+        return handleMaxAttempts(hashedIdentifier, attempts);
     }
 
     @Override
@@ -60,11 +60,13 @@ public class LoginRateLimitServiceImpl implements LoginRateLimitService {
         }
     }
 
-    private void handleMaxAttempts(String hashedIdentifier, Long attempts){
+    private boolean handleMaxAttempts(String hashedIdentifier, Long attempts){
         if(attempts >= loginRateLimitProperties.getMaxAttempts()){
             log.warn("User exceeded maximum login attempts ({}). Blocking user: {}", attempts, hashedIdentifier);
             blocklistService.blockUser(hashedIdentifier);
             resetAttemptsByHash(hashedIdentifier);
+            return true;
         }
+        return false;
     }
 }

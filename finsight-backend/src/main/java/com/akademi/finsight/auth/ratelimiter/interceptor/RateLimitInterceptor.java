@@ -10,6 +10,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
+import org.springframework.web.util.WebUtils;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -32,8 +33,11 @@ public class RateLimitInterceptor implements HandlerInterceptor {
 
     private String extractIdentifier(HttpServletRequest request){
 
-        if (!(request instanceof CachedBodyHttpServletRequest cachedRequest)) {
-            throw new RateLimitException(RateLimitErrorType.REQUEST_NOT_WRAPPED);
+        CachedBodyHttpServletRequest cachedRequest =
+                WebUtils.getNativeRequest(request, CachedBodyHttpServletRequest.class);
+
+        if(cachedRequest == null){
+            throw new RateLimitException(RateLimitErrorType.INVALID_REQUEST);
         }
 
         try {

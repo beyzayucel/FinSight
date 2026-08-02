@@ -5,7 +5,8 @@ package com.akademi.finsight.notification.model;
  */
 public enum NotificationType {
     VERIFICATION_EMAIL("notification.verificationEmail"),
-    OTP_EMAIL("notification.otpEmail");
+    OTP_EMAIL("notification.otpEmail"),
+    ACCOUNT_LOCKED_EMAIL("notification.accountLockedEmail");
 
     private final String templateKey;
 

@@ -28,7 +28,6 @@ public class EmailServiceImpl implements EmailService {
 
         notificationService.notify(new NotificationCommand(
                 NotificationType.VERIFICATION_EMAIL,
-                null,
                 request.email(),
                 params,
                 locale == null ? null : locale.getLanguage()

@@ -26,7 +26,7 @@ public record CreateUserRequest(
         @PersonName
         String lastName,
 
-        @Schema(description = "Phone in E.164 format", example = "+905551234567")
+        @Schema(description = "Phone in E.164 format", example = "+905559876543")
         @NotBlank(message = "{validation.phone.required}")
         @InternationalPhone
         String phoneNumber

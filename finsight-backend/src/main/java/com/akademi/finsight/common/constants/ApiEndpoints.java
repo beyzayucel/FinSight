@@ -15,6 +15,7 @@ public final class ApiEndpoints {
         public static final String REFRESH = "/refresh";
         public static final String LOGOUT = "/logout";
         public static final String CHANGE_PASSWORD = "/change-password";
+        public static final String VERIFY = "/verify";
     }
 
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -31,6 +32,7 @@ public final class ApiEndpoints {
     private static final String[] PUBLIC_ENDPOINTS = {
             Auth.BASE + Auth.LOGIN,
             Auth.BASE + Auth.REFRESH,
+            Auth.BASE + Auth.VERIFY,
             News.BASE,
             "/swagger-ui/**",
             "/v3/api-docs/**"

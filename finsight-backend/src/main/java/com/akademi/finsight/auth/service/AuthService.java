@@ -15,4 +15,6 @@ public interface AuthService {
     void logout(RefreshTokenRequest request);
 
     void changePassword(ChangePasswordRequest request, String email);
+
+    void verifyEmail(String token);
 }

@@ -14,10 +14,8 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
+
 
 @RequestMapping(ApiEndpoints.Auth.BASE)
 @Tag(
@@ -66,4 +64,13 @@ public interface AuthApi {
     @PatchMapping(ApiEndpoints.Auth.CHANGE_PASSWORD)
     ResponseEntity<ApiStandardResponse<Void>> changePassword(@Valid @RequestBody ChangePasswordRequest request,
                                                               @AuthenticationPrincipal String email);
+
+    @Operation(
+            summary = "Verify email",
+            description = "Verifies a user's email address using the token sent via verification email."
+    )
+    @ApiResponse(responseCode = "200", description = "Email verified successfully")
+    @ApiResponse(responseCode = "400", description = "Token is invalid or expired")
+    @GetMapping(ApiEndpoints.Auth.VERIFY)
+    ResponseEntity<ApiStandardResponse<Void>> verifyEmail(@RequestParam String token);
 }

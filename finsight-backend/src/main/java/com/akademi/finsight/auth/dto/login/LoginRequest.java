@@ -11,7 +11,7 @@ public record LoginRequest(
         @IdentifierFormat
         String identifier,
 
-        @Schema(description = "Password", example = "12345")
+        @Schema(description = "Password", example = "ChangeMe!2026")
         @NotBlank(message = "{validation.password.required}")
         String password
 ) {}

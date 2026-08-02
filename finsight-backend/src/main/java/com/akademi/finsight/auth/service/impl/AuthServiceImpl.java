@@ -11,6 +11,7 @@ import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenResponse;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenResult;
 import com.akademi.finsight.auth.refreshtoken.service.RefreshTokenService;
 import com.akademi.finsight.auth.service.AuthService;
+import com.akademi.finsight.auth.verificationtoken.service.VerificationTokenService;
 import com.akademi.finsight.common.masking.MaskType;
 import com.akademi.finsight.security.jwt.service.JwtService;
 import com.akademi.finsight.user.entity.User;
@@ -39,6 +40,7 @@ public class AuthServiceImpl implements AuthService {
     private final UserDetailsService userDetailsService;
     private final RefreshTokenService refreshTokenService;
     private final LoginRateLimitService loginRateLimitService;
+    private final VerificationTokenService verificationTokenService;
 
     @Override
     @Transactional
@@ -48,7 +50,6 @@ public class AuthServiceImpl implements AuthService {
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.identifier(), request.password()));
         } catch (AuthenticationException exception) {
-            // RateLimitInterceptor sadece bloklu mu diye bakiyor, sayaci burada artiriyoruz.
             loginRateLimitService.incrementFailedAttempts(request.identifier());
             throw exception;
         }
@@ -105,5 +106,11 @@ public class AuthServiceImpl implements AuthService {
         refreshTokenService.revokeAllByUser(user);
 
         log.info("Password changed: event=PASSWORD_CHANGED, email={}", MaskType.EMAIL.mask(user.getEmail()));
+    }
+
+    @Override
+    @Transactional
+    public void verifyEmail(String token) {
+        verificationTokenService.verifyEmail(token);
     }
 }

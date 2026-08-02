@@ -107,6 +107,9 @@ app:
     expire-duration: ${OTP_EXPIRE_DURATION}
     cooldown-duration: ${OTP_COOLDOWN_DURATION}
 
+  verification:
+    url: ${VERIFICATION_BASE_URL}
+
 jwt:
   secret: ${JWT_SECRET}
   access-token-expiry: ${JWT_ACCESS_TOKEN_EXPIRY}

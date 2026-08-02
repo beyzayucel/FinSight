@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
@@ -44,6 +45,12 @@ public class AuthController extends BaseController implements AuthApi {
     public ResponseEntity<ApiStandardResponse<Void>> changePassword(@Valid @RequestBody ChangePasswordRequest request,
                                                                      @AuthenticationPrincipal String email) {
         authService.changePassword(request, email);
+        return ok();
+    }
+
+    @Override
+    public ResponseEntity<ApiStandardResponse<Void>> verifyEmail(@RequestParam String token) {
+        authService.verifyEmail(token);
         return ok();
     }
 }

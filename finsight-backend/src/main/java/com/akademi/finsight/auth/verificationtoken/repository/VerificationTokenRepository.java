@@ -7,9 +7,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
+import java.util.List;
 import java.util.UUID;
 
 public interface VerificationTokenRepository extends JpaRepository<VerificationToken, UUID> {
+
+    List<VerificationToken> findAllByExpiresAtAfter(Instant now);
 
     @Modifying
     @Query("DELETE FROM VerificationToken vt WHERE vt.expiresAt < :now")
@@ -17,5 +20,7 @@ public interface VerificationTokenRepository extends JpaRepository<VerificationT
 
     @Modifying
     @Query("DELETE FROM VerificationToken vt WHERE vt.user.id = :userId")
-    void deleteByUserId(@Param("userId") UUID userId);}
+    void deleteByUserId(@Param("userId") UUID userId);
+
+}
 

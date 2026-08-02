@@ -6,7 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 
 public record ChangePasswordRequest(
 
-        @Schema(description = "Current password", example = "12345")
+        @Schema(description = "Current password", example = "ChangeMe!2026")
         @NotBlank(message = "{validation.password.current.required}")
         String currentPassword,
 

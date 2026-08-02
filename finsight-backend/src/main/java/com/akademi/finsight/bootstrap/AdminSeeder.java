@@ -42,7 +42,8 @@ public class AdminSeeder implements CommandLineRunner {
                 .lastName(adminProperties.getLastName())
                 .phoneNumber(adminProperties.getPhoneNumber())
                 .role(Role.ADMIN)
-                .firstLogin(false)
+                .enabled(true)
+                .firstLogin(true)
                 .emailVerified(true)
                 .build();
 

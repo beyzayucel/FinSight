@@ -1,11 +1,9 @@
 package com.akademi.finsight.otp.keygenerator;
 
 import com.akademi.finsight.auth.ratelimiter.util.IdentifierHasher;
-import lombok.NoArgsConstructor;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-import java.util.Locale;
 import java.util.Optional;
 
 import static com.akademi.finsight.otp.constant.OtpKeyConstants.*;
@@ -21,6 +19,10 @@ public class OtpKeyGenerator {
 
     public String generateCooldownKey(String email) {
         return generateKey(COOLDOWN_SUFFIX, email);
+    }
+
+    public String generateAttemptsKey(String email) {
+        return generateKey(ATTEMPTS_SUFFIX, email);
     }
 
     private String generateKey(String suffixPattern, String email) {

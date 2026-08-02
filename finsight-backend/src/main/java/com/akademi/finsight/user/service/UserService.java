@@ -14,6 +14,8 @@ public interface UserService {
 
     User findByEmail(String email);
 
+    User findByIdentifier(String identifier);
+
     void updateLastLogin(User user);
 
     void updatePassword(User user, String encodedPassword, boolean clearFirstLogin);

@@ -16,6 +16,8 @@ public final class ApiEndpoints {
         public static final String LOGOUT = "/logout";
         public static final String CHANGE_PASSWORD = "/change-password";
         public static final String VERIFY = "/verify";
+        public static final String OTP_VERIFY = "/otp/verify";
+        public static final String OTP_RESEND = "/otp/resend";
     }
 
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -33,6 +35,8 @@ public final class ApiEndpoints {
             Auth.BASE + Auth.LOGIN,
             Auth.BASE + Auth.REFRESH,
             Auth.BASE + Auth.VERIFY,
+            Auth.BASE + Auth.OTP_VERIFY,
+            Auth.BASE + Auth.OTP_RESEND,
             News.BASE,
             "/swagger-ui/**",
             "/v3/api-docs/**"

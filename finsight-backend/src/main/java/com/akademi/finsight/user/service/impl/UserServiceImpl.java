@@ -83,6 +83,16 @@ public class UserServiceImpl implements UserService {
         return findByEmailOrThrow(email);
     }
 
+    @Override
+    @Transactional(readOnly = true)
+    public User findByIdentifier(String identifier) {
+        String normalized = identifier.contains("@")
+                ? EmailNormalizer.normalize(identifier)
+                : identifier;
+        return userRepository.findByIdentifier(normalized)
+                .orElseThrow(UserNotFoundException::new);
+    }
+
     private User findByEmailOrThrow(String email) {
         return userRepository.findByEmail(EmailNormalizer.normalize(email))
                 .orElseThrow(UserNotFoundException::new);

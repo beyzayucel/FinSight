@@ -1,10 +1,13 @@
 package com.akademi.finsight.auth.service.impl;
 
 import com.akademi.finsight.auth.dto.login.LoginRequest;
-import com.akademi.finsight.auth.dto.login.LoginResponse;
+import com.akademi.finsight.auth.dto.login.LoginResult;
+import com.akademi.finsight.auth.dto.login.OtpLoginRequest;
+import com.akademi.finsight.auth.dto.login.ResendOtpRequest;
 import com.akademi.finsight.auth.dto.password.ChangePasswordRequest;
 import com.akademi.finsight.auth.exception.AuthErrorType;
 import com.akademi.finsight.auth.exception.AuthException;
+import com.akademi.finsight.auth.ratelimiter.config.LoginRateLimitProperties;
 import com.akademi.finsight.auth.ratelimiter.service.LoginRateLimitService;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenRequest;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenResponse;
@@ -12,6 +15,10 @@ import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenResult;
 import com.akademi.finsight.auth.refreshtoken.service.RefreshTokenService;
 import com.akademi.finsight.auth.service.AuthService;
 import com.akademi.finsight.auth.verificationtoken.service.VerificationTokenService;
+import com.akademi.finsight.notification.model.NotificationCommand;
+import com.akademi.finsight.notification.model.NotificationType;
+import com.akademi.finsight.notification.service.NotificationService;
+import com.akademi.finsight.otp.service.OtpService;
 import com.akademi.finsight.common.masking.MaskType;
 import com.akademi.finsight.security.jwt.service.JwtService;
 import com.akademi.finsight.user.entity.User;
@@ -26,6 +33,8 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.context.i18n.LocaleContextHolder;
+import java.util.Map;
 import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
@@ -41,16 +50,43 @@ public class AuthServiceImpl implements AuthService {
     private final RefreshTokenService refreshTokenService;
     private final LoginRateLimitService loginRateLimitService;
     private final VerificationTokenService verificationTokenService;
+    private final OtpService otpService;
+    private final NotificationService notificationService;
+    private final LoginRateLimitProperties loginRateLimitProperties;
 
     @Override
     @Transactional
-    public LoginResponse login(LoginRequest request) {
+    public LoginResult login(LoginRequest request) {
+        User user = authenticateUser(request);
+        loginRateLimitService.resetAttempts(request.identifier());
+
+        if (!user.isEmailVerified()) {
+            log.warn("Login rejected, email not verified: event=EMAIL_NOT_VERIFIED, email={}", MaskType.EMAIL.mask(user.getEmail()));
+            throw new AuthException(AuthErrorType.EMAIL_NOT_VERIFIED);
+        }
+
+        userService.updateLastLogin(user);
+
+        if (user.isFirstLogin()) {
+            log.info("First login, OTP bypassed: event=USER_FIRST_LOGIN, email={}", MaskType.EMAIL.mask(user.getEmail()));
+            return authenticateAndGenerateTokens(user);
+        }
+
+        otpService.generateOtp(user.getEmail(), user.getFirstName(), LocaleContextHolder.getLocale());
+        log.info("OTP sent for 2FA: event=OTP_REQUIRED, email={}", MaskType.EMAIL.mask(user.getEmail()));
+        return new LoginResult.OtpRequired("OTP code sent to your email address.");
+    }
+
+    private User authenticateUser(LoginRequest request) {
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(request.identifier(), request.password()));
         } catch (AuthenticationException exception) {
-            loginRateLimitService.incrementFailedAttempts(request.identifier());
+            boolean blocked = loginRateLimitService.incrementFailedAttempts(request.identifier());
+            if (blocked) {
+                sendAccountLockedNotification(request.identifier());
+            }
             throw exception;
         }
 
@@ -59,15 +95,43 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException(AuthErrorType.INVALID_CREDENTIALS);
         }
 
-        User user = userService.findByEmail(userDetails.getUsername());
+        return userService.findByEmail(userDetails.getUsername());
+    }
+
+    private void sendAccountLockedNotification(String identifier) {
+        try {
+            User user = userService.findByIdentifier(identifier);
+            long blockMinutes = loginRateLimitProperties.getBlockDuration().toMinutes();
+
+            Map<String, String> params = Map.of(
+                    "firstName", user.getFirstName(),
+                    "maxAttempts", String.valueOf(loginRateLimitProperties.getMaxAttempts()),
+                    "blockMinutes", String.valueOf(blockMinutes)
+            );
+
+            String language = LocaleContextHolder.getLocale().getLanguage();
+
+            notificationService.notify(new NotificationCommand(
+                    NotificationType.ACCOUNT_LOCKED_EMAIL,
+                    user.getEmail(),
+                    params,
+                    language
+            ));
+
+            log.info("Account locked notification sent: email={}", MaskType.EMAIL.mask(user.getEmail()));
+        } catch (Exception e) {
+            log.warn("Failed to send account locked notification for identifier: {}", identifier);
+        }
+    }
+
+    private LoginResult.Authenticated authenticateAndGenerateTokens(User user) {
+        UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
         String accessToken = jwtService.generateAccessToken(userDetails, user.isFirstLogin());
-        userService.updateLastLogin(user);
         RefreshTokenResult result = refreshTokenService.createAndSave(user);
-        loginRateLimitService.resetAttempts(request.identifier());
 
-        log.info("User logged in: event=USER_LOGGED_IN, email={}", MaskType.EMAIL.mask(user.getEmail()));
-
-        return new LoginResponse(accessToken, result.rawToken(), jwtService.getAccessTokenExpiryMinutes(), user.isFirstLogin());
+        return new LoginResult.Authenticated(
+                accessToken, result.rawToken(),
+                jwtService.getAccessTokenExpiryMinutes(), user.isFirstLogin());
     }
 
     @Override
@@ -112,5 +176,34 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void verifyEmail(String token) {
         verificationTokenService.verifyEmail(token);
+    }
+
+    @Override
+    @Transactional
+    public LoginResult.Authenticated otpLogin(OtpLoginRequest request) {
+        User user = userService.findByIdentifier(request.identifier());
+
+        if (!otpService.hasActiveOtp(user.getEmail())) {
+            log.warn("OTP login rejected, no active OTP: email={}", MaskType.EMAIL.mask(user.getEmail()));
+            throw new AuthException(AuthErrorType.OTP_NOT_ELIGIBLE);
+        }
+
+        otpService.validateOtp(user.getEmail(), request.code());
+
+        log.info("OTP login successful: event=OTP_LOGIN_SUCCESS, email={}", MaskType.EMAIL.mask(user.getEmail()));
+        return authenticateAndGenerateTokens(user);
+    }
+
+    @Override
+    public void resendOtp(ResendOtpRequest request) {
+        User user = userService.findByIdentifier(request.identifier());
+
+        if (!otpService.hasActiveOtp(user.getEmail())) {
+            log.warn("OTP resend rejected, no active OTP: email={}", MaskType.EMAIL.mask(user.getEmail()));
+            throw new AuthException(AuthErrorType.OTP_NOT_ELIGIBLE);
+        }
+
+        otpService.generateOtp(user.getEmail(), user.getFirstName(), LocaleContextHolder.getLocale());
+        log.info("OTP resent: event=OTP_RESENT, email={}", MaskType.EMAIL.mask(user.getEmail()));
     }
 }

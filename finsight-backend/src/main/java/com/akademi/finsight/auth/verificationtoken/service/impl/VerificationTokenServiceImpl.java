@@ -51,7 +51,6 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
 
         String verificationUrl = verificationBaseUrl + token;
         VerificationTokenRequest tokenRequest = new VerificationTokenRequest(user.getUsername(), user.getEmail(), temporaryPassword, verificationUrl);
-
         log.info("Verification mail is being sent to {}", MaskType.EMAIL.mask(user.getEmail()));
 
         emailService.sendVerificationEmail(tokenRequest, LocaleContextHolder.getLocale());
@@ -61,7 +60,7 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
     public void verifyEmail(String token) {
         VerificationToken verificationToken = repository.findAllByExpiresAtAfter(Instant.now())
                 .stream()
-                .filter(vt -> passwordEncoder.matches(token, vt.getToken()))
+                .filter(verificationTokenEntity -> passwordEncoder.matches(token, verificationTokenEntity.getToken()))
                 .findFirst()
                 .orElseThrow(() -> {
                     log.warn("Email verification failed: event=VERIFICATION_TOKEN_INVALID");

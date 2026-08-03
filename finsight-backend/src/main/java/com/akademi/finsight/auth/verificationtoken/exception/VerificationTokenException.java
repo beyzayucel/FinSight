@@ -8,7 +8,4 @@ public class VerificationTokenException extends BaseException {
         super(errorType);
     }
 
-    public VerificationTokenException(VerificationTokenErrorType errorType, Throwable cause) {
-        super(errorType, cause);
-    }
 }

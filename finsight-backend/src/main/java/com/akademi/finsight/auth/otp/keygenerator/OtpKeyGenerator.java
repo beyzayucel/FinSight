@@ -1,4 +1,4 @@
-package com.akademi.finsight.otp.keygenerator;
+package com.akademi.finsight.auth.otp.keygenerator;
 
 import com.akademi.finsight.auth.ratelimiter.util.IdentifierHasher;
 import lombok.RequiredArgsConstructor;
@@ -6,7 +6,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
-import static com.akademi.finsight.otp.constant.OtpKeyConstants.*;
+import static com.akademi.finsight.auth.otp.constant.OtpKeyConstants.*;
 
 @Component
 @RequiredArgsConstructor

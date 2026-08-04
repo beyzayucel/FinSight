@@ -1,4 +1,4 @@
-package com.akademi.finsight.otp.constant;
+package com.akademi.finsight.auth.otp.constant;
 
 public class OtpKeyConstants {
     private OtpKeyConstants() {}

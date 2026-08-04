@@ -1,15 +1,15 @@
-package com.akademi.finsight.otp.service.impl;
+package com.akademi.finsight.auth.otp.service.impl;
 
 import com.akademi.finsight.notification.exception.NotificationPublishException;
 import com.akademi.finsight.notification.model.NotificationCommand;
 import com.akademi.finsight.notification.model.NotificationType;
 import com.akademi.finsight.notification.service.NotificationService;
-import com.akademi.finsight.otp.config.OtpProperties;
-import com.akademi.finsight.otp.exception.OtpErrorType;
-import com.akademi.finsight.otp.exception.OtpException;
+import com.akademi.finsight.auth.otp.config.OtpProperties;
+import com.akademi.finsight.auth.otp.exception.OtpErrorType;
+import com.akademi.finsight.auth.otp.exception.OtpException;
 import com.akademi.finsight.common.masking.MaskType;
-import com.akademi.finsight.otp.keygenerator.OtpKeyGenerator;
-import com.akademi.finsight.otp.service.OtpService;
+import com.akademi.finsight.auth.otp.keygenerator.OtpKeyGenerator;
+import com.akademi.finsight.auth.otp.service.OtpService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.StringRedisTemplate;

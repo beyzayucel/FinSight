@@ -86,6 +86,7 @@ export default function LoginForm({ t }: LoginFormProps) {
         labelAction={
           <button
             type="button"
+            onClick={() => navigate(ROUTES.FORGOT_PASSWORD)}
             className="text-sm font-semibold text-primary transition-colors hover:text-primary-dark"
           >
             {t.forgotPassword}

@@ -54,6 +54,14 @@ export const translations = {
     veError: 'Doğrulama bağlantısı geçersiz veya süresi dolmuş.',
     veNoToken: 'Doğrulama bağlantısı eksik.',
     veGoLogin: 'Giriş Ekranına Dön',
+    // Forgot Password
+    forgotPasswordTitle: 'Şifremi Unuttum',
+    forgotPasswordSubtitle:
+      'Hesabınıza bağlı e-posta adresinizi girin. Size şifre sıfırlama bağlantısı gönderilecektir.',
+    forgotPasswordEmailLabel: 'E-POSTA ADRESİ',
+    forgotPasswordEmailPlaceholder: 'ad@kurum.com',
+    continueButton: 'Devam Et',
+    backToLogin: 'Giriş ekranına dön',
     ago: (s: string) => s,
     noNews: 'Güncel bildirim yok.',
   },
@@ -110,6 +118,14 @@ export const translations = {
     veError: 'Verification link is invalid or expired.',
     veNoToken: 'Verification link is missing.',
     veGoLogin: 'Go to Login',
+    // Forgot Password
+    forgotPasswordTitle: 'Forgot Password',
+    forgotPasswordSubtitle:
+      'Enter the email address linked to your account. We will send you a password reset link.',
+    forgotPasswordEmailLabel: 'EMAIL ADDRESS',
+    forgotPasswordEmailPlaceholder: 'name@company.com',
+    continueButton: 'Continue',
+    backToLogin: 'Back to sign in',
     ago: (s: string) => s,
     noNews: 'No current notifications.',
   },

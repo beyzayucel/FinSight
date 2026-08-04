@@ -1,5 +1,6 @@
 package com.akademi.finsight.notification.service.impl;
 
+import com.akademi.finsight.auth.passwordreset.dto.PasswordResetEmailRequest;
 import com.akademi.finsight.auth.verificationtoken.dto.VerificationTokenRequest;
 import com.akademi.finsight.notification.model.NotificationCommand;
 import com.akademi.finsight.notification.model.NotificationType;
@@ -28,6 +29,21 @@ public class EmailServiceImpl implements EmailService {
 
         notificationService.notify(new NotificationCommand(
                 NotificationType.VERIFICATION_EMAIL,
+                request.email(),
+                params,
+                locale == null ? null : locale.getLanguage()
+        ));
+    }
+
+    /** request.resetUrl() zaten cagiran tarafindan kurulmus tam bir URL'dir, oldugu gibi kullanilir. */
+    @Override
+    public void sendPasswordResetEmail(PasswordResetEmailRequest request, Locale locale) {
+        Map<String, String> params = new HashMap<>();
+        params.put("firstName", request.firstName());
+        params.put("resetUrl", request.resetUrl());
+
+        notificationService.notify(new NotificationCommand(
+                NotificationType.PASSWORD_RESET_EMAIL,
                 request.email(),
                 params,
                 locale == null ? null : locale.getLanguage()

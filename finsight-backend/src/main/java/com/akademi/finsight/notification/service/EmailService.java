@@ -1,5 +1,6 @@
 package com.akademi.finsight.notification.service;
 
+import com.akademi.finsight.auth.passwordreset.dto.PasswordResetEmailRequest;
 import com.akademi.finsight.auth.verificationtoken.dto.VerificationTokenRequest;
 
 import java.util.Locale;
@@ -9,4 +10,6 @@ public interface EmailService {
 
     /** Kafka ack'ini beklemez, ana istek akisini bloklamaz; gonderim consumer'da asenkron yapilir. */
     void sendVerificationEmail(VerificationTokenRequest request, Locale locale);
+
+    void sendPasswordResetEmail(PasswordResetEmailRequest request, Locale locale);
 }

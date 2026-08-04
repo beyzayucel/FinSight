@@ -111,6 +111,10 @@ app:
   verification:
     url: ${VERIFICATION_BASE_URL}
 
+  password-reset:
+    url: ${PASSWORD_RESET_BASE_URL}
+    expire-duration: ${PASSWORD_RESET_EXPIRE_DURATION}
+
 jwt:
   secret: ${JWT_SECRET}
   access-token-expiry: ${JWT_ACCESS_TOKEN_EXPIRY}

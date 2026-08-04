@@ -5,6 +5,8 @@ import com.akademi.finsight.auth.dto.login.LoginResult;
 import com.akademi.finsight.auth.dto.login.OtpLoginRequest;
 import com.akademi.finsight.auth.dto.login.ResendOtpRequest;
 import com.akademi.finsight.auth.dto.password.ChangePasswordRequest;
+import com.akademi.finsight.auth.dto.password.ForgotPasswordRequest;
+import com.akademi.finsight.auth.dto.password.ResetPasswordRequest;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenRequest;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenResponse;
 
@@ -23,4 +25,8 @@ public interface AuthService {
     LoginResult.Authenticated otpLogin(OtpLoginRequest request);
 
     void resendOtp(ResendOtpRequest request);
+
+    void forgotPassword(ForgotPasswordRequest request);
+
+    void resetPassword(ResetPasswordRequest request);
 }

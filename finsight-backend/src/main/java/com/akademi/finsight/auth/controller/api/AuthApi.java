@@ -6,6 +6,8 @@ import com.akademi.finsight.auth.dto.login.LoginResult;
 import com.akademi.finsight.auth.dto.login.OtpLoginRequest;
 import com.akademi.finsight.auth.dto.login.ResendOtpRequest;
 import com.akademi.finsight.auth.dto.password.ChangePasswordRequest;
+import com.akademi.finsight.auth.dto.password.ForgotPasswordRequest;
+import com.akademi.finsight.auth.dto.password.ResetPasswordRequest;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenRequest;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenResponse;
 import com.akademi.finsight.common.constants.ApiEndpoints;
@@ -96,4 +98,21 @@ public interface AuthApi {
     @ApiResponse(responseCode = "429", description = "Too many failed OTP attempts")
     @PostMapping(ApiEndpoints.Auth.OTP_RESEND)
     ResponseEntity<ApiStandardResponse<Void>> resendOtp(@Valid @RequestBody ResendOtpRequest request);
+
+    @Operation(
+            summary = "Request password reset",
+            description = "Sends a password reset link to the user's email address if an account with that email exists. Always returns success to avoid revealing account existence."
+    )
+    @ApiResponse(responseCode = "200", description = "Request accepted")
+    @PostMapping(ApiEndpoints.Auth.FORGOT_PASSWORD)
+    ResponseEntity<ApiStandardResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request);
+
+    @Operation(
+            summary = "Reset password",
+            description = "Sets a new password using the token received via the password reset email. Revokes all existing refresh tokens after a successful reset."
+    )
+    @ApiResponse(responseCode = "200", description = "Password reset successfully")
+    @ApiResponse(responseCode = "400", description = "Token is invalid or expired")
+    @PostMapping(ApiEndpoints.Auth.RESET_PASSWORD)
+    ResponseEntity<ApiStandardResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request);
 }

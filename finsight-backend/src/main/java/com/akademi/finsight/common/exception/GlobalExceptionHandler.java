@@ -18,6 +18,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
@@ -88,6 +89,15 @@ public class GlobalExceptionHandler {
 
         return buildResponse(ErrorType.METHOD_NOT_ALLOWED,
                 resolveMessage(ErrorType.METHOD_NOT_ALLOWED, ex.getMethod()), request);
+    }
+
+    @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
+    public ResponseEntity<ApiStandardResponse<Void>> handleMediaTypeNotSupported(
+            HttpMediaTypeNotSupportedException ex, HttpServletRequest request) {
+
+        log.debug("Unsupported media type: contentType={}, path={}", ex.getContentType(), request.getRequestURI());
+
+        return buildResponse(ErrorType.UNSUPPORTED_MEDIA_TYPE, resolveMessage(ErrorType.UNSUPPORTED_MEDIA_TYPE), request);
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)

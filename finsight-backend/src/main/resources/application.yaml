@@ -140,3 +140,8 @@ admin:
   last-name: ${ADMIN_LAST_NAME}
   phone-number: ${ADMIN_PHONE_NUMBER}
   password: ${ADMIN_PASSWORD}
+
+infina:
+  api:
+    base-url: ${INFINA_API_URL:}
+    key: ${INFINA_API_KEY:}

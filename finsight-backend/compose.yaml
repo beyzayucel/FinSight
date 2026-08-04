@@ -5,6 +5,8 @@ services:
     image: mcr.microsoft.com/mssql/server:2022-latest
     platform: linux/amd64
     container_name: finsight-mssql
+    labels:
+      org.springframework.boot.jdbc.parameters: "databaseName=${DB_NAME}"
     networks:
       - finsight-net
     environment:

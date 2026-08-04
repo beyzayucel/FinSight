@@ -7,6 +7,7 @@ import com.akademi.finsight.auth.passwordreset.exception.PasswordResetErrorType;
 import com.akademi.finsight.auth.passwordreset.exception.PasswordResetException;
 import com.akademi.finsight.auth.passwordreset.repository.PasswordResetTokenRepository;
 import com.akademi.finsight.auth.passwordreset.service.PasswordResetTokenService;
+import com.akademi.finsight.auth.ratelimiter.util.IdentifierHasher;
 import com.akademi.finsight.common.masking.MaskType;
 import com.akademi.finsight.notification.service.EmailService;
 import com.akademi.finsight.user.entity.User;
@@ -14,7 +15,6 @@ import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.i18n.LocaleContextHolder;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -26,7 +26,7 @@ import java.util.UUID;
 @Transactional
 public class PasswordResetTokenServiceImpl implements PasswordResetTokenService {
 
-    private final PasswordEncoder passwordEncoder;
+    private final IdentifierHasher tokenHasher;
     private final PasswordResetTokenRepository repository;
     private final EmailService emailService;
     private final PasswordResetProperties properties;
@@ -37,7 +37,7 @@ public class PasswordResetTokenServiceImpl implements PasswordResetTokenService 
         repository.flush();
 
         String token = UUID.randomUUID().toString();
-        String hash = passwordEncoder.encode(token);
+        String hash = tokenHasher.hash(token);
         PasswordResetToken resetToken = PasswordResetToken.builder()
                 .user(user)
                 .token(hash)
@@ -55,10 +55,7 @@ public class PasswordResetTokenServiceImpl implements PasswordResetTokenService 
 
     @Override
     public User consumeToken(String token) {
-        PasswordResetToken resetToken = repository.findAllByExpiresAtAfter(Instant.now())
-                .stream()
-                .filter(entity -> passwordEncoder.matches(token, entity.getToken()))
-                .findFirst()
+        PasswordResetToken resetToken = repository.findByTokenAndExpiresAtAfter(tokenHasher.hash(token), Instant.now())
                 .orElseThrow(() -> {
                     log.warn("Password reset failed: event=PASSWORD_RESET_TOKEN_INVALID");
                     return new PasswordResetException(PasswordResetErrorType.PASSWORD_RESET_TOKEN_INVALID);

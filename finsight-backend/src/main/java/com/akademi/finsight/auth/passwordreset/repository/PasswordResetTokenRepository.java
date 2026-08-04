@@ -7,12 +7,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.Instant;
-import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, UUID> {
 
-    List<PasswordResetToken> findAllByExpiresAtAfter(Instant now);
+    Optional<PasswordResetToken> findByTokenAndExpiresAtAfter(String token, Instant now);
 
     @Modifying
     @Query("DELETE FROM PasswordResetToken prt WHERE prt.expiresAt < :now")

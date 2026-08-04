@@ -1,4 +1,4 @@
-package com.akademi.finsight.otp.config;
+package com.akademi.finsight.auth.otp.config;
 
 import lombok.Getter;
 import lombok.Setter;

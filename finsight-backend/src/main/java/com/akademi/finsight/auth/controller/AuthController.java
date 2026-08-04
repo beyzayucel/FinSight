@@ -7,6 +7,8 @@ import com.akademi.finsight.auth.dto.login.LoginResult;
 import com.akademi.finsight.auth.dto.login.OtpLoginRequest;
 import com.akademi.finsight.auth.dto.login.ResendOtpRequest;
 import com.akademi.finsight.auth.dto.password.ChangePasswordRequest;
+import com.akademi.finsight.auth.dto.password.ForgotPasswordRequest;
+import com.akademi.finsight.auth.dto.password.ResetPasswordRequest;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenRequest;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenResponse;
 import com.akademi.finsight.auth.service.AuthService;
@@ -68,6 +70,18 @@ public class AuthController extends BaseController implements AuthApi {
     public ResponseEntity<ApiStandardResponse<Void>> resendOtp(
             @Valid @RequestBody ResendOtpRequest request) {
         authService.resendOtp(request);
+        return ok();
+    }
+
+    @Override
+    public ResponseEntity<ApiStandardResponse<Void>> forgotPassword(@Valid @RequestBody ForgotPasswordRequest request) {
+        authService.forgotPassword(request);
+        return ok();
+    }
+
+    @Override
+    public ResponseEntity<ApiStandardResponse<Void>> resetPassword(@Valid @RequestBody ResetPasswordRequest request) {
+        authService.resetPassword(request);
         return ok();
     }
 }

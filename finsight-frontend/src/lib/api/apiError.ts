@@ -1,9 +1,15 @@
 import { AxiosError } from 'axios'
 
+type FieldError = {
+  field: string
+  message: string
+}
+
 type ApiErrorBody = {
   error?: {
     message?: string
     code?: string
+    fieldErrors?: FieldError[]
   }
 }
 
@@ -11,6 +17,7 @@ type ApiError = {
   message: string
   code: string
   status: number
+  fieldErrors?: FieldError[]
 }
 
 const FALLBACK: ApiError = {
@@ -29,5 +36,6 @@ export function getApiError(err: unknown): ApiError {
     message: error?.message ?? FALLBACK.message,
     code: error?.code ?? FALLBACK.code,
     status: resp?.status ?? FALLBACK.status,
+    fieldErrors: error?.fieldErrors,
   }
 }

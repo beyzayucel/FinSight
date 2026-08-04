@@ -5,8 +5,11 @@ import com.akademi.finsight.auth.dto.login.LoginResult;
 import com.akademi.finsight.auth.dto.login.OtpLoginRequest;
 import com.akademi.finsight.auth.dto.login.ResendOtpRequest;
 import com.akademi.finsight.auth.dto.password.ChangePasswordRequest;
+import com.akademi.finsight.auth.dto.password.ForgotPasswordRequest;
+import com.akademi.finsight.auth.dto.password.ResetPasswordRequest;
 import com.akademi.finsight.auth.exception.AuthErrorType;
 import com.akademi.finsight.auth.exception.AuthException;
+import com.akademi.finsight.auth.passwordreset.service.PasswordResetTokenService;
 import com.akademi.finsight.auth.ratelimiter.config.LoginRateLimitProperties;
 import com.akademi.finsight.auth.ratelimiter.service.LoginRateLimitService;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenRequest;
@@ -22,6 +25,7 @@ import com.akademi.finsight.auth.otp.service.OtpService;
 import com.akademi.finsight.common.masking.MaskType;
 import com.akademi.finsight.security.jwt.service.JwtService;
 import com.akademi.finsight.user.entity.User;
+import com.akademi.finsight.user.exception.UserNotFoundException;
 import com.akademi.finsight.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,6 +57,7 @@ public class AuthServiceImpl implements AuthService {
     private final OtpService otpService;
     private final NotificationService notificationService;
     private final LoginRateLimitProperties loginRateLimitProperties;
+    private final PasswordResetTokenService passwordResetTokenService;
 
     @Override
     @Transactional
@@ -205,5 +210,26 @@ public class AuthServiceImpl implements AuthService {
 
         otpService.generateOtp(user.getEmail(), user.getFirstName(), LocaleContextHolder.getLocale());
         log.info("OTP resent: event=OTP_RESENT, email={}", MaskType.EMAIL.mask(user.getEmail()));
+    }
+
+    @Override
+    public void forgotPassword(ForgotPasswordRequest request) {
+        try {
+            User user = userService.findByEmail(request.email());
+            passwordResetTokenService.createAndSendResetToken(user);
+            log.info("Password reset requested: event=PASSWORD_RESET_REQUESTED, email={}", MaskType.EMAIL.mask(request.email()));
+        } catch (UserNotFoundException e) {
+            log.info("Password reset requested for unknown email: event=PASSWORD_RESET_UNKNOWN_EMAIL, email={}", MaskType.EMAIL.mask(request.email()));
+        }
+    }
+
+    @Override
+    @Transactional
+    public void resetPassword(ResetPasswordRequest request) {
+        User user = passwordResetTokenService.consumeToken(request.token());
+        userService.updatePassword(user, passwordEncoder.encode(request.newPassword()), true);
+        refreshTokenService.revokeAllByUser(user);
+
+        log.info("Password reset completed: event=PASSWORD_RESET_COMPLETED, email={}", MaskType.EMAIL.mask(user.getEmail()));
     }
 }

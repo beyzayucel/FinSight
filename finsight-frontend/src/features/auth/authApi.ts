@@ -46,6 +46,15 @@ type ChangePasswordRequest = {
   newPassword: string
 }
 
+type ForgotPasswordRequest = {
+  email: string
+}
+
+type ResetPasswordRequest = {
+  token: string
+  newPassword: string
+}
+
 type RefreshTokenResponse = {
   accessToken: string
   refreshToken: string
@@ -67,6 +76,14 @@ export function otpResend(data: OtpResendRequest) {
 
 export function changePassword(data: ChangePasswordRequest) {
   return api.patch<ApiResponse<void>>('/auth/change-password', data)
+}
+
+export function forgotPassword(data: ForgotPasswordRequest) {
+  return api.post<ApiResponse<void>>('/auth/forgot-password', data)
+}
+
+export function resetPassword(data: ResetPasswordRequest) {
+  return api.post<ApiResponse<void>>('/auth/reset-password', data)
 }
 
 export function refreshTokens(refreshToken: string) {

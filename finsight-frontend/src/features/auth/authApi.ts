@@ -50,6 +50,11 @@ type ForgotPasswordRequest = {
   email: string
 }
 
+type ResetPasswordRequest = {
+  token: string
+  newPassword: string
+}
+
 type RefreshTokenResponse = {
   accessToken: string
   refreshToken: string
@@ -75,6 +80,10 @@ export function changePassword(data: ChangePasswordRequest) {
 
 export function forgotPassword(data: ForgotPasswordRequest) {
   return api.post<ApiResponse<void>>('/auth/forgot-password', data)
+}
+
+export function resetPassword(data: ResetPasswordRequest) {
+  return api.post<ApiResponse<void>>('/auth/reset-password', data)
 }
 
 export function refreshTokens(refreshToken: string) {

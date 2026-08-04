@@ -4,6 +4,8 @@ import { useNavigate } from 'react-router-dom'
 import { Button, TextField } from '@/components/ui'
 import type { Translations } from '@/i18n/translations'
 import { ROUTES } from '@/lib/routes'
+import { forgotPassword } from '@/features/auth/authApi'
+import { getApiError } from '@/lib/api/apiError'
 import { MdOutlineEmail } from 'react-icons/md'
 import { IoArrowBack } from 'react-icons/io5'
 
@@ -11,15 +13,31 @@ type ForgotPasswordFormProps = {
   t: Translations
 }
 
-/** Şimdilik frontend için gösterimini sağlıyor.
- * Backende bağlanacak. */
 export default function ForgotPasswordForm({ t }: ForgotPasswordFormProps) {
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [success, setSuccess] = useState(false)
+  const [error, setError] = useState('')
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    console.log({ email })
+    setError('')
+    setLoading(true)
+
+    try {
+      await forgotPassword({ email })
+      setSuccess(true)
+    } catch (err) {
+      const apiErr = getApiError(err)
+      if (apiErr.status === 0) {
+        setError(t.forgotPasswordFallbackError)
+      } else {
+        setError(apiErr.fieldErrors?.[0]?.message ?? apiErr.message)
+      }
+    } finally {
+      setLoading(false)
+    }
   }
 
   return (
@@ -33,9 +51,15 @@ export default function ForgotPasswordForm({ t }: ForgotPasswordFormProps) {
         onChange={(e) => setEmail(e.target.value)}
         placeholder={t.forgotPasswordEmailPlaceholder}
         icon={<MdOutlineEmail />}
+        disabled={success}
       />
 
-      <Button type="submit">{t.continueButton}</Button>
+      {success && <p className="text-sm text-green-600">{t.forgotPasswordSuccess}</p>}
+      {error && <p className="text-sm text-red-500">{error}</p>}
+
+      <Button type="submit" disabled={loading || success}>
+        {loading ? t.continueSending : t.continueButton}
+      </Button>
 
       <button
         type="button"

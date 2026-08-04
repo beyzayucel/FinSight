@@ -1,4 +1,4 @@
-package com.akademi.finsight.integration.infina.dto.response;
+package com.akademi.finsight.integration.infina.dto.response.benchmark;
 
 import java.math.BigDecimal;
 

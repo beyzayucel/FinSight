@@ -1,9 +1,11 @@
 package com.akademi.finsight.integration.infina.service.impl;
 
 import com.akademi.finsight.integration.infina.client.InfinaServicesClient;
-import com.akademi.finsight.integration.infina.client.dto.BenchmarkInfoData;
+import com.akademi.finsight.integration.infina.client.dto.benchmark.BenchmarkInfoData;
 import com.akademi.finsight.integration.infina.client.dto.base.InfinaResponse;
-import com.akademi.finsight.integration.infina.dto.response.BenchmarkInfoResponse;
+import com.akademi.finsight.integration.infina.client.dto.fund.FundInfoData;
+import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
+import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
 import com.akademi.finsight.integration.infina.exception.InfinaErrorType;
 import com.akademi.finsight.integration.infina.exception.InfinaIntegrationException;
 import com.akademi.finsight.integration.infina.mapper.InfinaMapper;
@@ -38,7 +40,7 @@ public class InfinaServiceImpl implements InfinaService {
 			throw new InfinaIntegrationException(InfinaErrorType.INFINA_UNAVAILABLE, e);
 		}
 
-		if (response == null || response.result() == null || response.result().summary() == null){
+		if (response == null || response.result() == null || response.result().summary() == null || response.result().data() == null){
 			log.warn("Infina returned an invalid response. event=INFINA_ERROR_RESPONSE, fundCode={}, response={}",fundCode, response);
 			throw new InfinaIntegrationException(InfinaErrorType.INFINA_ERROR_RESPONSE);
 		}
@@ -52,5 +54,33 @@ public class InfinaServiceImpl implements InfinaService {
 
 		return infinaMapper.toBenchmarkInfoResponseList(
 				response.result().data().benchmarkInfos());
+	}
+
+	@Override
+	public FundInfoResponse getFundInfo(String funCode,
+										String date,
+										String periods){
+		InfinaResponse<FundInfoData> response;
+		try {
+			response = infinaServicesClient.getFundInfo(funCode, date, periods);
+		} catch (RestClientException e){
+			log.error("Infina call failed: event=INFINA_UNAVAILABLE, funCode{}", funCode,e);
+			throw new InfinaIntegrationException(InfinaErrorType.INFINA_UNAVAILABLE, e);
+		}
+
+		if (response == null || response.result() == null || response.result().summary() == null || response.result().data() == null){
+
+			log.warn("Infina returned an invalid response, event=INFINA_RESPONSE, fundCode={}, response={}", funCode, response);
+			throw new InfinaIntegrationException(InfinaErrorType.INFINA_ERROR_RESPONSE);
+		}
+
+		var	summary = response.result().summary();
+		if (summary.resultCode() != INFINA_SUCCES_CODE){
+
+			log.warn("Infina error response: event=INFINA_ERROR_RESPONSE, resultCode={}, resultMessage={}", summary.resultCode(), summary.resultMessage());
+			throw new InfinaIntegrationException(InfinaErrorType.INFINA_ERROR_RESPONSE);
+		}
+
+		return infinaMapper.toFundInfoResponse(response.result().data());
 	}
 }

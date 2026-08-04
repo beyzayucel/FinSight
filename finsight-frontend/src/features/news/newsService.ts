@@ -1,4 +1,5 @@
 import type { Lang } from '@/i18n/translations'
+import api from '@/lib/api/client'
 
 export type NewsItem = {
   id: string
@@ -7,39 +8,30 @@ export type NewsItem = {
   url?: string
 }
 
-
+type NewsApiItem = {
+  title: string
+  url: string
+  hoursAgo: number
+}
 
 export async function fetchHighlights(lang: Lang): Promise<NewsItem[]> {
   try {
-    const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:8080'
-    const response = await fetch(`${baseUrl}/api/v1/news`, {
-      headers: {
-        'Accept-Language': lang,
-      },
-    })
+    const response = await api.get<{ success: boolean; data: NewsApiItem[] }>('/news')
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`)
+    if (!response.data.success || !Array.isArray(response.data.data)) {
+      return []
     }
 
-    const json = await response.json()
-    if (json && json.success && Array.isArray(json.data)) {
-      return json.data.map((item: any, index: number) => {
-        const timeStr = lang === 'tr'
-          ? (item.hoursAgo === 0 ? 'yeni' : `${item.hoursAgo}s önce`)
-          : (item.hoursAgo === 0 ? 'new' : `${item.hoursAgo}h ago`)
-        return {
-          id: item.url || index.toString(),
-          text: item.title,
-          time: timeStr,
-          url: item.url,
-        }
-      })
-    }
-
-    throw new Error('Invalid response structure or success is false')
-  } catch (error) {
-    console.error('Failed to fetch highlights from API:', error)
+    return response.data.data.map((item, index) => ({
+      id: item.url || index.toString(),
+      text: item.title,
+      time:
+        lang === 'tr'
+          ? item.hoursAgo === 0 ? 'yeni' : `${item.hoursAgo}s önce`
+          : item.hoursAgo === 0 ? 'new' : `${item.hoursAgo}h ago`,
+      url: item.url,
+    }))
+  } catch {
     return []
   }
 }

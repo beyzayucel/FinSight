@@ -1,13 +1,9 @@
 package com.akademi.finsight.auth.dto.login;
 
-import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import com.fasterxml.jackson.annotation.JsonTypeName;
-
-@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
 public sealed interface LoginResult {
 
-    @JsonTypeName("AUTHENTICATED")
     record Authenticated(
+            String type,
             String accessToken,
             String refreshToken,
             String tokenType,
@@ -15,12 +11,16 @@ public sealed interface LoginResult {
             boolean firstLogin
     ) implements LoginResult {
         public Authenticated(String accessToken, String refreshToken, long expiresIn, boolean firstLogin) {
-            this(accessToken, refreshToken, "Bearer", expiresIn, firstLogin);
+            this("AUTHENTICATED", accessToken, refreshToken, "Bearer", expiresIn, firstLogin);
         }
     }
 
-    @JsonTypeName("OTP_REQUIRED")
     record OtpRequired(
+            String type,
             String message
-    ) implements LoginResult {}
+    ) implements LoginResult {
+        public OtpRequired(String message) {
+            this("OTP_REQUIRED", message);
+        }
+    }
 }

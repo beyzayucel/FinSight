@@ -118,6 +118,14 @@ export default function ChangePasswordPage() {
             icon={<IoLockClosed />}
           />
 
+          {confirmPassword.length > 0 && newPassword !== confirmPassword && (
+            <p className="text-sm text-red-500">{t.cpMismatch}</p>
+          )}
+
+          {newPassword.length > 0 && currentPassword.length > 0 && newPassword === currentPassword && (
+            <p className="text-sm text-red-500">{t.cpSamePassword}</p>
+          )}
+
           {success && (
             <p className="text-sm text-green-600">{t.cpSuccess}</p>
           )}
@@ -126,7 +134,7 @@ export default function ChangePasswordPage() {
             <p className="text-sm text-red-500">{error}</p>
           )}
 
-          <Button type="submit" disabled={loading || !currentPassword || !newPassword || !confirmPassword || !allChecksPassed || newPassword !== confirmPassword}>
+          <Button type="submit" disabled={loading || !currentPassword || !newPassword || !confirmPassword || !allChecksPassed || newPassword !== confirmPassword || newPassword === currentPassword}>
             {loading ? t.cpChanging : t.cpButton}
           </Button>
         </form>

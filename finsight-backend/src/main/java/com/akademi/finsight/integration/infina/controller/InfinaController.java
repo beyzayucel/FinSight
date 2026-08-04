@@ -19,9 +19,9 @@ public class InfinaController extends BaseController implements InfinaApi {
 
 	@Override
 	public ResponseEntity<ApiStandardResponse<List<BenchmarkInfoResponse>>> benchmarkInfo(
-			@RequestParam("fund_code") String fundCode,
-			@RequestParam("begin_period") String beginPeriod,
-			@RequestParam("end_period") String endPeriod,
+			@RequestParam("fundCode") String fundCode,
+			@RequestParam("beginPeriod") String beginPeriod,
+			@RequestParam("endPeriod") String endPeriod,
 			@RequestParam(value = "currency", required = false) String currency){
 		return ok(infinaService.getBenchmarkInfo(fundCode, beginPeriod, endPeriod, currency));
 	}

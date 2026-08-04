@@ -39,7 +39,6 @@ export default function LoginForm({ t }: LoginFormProps) {
       const response = await login({ identifier: trimmedId, password })
       const result = response.data.data
 
-      // Beni Hatırla: sadece identifier'ı localStorage'a yaz/sil
       if (remember) {
         localStorage.setItem(REMEMBERED_ID_KEY, trimmedId)
       } else {

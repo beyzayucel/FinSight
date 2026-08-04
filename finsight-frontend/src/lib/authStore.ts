@@ -1,6 +1,3 @@
-// Basit auth store — token'ları localStorage'da persist eder
-// İleride Zustand veya Context ile değiştirilebilir
-
 const TOKEN_KEY = 'finsight_access_token'
 const REFRESH_KEY = 'finsight_refresh_token'
 const LANG_KEY = 'finsight_lang'

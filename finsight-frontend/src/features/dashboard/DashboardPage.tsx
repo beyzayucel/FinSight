@@ -1,4 +1,3 @@
-// Guard kaldırıldı — ProtectedRoute zaten token kontrolü yapıyor
 export default function DashboardPage() {
   return (
     <div className="flex min-h-screen items-center justify-center">

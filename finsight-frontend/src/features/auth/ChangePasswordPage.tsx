@@ -31,8 +31,6 @@ export default function ChangePasswordPage() {
   const checks = getPasswordChecks(newPassword)
   const allChecksPassed = Object.values(checks).every(Boolean)
 
-  // Guard kaldırıldı — ProtectedRoute zaten token kontrolü yapıyor
-
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')

@@ -1,6 +1,3 @@
-// API hata response'unu parse eden utility
-// err.response?.data?.error?.message tekrarını ortadan kaldırır
-
 import { AxiosError } from 'axios'
 
 type ApiErrorBody = {

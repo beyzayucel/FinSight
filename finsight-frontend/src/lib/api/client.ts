@@ -14,8 +14,6 @@ const api = axios.create({
   },
 })
 
-// ---- Request Interceptor ----
-// Her istekte token varsa Authorization header'ına ekle
 api.interceptors.request.use((config) => {
   const token = getAccessToken()
   if (token) {
@@ -25,25 +23,18 @@ api.interceptors.request.use((config) => {
   return config
 })
 
-// ---- Response Interceptor ----
-// 401 gelirse refresh token ile yeni access token al, isteği tekrar at
 let isRefreshing = false
 let pendingRequests: Array<(token: string) => void> = []
 
 api.interceptors.response.use(
-  // başarılı response — dokunma, geç
   (response) => response,
-
-  // hata response
   async (error) => {
     const originalRequest = error.config
 
-    // 401 değilse veya refresh isteğinin kendisi başarısız olduysa — dokunma
     if (error.response?.status !== 401 || originalRequest._retry) {
       return Promise.reject(error)
     }
 
-    // login, otp gibi public endpoint'lerde 401 gelirse refresh deneme
     const publicPaths = ['/auth/login', '/auth/otp/verify', '/auth/otp/resend', '/auth/refresh']
     if (publicPaths.some((path) => originalRequest.url?.includes(path))) {
       return Promise.reject(error)
@@ -56,8 +47,8 @@ api.interceptors.response.use(
       return Promise.reject(error)
     }
 
-    // zaten refresh yapılıyorsa — kuyruğa ekle, bekle
     if (isRefreshing) {
+      originalRequest._retry = true
       return new Promise((resolve) => {
         pendingRequests.push((newToken: string) => {
           originalRequest.headers.Authorization = `Bearer ${newToken}`
@@ -66,7 +57,6 @@ api.interceptors.response.use(
       })
     }
 
-    // refresh başlat
     originalRequest._retry = true
     isRefreshing = true
 
@@ -81,15 +71,12 @@ api.interceptors.response.use(
       const newRefreshToken = response.data.data.refreshToken
       setTokens(newAccessToken, newRefreshToken)
 
-      // kuyruktaki istekleri yeni token'la çalıştır
       pendingRequests.forEach((cb) => cb(newAccessToken))
       pendingRequests = []
 
-      // orijinal isteği yeni token'la tekrar at
       originalRequest.headers.Authorization = `Bearer ${newAccessToken}`
       return api(originalRequest)
     } catch (refreshError) {
-      // refresh token da geçersiz — login'e gönder
       clearTokens()
       pendingRequests = []
       window.location.href = ROUTES.LOGIN

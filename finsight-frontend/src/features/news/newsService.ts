@@ -16,7 +16,6 @@ type NewsApiItem = {
 
 export async function fetchHighlights(lang: Lang): Promise<NewsItem[]> {
   try {
-    // Accept-Language interceptor tarafından otomatik eklenir
     const response = await api.get<{ success: boolean; data: NewsApiItem[] }>('/news')
 
     if (!response.data.success || !Array.isArray(response.data.data)) {

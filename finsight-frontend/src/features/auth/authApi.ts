@@ -1,13 +1,9 @@
 import api from '@/lib/api/client'
 
-// ---- Request Tipleri ----
-
 type LoginRequest = {
   identifier: string
   password: string
 }
-
-// ---- Response Tipleri ----
 
 type ApiResponse<T> = {
   success: boolean
@@ -56,8 +52,6 @@ type RefreshTokenResponse = {
   tokenType: string
   expiresIn: number
 }
-
-// ---- API Fonksiyonları ----
 
 export function login(data: LoginRequest) {
   return api.post<ApiResponse<LoginResponse>>('/auth/login', data)

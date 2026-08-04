@@ -1,4 +1,3 @@
-// Backend ApiEndpoints karşılığı — tek yerden yönetim
 export const ROUTES = {
   LOGIN: '/login',
   OTP: '/otp',

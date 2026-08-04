@@ -117,7 +117,6 @@ export const translations = {
 
 export type Translations = (typeof translations)['tr']
 
-// getLang() as Lang tekrarını ortadan kaldırır
 import { getLang } from '@/lib/authStore'
 export function getTranslations(): Translations {
   const lang = getLang()

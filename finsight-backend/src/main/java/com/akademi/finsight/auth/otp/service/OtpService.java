@@ -1,4 +1,4 @@
-package com.akademi.finsight.otp.service;
+package com.akademi.finsight.auth.otp.service;
 
 import java.util.Locale;
 

@@ -1,4 +1,4 @@
-package com.akademi.finsight.otp.exception;
+package com.akademi.finsight.auth.otp.exception;
 
 import com.akademi.finsight.common.exception.BaseErrorType;
 import lombok.Getter;

@@ -3,7 +3,7 @@ package com.akademi.finsight.common.exception;
 
 import com.akademi.finsight.auth.exception.AuthErrorType;
 import com.akademi.finsight.auth.ratelimiter.exception.RateLimitException;
-import com.akademi.finsight.otp.exception.OtpException;
+import com.akademi.finsight.auth.otp.exception.OtpException;
 import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.common.response.ErrorDetail;
 import com.akademi.finsight.common.response.FieldError;

@@ -18,7 +18,7 @@ import com.akademi.finsight.auth.verificationtoken.service.VerificationTokenServ
 import com.akademi.finsight.notification.model.NotificationCommand;
 import com.akademi.finsight.notification.model.NotificationType;
 import com.akademi.finsight.notification.service.NotificationService;
-import com.akademi.finsight.otp.service.OtpService;
+import com.akademi.finsight.auth.otp.service.OtpService;
 import com.akademi.finsight.common.masking.MaskType;
 import com.akademi.finsight.security.jwt.service.JwtService;
 import com.akademi.finsight.user.entity.User;

@@ -2,6 +2,8 @@ package com.akademi.finsight.fund.service;
 
 import com.akademi.finsight.fund.dto.request.FundDistributionRequest;
 import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.UUID;
@@ -12,7 +14,7 @@ public interface FundDistributionService {
 
     FundDistributionResponse getById(UUID id);
 
-    List<FundDistributionResponse> getAll();
+    Page<FundDistributionResponse> getAll(Pageable pageable);
 
     List<FundDistributionResponse> getLatestByFundCode(String fundCode);
 

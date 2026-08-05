@@ -12,6 +12,8 @@ import com.akademi.finsight.fund.repository.FundRepository;
 import com.akademi.finsight.fund.service.FundDistributionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -49,8 +51,8 @@ public class FundDistributionServiceImpl implements FundDistributionService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FundDistributionResponse> getAll() {
-        return fundDistributionMapper.toResponseList(fundDistributionRepository.findAll());
+    public Page<FundDistributionResponse> getAll(Pageable pageable) {
+        return fundDistributionRepository.findAll(pageable).map(fundDistributionMapper::toResponse);
     }
 
     @Override

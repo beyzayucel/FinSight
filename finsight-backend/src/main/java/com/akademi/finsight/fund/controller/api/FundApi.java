@@ -2,12 +2,15 @@ package com.akademi.finsight.fund.controller.api;
 
 import com.akademi.finsight.common.constants.ApiEndpoints;
 import com.akademi.finsight.common.response.ApiStandardResponse;
+import com.akademi.finsight.common.response.PageResponse;
 import com.akademi.finsight.fund.dto.request.FundRequest;
 import com.akademi.finsight.fund.dto.response.FundResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -17,7 +20,6 @@ import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.util.List;
 import java.util.UUID;
 
 @RequestMapping(ApiEndpoints.Funds.BASE)
@@ -41,10 +43,10 @@ public interface FundApi {
     ResponseEntity<ApiStandardResponse<FundResponse>> getById(@PathVariable UUID id);
 
     @Operation(summary = "List funds",
-            description = "Returns all funds.")
+            description = "Returns a paginated list of funds.")
     @ApiResponse(responseCode = "200", description = "Funds retrieved successfully")
     @GetMapping
-    ResponseEntity<ApiStandardResponse<List<FundResponse>>> getAll();
+    ResponseEntity<ApiStandardResponse<PageResponse<FundResponse>>> getAll(@ParameterObject Pageable pageable);
 
     @Operation(summary = "Update fund",
             description = "Updates an existing fund.")

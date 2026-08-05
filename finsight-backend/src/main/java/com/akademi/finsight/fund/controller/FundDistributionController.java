@@ -2,11 +2,13 @@ package com.akademi.finsight.fund.controller;
 
 import com.akademi.finsight.common.controller.BaseController;
 import com.akademi.finsight.common.response.ApiStandardResponse;
+import com.akademi.finsight.common.response.PageResponse;
 import com.akademi.finsight.fund.controller.api.FundDistributionApi;
 import com.akademi.finsight.fund.dto.request.FundDistributionRequest;
 import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
 import com.akademi.finsight.fund.service.FundDistributionService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -31,8 +33,8 @@ public class FundDistributionController extends BaseController implements FundDi
     }
 
     @Override
-    public ResponseEntity<ApiStandardResponse<List<FundDistributionResponse>>> getAll() {
-        return ok(fundDistributionService.getAll());
+    public ResponseEntity<ApiStandardResponse<PageResponse<FundDistributionResponse>>> getAll(Pageable pageable) {
+        return ok(PageResponse.of(fundDistributionService.getAll(pageable)));
     }
 
     @Override

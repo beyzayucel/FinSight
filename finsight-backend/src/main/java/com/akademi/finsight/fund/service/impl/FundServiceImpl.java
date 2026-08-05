@@ -10,10 +10,11 @@ import com.akademi.finsight.fund.repository.FundRepository;
 import com.akademi.finsight.fund.service.FundService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -45,8 +46,8 @@ public class FundServiceImpl implements FundService {
 
     @Override
     @Transactional(readOnly = true)
-    public List<FundResponse> getAll() {
-        return fundMapper.toResponseList(fundRepository.findAll());
+    public Page<FundResponse> getAll(Pageable pageable) {
+        return fundRepository.findAll(pageable).map(fundMapper::toResponse);
     }
 
     @Override

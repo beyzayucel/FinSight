@@ -7,8 +7,6 @@ import com.akademi.finsight.fund.entity.Fund;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 
-import java.util.List;
-
 @Mapper(config = BaseMapperConfig.class)
 public interface FundMapper {
 
@@ -17,6 +15,4 @@ public interface FundMapper {
     void updateEntity(@MappingTarget Fund entity, FundRequest request);
 
     FundResponse toResponse(Fund entity);
-
-    List<FundResponse> toResponseList(List<Fund> entities);
 }

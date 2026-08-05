@@ -4,8 +4,8 @@ import ai.onnxruntime.NodeInfo;
 import ai.onnxruntime.OrtEnvironment;
 import ai.onnxruntime.OrtException;
 import ai.onnxruntime.OrtSession;
-import com.akademi.finsight.stresstest.exception.StresTestErrorType;
-import com.akademi.finsight.stresstest.exception.StresTestException;
+import com.akademi.finsight.stresstest.exception.StressTestErrorType;
+import com.akademi.finsight.stresstest.exception.StressTestException;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
@@ -57,7 +57,7 @@ public class OnnxModelRegistry {
             return options;
 
         }catch (OrtException e){
-            throw new StresTestException(StresTestErrorType.MODEL_INITIALIZATION_ERROR, e);
+            throw new StressTestException(StressTestErrorType.MODEL_INITIALIZATION_ERROR, e);
         }
     }
 
@@ -78,7 +78,7 @@ public class OnnxModelRegistry {
         // Bu durum kabul edilebilir değil bu kısımı kurgula
         if (resourcePath == null){
             log.error("CRITICAL: Invalid model key specified. Key [{}] is not defined in MODEL_PATHS mapping.", key);
-            throw new StresTestException(StresTestErrorType.INVALID_MODEL_KEY);
+            throw new StressTestException(StressTestErrorType.INVALID_MODEL_KEY);
         }
         loadModelFromResource(key, resourcePath);
     }
@@ -88,7 +88,7 @@ public class OnnxModelRegistry {
 
             if (is == null) {
                 log.error("CRITICAL: Model resource file is missing at path: {}", resourcePath);
-                throw new StresTestException(StresTestErrorType.MODEL_NOT_FOUND);
+                throw new StressTestException(StressTestErrorType.MODEL_NOT_FOUND);
             }
 
             byte[] modelBytes = is.readAllBytes();
@@ -113,7 +113,7 @@ public class OnnxModelRegistry {
 
         if (!MODEL_PATHS.containsKey(key)) {
             log.error("CRITICAL: Cannot reload unknown model key: {}", key);
-            throw new StresTestException(StresTestErrorType.INVALID_MODEL_KEY);
+            throw new StressTestException(StressTestErrorType.INVALID_MODEL_KEY);
         }
 
         OrtSession old = sessions.remove(key);
@@ -130,7 +130,7 @@ public class OnnxModelRegistry {
     public OrtSession getSession(String key) {
         OrtSession session = sessions.get(key);
         if (session == null) {
-            throw new StresTestException(StresTestErrorType.MODEL_NOT_AVAILABLE);
+            throw new StressTestException(StressTestErrorType.MODEL_NOT_AVAILABLE);
         }
         return session;
     }

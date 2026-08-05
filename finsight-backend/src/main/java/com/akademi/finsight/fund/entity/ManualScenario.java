@@ -1,6 +1,6 @@
 package com.akademi.finsight.fund.entity;
 
-import com.akademi.finsight.common.entity.BaseEntity;
+import com.akademi.finsight.common.entity.SoftDeletableEntity;
 import com.akademi.finsight.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -16,7 +16,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class ManualScenario extends BaseEntity {
+public class ManualScenario extends SoftDeletableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

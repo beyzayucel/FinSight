@@ -1,6 +1,6 @@
 package com.akademi.finsight.fund.entity;
 
-import com.akademi.finsight.common.entity.BaseEntity;
+import com.akademi.finsight.common.entity.SoftDeletableEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -17,7 +17,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class ManualScenarioWeight extends BaseEntity {
+public class ManualScenarioWeight extends SoftDeletableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "scenario_id", nullable = false)

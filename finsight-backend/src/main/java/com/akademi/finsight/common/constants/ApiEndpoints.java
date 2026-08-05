@@ -37,6 +37,7 @@ public final class ApiEndpoints {
     public static final class Funds {
         public static final String BASE = API_V1 + "/funds";
         public static final String BY_ID = "/{id}";
+        public static final String MANUAL_SCENARIO = "/scenarios/apply";
     }
 
     @NoArgsConstructor(access = AccessLevel.PRIVATE)

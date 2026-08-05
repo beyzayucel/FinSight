@@ -1,19 +1,15 @@
 import { useState, useEffect } from 'react'
 import DashboardLayout from './components/DashboardLayout'
-import AIRecommendationTab from './components/AIRecommendationTab'
 import ManualScenarioTab from './components/ManualScenarioTab'
-import { getActiveFund, getPendingRecommendation } from './dashboardApi'
-import type { Fund, AIRecommendation } from './dashboardApi'
+import { getActiveFund } from './dashboardApi'
+import type { Fund } from './dashboardApi'
 
 type MenuIndex = 1 | 2 | 3 | 4 | 5
-type ActiveTab = 'ai' | 'manual'
 
 export default function DashboardPage() {
   const [activeMenu, setActiveMenu] = useState<MenuIndex>(2) // Defaults to screen 2: AI Önerisi & Karar
-  const [activeTab, setActiveTab] = useState<ActiveTab>('manual') // Screen shows manual scenario selected by default
 
   const [fund, setFund] = useState<Fund | null>(null)
-  const [recommendation, setRecommendation] = useState<AIRecommendation | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -26,9 +22,6 @@ export default function DashboardPage() {
       
       const activeFund = await getActiveFund()
       setFund(activeFund)
-
-      const rec = await getPendingRecommendation(activeFund.id)
-      setRecommendation(rec)
     } catch (err: any) {
       setError(err?.message || 'Veriler yüklenirken bir hata oluştu.')
     } finally {
@@ -92,7 +85,7 @@ export default function DashboardPage() {
       )
     }
 
-    if (error || !fund || !recommendation) {
+    if (error || !fund) {
       return (
         <div className="bg-rose-50 border border-rose-100 rounded-2xl p-6 text-center max-w-xl mx-auto mt-12 space-y-4">
           <h3 className="text-lg font-bold text-rose-800">Sistem Bağlantı Hatası</h3>
@@ -126,7 +119,7 @@ export default function DashboardPage() {
       case 5:
         return renderPlaceholder(
           'Karar Geçmişi',
-          'Yapay zeka önerileri ve uygulanan manuel simülasyon senaryolarının geçmiş kaydı.'
+          'Uygulanan manuel simülasyon senaryolarının geçmiş kaydı.'
         )
       case 2:
       default:
@@ -136,58 +129,16 @@ export default function DashboardPage() {
             <div className="flex items-start justify-between">
               <div>
                 <h2 className="text-xl font-bold text-slate-800 select-none tracking-tight">
-                  AI Önerisi & Karar
+                  Manuel Senaryo Simülasyonu
                 </h2>
               </div>
-
-              {/* Karar Durum Etiketi */}
-              <div className="flex flex-col items-end select-none text-right">
-                <span
-                  className="mt-0.5 px-3 py-1 rounded-md text-[9px] font-extrabold tracking-widest bg-slate-100/60 border border-slate-200 text-slate-500 uppercase"
-                >
-                  {recommendation.status === 'PENDING' && 'KARAR VERİLMEDİ'}
-                  {recommendation.status === 'ACCEPTED' && 'KARAR UYGULANDI'}
-                  {recommendation.status === 'REJECTED' && 'REDDEDİLDİ'}
-                </span>
-              </div>
-            </div>
-
-            {/* TAB SWITCHER */}
-            <div className="flex items-center space-x-1.5 p-1 bg-slate-100 border border-slate-200/50 rounded-xl w-fit select-none">
-              <button
-                onClick={() => setActiveTab('ai')}
-                className={`px-4.5 py-1.5 rounded-lg font-bold text-xs tracking-wider uppercase transition-all duration-200 cursor-pointer ${
-                  activeTab === 'ai'
-                    ? 'bg-white text-slate-800 shadow-md'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                AI Önerisi
-              </button>
-              <button
-                onClick={() => setActiveTab('manual')}
-                className={`px-4.5 py-1.5 rounded-lg font-bold text-xs tracking-wider uppercase transition-all duration-200 cursor-pointer ${
-                  activeTab === 'manual'
-                    ? 'bg-white text-slate-800 shadow-md'
-                    : 'text-slate-500 hover:text-slate-700'
-                }`}
-              >
-                Manuel Senaryo
-              </button>
             </div>
 
             {/* TAB CONTENT */}
-            {activeTab === 'ai' ? (
-              <AIRecommendationTab
-                recommendation={recommendation}
-                onDecisionSubmitted={handleDecisionSubmitted}
-              />
-            ) : (
-              <ManualScenarioTab
-                fund={fund}
-                onScenarioApplied={handleScenarioApplied}
-              />
-            )}
+            <ManualScenarioTab
+              fund={fund}
+              onScenarioApplied={handleScenarioApplied}
+            />
           </div>
         )
     }
@@ -198,10 +149,6 @@ export default function DashboardPage() {
       activeMenuIndex={activeMenu}
       onMenuChange={(idx) => {
         setActiveMenu(idx)
-        // Reset default active tab when switching to screen 2
-        if (idx === 2) {
-          setActiveTab('manual')
-        }
       }}
       fundDate={fund?.date}
       fundName={fund?.name}

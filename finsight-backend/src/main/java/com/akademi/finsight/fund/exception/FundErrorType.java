@@ -11,7 +11,13 @@ public enum FundErrorType implements BaseErrorType {
 
     FUND_NOT_FOUND("error.fund.not.found", HttpStatus.NOT_FOUND),
     FUND_CODE_ALREADY_EXISTS("error.fund.code.already.exists", HttpStatus.CONFLICT),
-    FUND_DISTRIBUTION_NOT_FOUND("error.fund.distribution.not.found", HttpStatus.NOT_FOUND);
+    FUND_DISTRIBUTION_NOT_FOUND("error.fund.distribution.not.found", HttpStatus.NOT_FOUND),
+
+    INVALID_SCENARIO_TOTAL("fund.scenario.invalid.total", HttpStatus.BAD_REQUEST),
+    INVALID_SCENARIO_DEVIATION("fund.scenario.invalid.deviation", HttpStatus.BAD_REQUEST),
+    INVALID_SCENARIO_STOCK_FLOOR("fund.scenario.invalid.stock.floor", HttpStatus.BAD_REQUEST),
+
+    INVALID_INPUT("fund.invalid.input", HttpStatus.BAD_REQUEST);
 
     private final String messageKey;
     private final HttpStatus httpStatus;

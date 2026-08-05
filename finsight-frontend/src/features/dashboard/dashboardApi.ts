@@ -39,7 +39,7 @@ export type AIRecommendation = {
 }
 
 // Mock database in localStorage
-const MOCK_FUND_ID = 'e2c4d8b9-509f-4318-97f2-1fb8e2bd5b2d'
+const MOCK_FUND_ID = '3678be54-536f-492f-962e-37ab1ef4d1b6'
 const MOCK_REC_ID = 'f1a2b3c4-d5e6-4f7g-8h9i-0j1k2l3m4n5o'
 
 const DEFAULT_FUND: Fund = {

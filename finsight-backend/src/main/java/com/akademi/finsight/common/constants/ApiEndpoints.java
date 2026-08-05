@@ -26,6 +26,9 @@ public final class ApiEndpoints {
     public static final class Users {
         public static final String BASE = API_V1 + "/users";
         public static final String ME = "/me";
+        public static final String BY_ID = "/{id}";
+        public static final String STATUS = "/{id}/status";
+        public static final String STATS = "/stats";
     }
 
     @NoArgsConstructor(access = AccessLevel.PRIVATE)

@@ -1,4 +1,4 @@
-package com.akademi.finsight.user.dto;
+package com.akademi.finsight.user.dto.request;
 
 
 import com.akademi.finsight.user.validation.InternationalPhone;

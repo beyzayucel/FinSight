@@ -1,6 +1,6 @@
 package com.akademi.finsight.fund.entity;
 
-import com.akademi.finsight.common.entity.BaseEntity;
+import com.akademi.finsight.common.entity.SoftDeletableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
@@ -9,6 +9,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
 
 import java.time.LocalDate;
 @Getter
@@ -19,7 +20,8 @@ import java.time.LocalDate;
 @Table(name = "funds", uniqueConstraints = {
 		@UniqueConstraint(name = "uk_funds_code", columnNames = "code")
 })
-public class Fund extends BaseEntity {
+@SQLDelete(sql = "UPDATE funds SET deleted = 1, deleted_at = SYSDATETIMEOFFSET() WHERE id = ?")
+public class Fund extends SoftDeletableEntity {
 
 	@Column(nullable = false, length = 3)
 	private String code;

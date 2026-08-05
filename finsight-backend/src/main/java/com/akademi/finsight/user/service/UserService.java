@@ -22,9 +22,9 @@ public interface UserService {
 
     UserResponse updateUser(UUID id, UpdateUserRequest request);
 
-    void changeUserStatus(UUID id, boolean enabled);
+    void changeUserStatus(UUID id, boolean enabled, String currentUserEmail);
 
-    void deleteUser(UUID id);
+    void deleteUser(UUID id, String currentUserEmail);
 
     User findByEmail(String email);
 

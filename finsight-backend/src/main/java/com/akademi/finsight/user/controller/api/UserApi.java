@@ -93,7 +93,8 @@ public interface UserApi {
     @ApiResponse(responseCode = "404", description = "User not found")
     @PatchMapping(ApiEndpoints.Users.STATUS)
     ResponseEntity<ApiStandardResponse<Void>> changeUserStatus(@PathVariable UUID id,
-                                                                @RequestParam boolean enabled);
+                                                                @RequestParam boolean enabled,
+                                                                @AuthenticationPrincipal String email);
 
     @Operation(
             summary = "Delete user (Admin only)",
@@ -103,7 +104,8 @@ public interface UserApi {
     @ApiResponse(responseCode = "403", description = "Access denied — requires ADMIN role")
     @ApiResponse(responseCode = "404", description = "User not found")
     @DeleteMapping(ApiEndpoints.Users.BY_ID)
-    ResponseEntity<ApiStandardResponse<Void>> deleteUser(@PathVariable UUID id);
+    ResponseEntity<ApiStandardResponse<Void>> deleteUser(@PathVariable UUID id,
+                                                          @AuthenticationPrincipal String email);
 
 
     @Operation(

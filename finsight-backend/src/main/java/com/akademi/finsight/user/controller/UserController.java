@@ -62,15 +62,17 @@ public class UserController extends BaseController implements UserApi {
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiStandardResponse<Void>> changeUserStatus(@PathVariable UUID id,
-                                                                       @RequestParam boolean enabled) {
-        userService.changeUserStatus(id, enabled);
+                                                                       @RequestParam boolean enabled,
+                                                                       @AuthenticationPrincipal String email) {
+        userService.changeUserStatus(id, enabled, email);
         return ok();
     }
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiStandardResponse<Void>> deleteUser(@PathVariable UUID id) {
-        userService.deleteUser(id);
+    public ResponseEntity<ApiStandardResponse<Void>> deleteUser(@PathVariable UUID id,
+                                                                 @AuthenticationPrincipal String email) {
+        userService.deleteUser(id, email);
         return ok();
     }
 

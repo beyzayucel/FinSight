@@ -8,9 +8,12 @@ import com.akademi.finsight.user.dto.request.UpdateUserRequest;
 import com.akademi.finsight.user.dto.response.UserResponse;
 import com.akademi.finsight.user.dto.response.UserStatsResponse;
 import com.akademi.finsight.user.entity.User;
+import com.akademi.finsight.user.entity.Role;
+import com.akademi.finsight.user.exception.AdminProtectedException;
 import com.akademi.finsight.user.exception.EmailAlreadyExistsException;
 import com.akademi.finsight.user.exception.EmailAlreadyVerifiedException;
 import com.akademi.finsight.user.exception.PhoneAlreadyExistsException;
+import com.akademi.finsight.user.exception.SelfActionNotAllowedException;
 import com.akademi.finsight.user.exception.UserNotFoundException;
 import com.akademi.finsight.user.exception.UserStatusUnchangedException;
 import com.akademi.finsight.user.mapper.UserMapper;
@@ -126,8 +129,9 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void changeUserStatus(UUID id, boolean enabled) {
+    public void changeUserStatus(UUID id, boolean enabled, String currentUserEmail) {
         User user = findByIdOrThrow(id);
+        validateAdminAction(user, currentUserEmail);
         if (user.isEnabled() == enabled) {
             throw new UserStatusUnchangedException();
         }
@@ -138,11 +142,23 @@ public class UserServiceImpl implements UserService {
 
     @Override
     @Transactional
-    public void deleteUser(UUID id) {
+    public void deleteUser(UUID id, String currentUserEmail) {
         User user = findByIdOrThrow(id);
+        validateAdminAction(user, currentUserEmail);
         refreshTokenService.revokeAllByUser(user);
         userRepository.delete(user);
         log.info("User deleted by admin: event=USER_DELETED, email={}", MaskType.EMAIL.mask(user.getEmail()));
+    }
+
+    private void validateAdminAction(User targetUser, String currentUserEmail) {
+        User currentUser = userRepository.findByEmail(EmailNormalizer.normalize(currentUserEmail))
+                .orElseThrow(UserNotFoundException::new);
+        if (targetUser.getId().equals(currentUser.getId())) {
+            throw new SelfActionNotAllowedException();
+        }
+        if (targetUser.getRole() == Role.ADMIN) {
+            throw new AdminProtectedException();
+        }
     }
 
 

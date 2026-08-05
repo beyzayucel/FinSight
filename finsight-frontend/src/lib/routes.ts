@@ -6,4 +6,5 @@ export const ROUTES = {
   CHANGE_PASSWORD: '/change-password',
   VERIFY_EMAIL: '/verify-email',
   DASHBOARD: '/dashboard',
+  ADMIN_DASHBOARD: '/admin',
 } as const

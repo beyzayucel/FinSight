@@ -1,12 +1,11 @@
-package com.akademi.finsight.user.dto;
-
+package com.akademi.finsight.user.dto.request;
 
 import com.akademi.finsight.user.validation.InternationalPhone;
 import com.akademi.finsight.user.validation.PersonName;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 
-public record UpdateProfileRequest(
+public record UpdateUserRequest(
 
         @Schema(description = "First name", example = "John")
         @NotBlank(message = "{validation.firstname.required}")

@@ -110,6 +110,7 @@ app:
 
   verification:
     url: ${VERIFICATION_BASE_URL}
+    expire-days: ${VERIFICATION_EXPIRE_DAYS}
 
   password-reset:
     url: ${PASSWORD_RESET_BASE_URL}

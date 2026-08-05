@@ -1,4 +1,4 @@
-package com.akademi.finsight.user.dto;
+package com.akademi.finsight.user.dto.response;
 
 import java.time.Instant;
 import java.util.UUID;

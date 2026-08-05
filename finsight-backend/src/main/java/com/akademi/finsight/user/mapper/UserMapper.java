@@ -2,8 +2,8 @@ package com.akademi.finsight.user.mapper;
 
 
 import com.akademi.finsight.common.mapper.BaseMapperConfig;
-import com.akademi.finsight.user.dto.CreateUserRequest;
-import com.akademi.finsight.user.dto.UserResponse;
+import com.akademi.finsight.user.dto.request.CreateUserRequest;
+import com.akademi.finsight.user.dto.response.UserResponse;
 import com.akademi.finsight.user.entity.User;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;

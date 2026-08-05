@@ -25,7 +25,7 @@ import com.akademi.finsight.auth.otp.service.OtpService;
 import com.akademi.finsight.common.masking.MaskType;
 import com.akademi.finsight.security.jwt.service.JwtService;
 import com.akademi.finsight.user.entity.User;
-import com.akademi.finsight.user.exception.UserNotFoundException;
+import com.akademi.finsight.user.exception.UserException;
 import com.akademi.finsight.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -216,9 +216,13 @@ public class AuthServiceImpl implements AuthService {
     public void forgotPassword(ForgotPasswordRequest request) {
         try {
             User user = userService.findByEmail(request.email());
+            if (!user.isEmailVerified()) {
+                log.warn("Password reset rejected, email not verified: event=EMAIL_NOT_VERIFIED, email={}", MaskType.EMAIL.mask(request.email()));
+                return;
+            }
             passwordResetTokenService.createAndSendResetToken(user);
             log.info("Password reset requested: event=PASSWORD_RESET_REQUESTED, email={}", MaskType.EMAIL.mask(request.email()));
-        } catch (UserNotFoundException e) {
+        } catch (UserException e) {
             log.info("Password reset requested for unknown email: event=PASSWORD_RESET_UNKNOWN_EMAIL, email={}", MaskType.EMAIL.mask(request.email()));
         }
     }

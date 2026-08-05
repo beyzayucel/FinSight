@@ -33,6 +33,19 @@ public final class ApiEndpoints {
         public static final String BASE = API_V1 + "/news";
     }
 
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static final class Funds {
+        public static final String BASE = API_V1 + "/funds";
+        public static final String BY_ID = "/{id}";
+    }
+
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static final class FundDistributions {
+        public static final String BASE = API_V1 + "/fund-distributions";
+        public static final String BY_ID = "/{id}";
+        public static final String LATEST_BY_FUND = "/funds/{fundCode}/latest";
+    }
+
     private static final String[] PUBLIC_ENDPOINTS = {
             Auth.BASE + Auth.LOGIN,
             Auth.BASE + Auth.REFRESH,

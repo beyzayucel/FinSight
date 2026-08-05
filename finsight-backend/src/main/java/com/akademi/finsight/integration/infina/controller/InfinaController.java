@@ -3,7 +3,8 @@ package com.akademi.finsight.integration.infina.controller;
 import com.akademi.finsight.common.controller.BaseController;
 import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.integration.infina.controller.api.InfinaApi;
-import com.akademi.finsight.integration.infina.dto.response.BenchmarkInfoResponse;
+import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
+import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
 import com.akademi.finsight.integration.infina.service.InfinaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -19,10 +20,18 @@ public class InfinaController extends BaseController implements InfinaApi {
 
 	@Override
 	public ResponseEntity<ApiStandardResponse<List<BenchmarkInfoResponse>>> benchmarkInfo(
-			@RequestParam("fund_code") String fundCode,
-			@RequestParam("begin_period") String beginPeriod,
-			@RequestParam("end_period") String endPeriod,
+			@RequestParam("fundCode") String fundCode,
+			@RequestParam("beginPeriod") String beginPeriod,
+			@RequestParam("endPeriod") String endPeriod,
 			@RequestParam(value = "currency", required = false) String currency){
 		return ok(infinaService.getBenchmarkInfo(fundCode, beginPeriod, endPeriod, currency));
+	}
+
+	@Override
+	public ResponseEntity<ApiStandardResponse<FundInfoResponse>> fundInfo(
+			@RequestParam("fundCode") String fundCode,
+			@RequestParam(value = "date", required = false) String date,
+			@RequestParam(value = "periods", required = false) String periods){
+		return ok(infinaService.getFundInfo(fundCode, date, periods));
 	}
 }

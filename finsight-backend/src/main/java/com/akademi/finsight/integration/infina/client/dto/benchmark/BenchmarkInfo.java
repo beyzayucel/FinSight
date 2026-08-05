@@ -1,6 +1,5 @@
-package com.akademi.finsight.integration.infina.client.dto;
+package com.akademi.finsight.integration.infina.client.dto.benchmark;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.annotation.JsonNaming;
 
@@ -8,7 +7,6 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @JsonNaming(PropertyNamingStrategies.SnakeCaseStrategy.class)
-@JsonIgnoreProperties(ignoreUnknown = true)
 public record BenchmarkInfo(
 		LocalDate bmDefinitionDate,
 		String bmDefinition,

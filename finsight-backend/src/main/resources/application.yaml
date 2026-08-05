@@ -147,5 +147,7 @@ admin:
 
 infina:
   api:
-    base-url: ${INFINA_API_URL:}
-    key: ${INFINA_API_KEY:}
+    base-url: ${INFINA_API_URL}
+    key: ${INFINA_API_KEY}
+    connect-timeout: ${INFINA_API_CONNECT_TIMEOUT:3s}
+    read-timeout: ${INFINA_API_READ_TIMEOUT:10s}

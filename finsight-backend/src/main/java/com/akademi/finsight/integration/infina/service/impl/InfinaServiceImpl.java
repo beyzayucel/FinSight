@@ -1,19 +1,30 @@
 package com.akademi.finsight.integration.infina.service.impl;
 
 import com.akademi.finsight.integration.infina.client.InfinaServicesClient;
-import com.akademi.finsight.integration.infina.client.dto.BenchmarkInfoData;
+import com.akademi.finsight.integration.infina.client.dto.benchmark.BenchmarkInfoData;
 import com.akademi.finsight.integration.infina.client.dto.base.InfinaResponse;
-import com.akademi.finsight.integration.infina.dto.response.BenchmarkInfoResponse;
+import com.akademi.finsight.integration.infina.client.dto.fund.FundInfoData;
+import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
+import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
+import com.akademi.finsight.integration.infina.exception.InfinaErrorType;
+import com.akademi.finsight.integration.infina.exception.InfinaIntegrationException;
 import com.akademi.finsight.integration.infina.mapper.InfinaMapper;
 import com.akademi.finsight.integration.infina.service.InfinaService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.client.RestClientException;
+import org.springframework.web.client.RestClientResponseException;
 
 import java.util.List;
+import java.util.function.Supplier;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class InfinaServiceImpl implements InfinaService {
+
+	private static final int INFINA_SUCCESS_CODE = 200;
 	private final InfinaServicesClient infinaServicesClient;
 	private final InfinaMapper infinaMapper;
 
@@ -22,7 +33,52 @@ public class InfinaServiceImpl implements InfinaService {
 														String beginPeriod,
 														String endPeriod,
 														String currency){
-		InfinaResponse<BenchmarkInfoData> response = infinaServicesClient.getBenchmarkInfo(fundCode, beginPeriod, endPeriod, currency);
-		return infinaMapper.toBenchmarkInfoResponseList(response.result().data().benchmarkInfos());
+
+		BenchmarkInfoData data = callInfina(
+				() -> infinaServicesClient.getBenchmarkInfo(fundCode, beginPeriod, endPeriod, currency),
+				fundCode);
+
+		return infinaMapper.toBenchmarkInfoResponseList(data.benchmarkInfos());
+	}
+
+	@Override
+	public FundInfoResponse getFundInfo(String fundCode,
+										String date,
+										String periods){
+		FundInfoData data = callInfina(
+				() -> infinaServicesClient.getFundInfo(fundCode, date, periods),
+				fundCode);
+
+		return infinaMapper.toFundInfoResponse(data);
+	}
+
+	private <T> T callInfina(Supplier<InfinaResponse<T>> call, String fundCode) {
+		InfinaResponse<T> response;
+		try {
+			response = call.get();
+		} catch (RestClientResponseException e) {
+			log.warn("Infina returned an error status: event=INFINA_ERROR_RESPONSE, fundCode={}, status={}",
+					fundCode, e.getStatusCode(), e);
+			throw new InfinaIntegrationException(InfinaErrorType.INFINA_ERROR_RESPONSE, e);
+		} catch (RestClientException e) {
+			log.error("Infina call failed: event=INFINA_UNAVAILABLE, fundCode={}", fundCode, e);
+			throw new InfinaIntegrationException(InfinaErrorType.INFINA_UNAVAILABLE, e);
+		}
+
+		if (response == null || response.result() == null
+				|| response.result().summary() == null || response.result().data() == null) {
+			log.warn("Infina returned an invalid response: event=INFINA_ERROR_RESPONSE, fundCode={}, response={}",
+					fundCode, response);
+			throw new InfinaIntegrationException(InfinaErrorType.INFINA_ERROR_RESPONSE);
+		}
+
+		InfinaResponse.Summary summary = response.result().summary();
+		if (summary.resultCode() != INFINA_SUCCESS_CODE) {
+			log.warn("Infina error response: event=INFINA_ERROR_RESPONSE, fundCode={}, resultCode={}, resultMessage={}",
+					fundCode, summary.resultCode(), summary.resultMessage());
+			throw new InfinaIntegrationException(InfinaErrorType.INFINA_ERROR_RESPONSE);
+		}
+
+		return response.result().data();
 	}
 }

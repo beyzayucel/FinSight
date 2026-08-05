@@ -31,7 +31,7 @@ public class InfinaController extends BaseController implements InfinaApi {
 	public ResponseEntity<ApiStandardResponse<FundInfoResponse>> fundInfo(
 			@RequestParam("fundCode") String fundCode,
 			@RequestParam(value = "date", required = false) String date,
-			@RequestParam(value = "period", required = false) String period){
-		return ok(infinaService.getFundInfo(fundCode, date, period));
+			@RequestParam(value = "periods", required = false) String periods){
+		return ok(infinaService.getFundInfo(fundCode, date, periods));
 	}
 }

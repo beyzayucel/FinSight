@@ -22,7 +22,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class InfinaServiceImpl implements InfinaService {
 
-	private static final int INFINA_SUCCES_CODE = 200;
+	private static final int INFINA_SUCCESS_CODE = 200;
 	private final InfinaServicesClient infinaServicesClient;
 	private final InfinaMapper infinaMapper;
 
@@ -46,7 +46,7 @@ public class InfinaServiceImpl implements InfinaService {
 		}
 
 		var	summary = response.result().summary();
-		if (summary.resultCode() != INFINA_SUCCES_CODE){
+		if (summary.resultCode() != INFINA_SUCCESS_CODE){
 			log.warn("Infina error response: event=INFINA_ERROR_RESPONSE, resultCode={}, resultMessage={}",
 					summary.resultCode(), summary.resultMessage());
 			throw new InfinaIntegrationException(InfinaErrorType.INFINA_ERROR_RESPONSE);
@@ -57,25 +57,25 @@ public class InfinaServiceImpl implements InfinaService {
 	}
 
 	@Override
-	public FundInfoResponse getFundInfo(String funCode,
+	public FundInfoResponse getFundInfo(String fundCode,
 										String date,
 										String periods){
 		InfinaResponse<FundInfoData> response;
 		try {
-			response = infinaServicesClient.getFundInfo(funCode, date, periods);
+			response = infinaServicesClient.getFundInfo(fundCode, date, periods);
 		} catch (RestClientException e){
-			log.error("Infina call failed: event=INFINA_UNAVAILABLE, funCode{}", funCode,e);
+			log.error("Infina call failed: event=INFINA_UNAVAILABLE, fundCode={}", fundCode, e);
 			throw new InfinaIntegrationException(InfinaErrorType.INFINA_UNAVAILABLE, e);
 		}
 
 		if (response == null || response.result() == null || response.result().summary() == null || response.result().data() == null){
 
-			log.warn("Infina returned an invalid response, event=INFINA_RESPONSE, fundCode={}, response={}", funCode, response);
+			log.warn("Infina returned an invalid response, event=INFINA_ERROR_RESPONSE, fundCode={}, response={}", fundCode, response);
 			throw new InfinaIntegrationException(InfinaErrorType.INFINA_ERROR_RESPONSE);
 		}
 
 		var	summary = response.result().summary();
-		if (summary.resultCode() != INFINA_SUCCES_CODE){
+		if (summary.resultCode() != INFINA_SUCCESS_CODE){
 
 			log.warn("Infina error response: event=INFINA_ERROR_RESPONSE, resultCode={}, resultMessage={}", summary.resultCode(), summary.resultMessage());
 			throw new InfinaIntegrationException(InfinaErrorType.INFINA_ERROR_RESPONSE);

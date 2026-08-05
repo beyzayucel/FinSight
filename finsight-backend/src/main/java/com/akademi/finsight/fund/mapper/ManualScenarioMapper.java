@@ -21,6 +21,8 @@ public interface ManualScenarioMapper {
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "weights", ignore = true)
+    @Mapping(target = "deleted", ignore = true)
+    @Mapping(target = "deletedAt", ignore = true)
     @Mapping(target = "user", source = "user")
     @Mapping(target = "fund", source = "fund")
     ManualScenario toEntity(ManualScenarioRequest request, User user, Fund fund);

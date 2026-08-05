@@ -7,6 +7,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
 
 import java.math.BigDecimal;
 
@@ -17,6 +18,7 @@ import java.math.BigDecimal;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
+@SQLDelete(sql = "UPDATE manual_scenario_weight SET deleted = 1, deleted_at = SYSDATETIMEOFFSET() WHERE id = ?")
 public class ManualScenarioWeight extends SoftDeletableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

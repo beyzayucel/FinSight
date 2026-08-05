@@ -5,6 +5,7 @@ import com.akademi.finsight.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
 import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -16,6 +17,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
+@SQLDelete(sql = "UPDATE manual_scenario SET deleted = 1, deleted_at = SYSDATETIMEOFFSET() WHERE id = ?")
 public class ManualScenario extends SoftDeletableEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)

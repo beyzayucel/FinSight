@@ -51,6 +51,20 @@ public final class ApiEndpoints {
         public static final String LATEST_BY_FUND = "/funds/{fundCode}/latest";
     }
 
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static final class FundPeriodMetrics {
+        public static final String BASE = API_V1 + "/fund-period-metrics";
+        public static final String BY_ID = "/{id}";
+        public static final String LATEST_BY_FUND = "/funds/{fundCode}/latest";
+    }
+
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static final class FundStockAllocations {
+        public static final String BASE = API_V1 + "/fund-stock-allocations";
+        public static final String BY_ID = "/{id}";
+        public static final String BY_FUND_AND_PERIOD = "/funds/{fundCode}/periods/{period}";
+    }
+
     private static final String[] PUBLIC_ENDPOINTS = {
             Auth.BASE + Auth.LOGIN,
             Auth.BASE + Auth.REFRESH,

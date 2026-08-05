@@ -9,13 +9,8 @@ import com.akademi.finsight.user.dto.response.UserResponse;
 import com.akademi.finsight.user.dto.response.UserStatsResponse;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.entity.Role;
-import com.akademi.finsight.user.exception.AdminProtectedException;
-import com.akademi.finsight.user.exception.EmailAlreadyExistsException;
-import com.akademi.finsight.user.exception.EmailAlreadyVerifiedException;
-import com.akademi.finsight.user.exception.PhoneAlreadyExistsException;
-import com.akademi.finsight.user.exception.SelfActionNotAllowedException;
-import com.akademi.finsight.user.exception.UserNotFoundException;
-import com.akademi.finsight.user.exception.UserStatusUnchangedException;
+import com.akademi.finsight.user.exception.UserErrorType;
+import com.akademi.finsight.user.exception.UserException;
 import com.akademi.finsight.user.mapper.UserMapper;
 import com.akademi.finsight.user.repository.UserRepository;
 import com.akademi.finsight.user.repository.UserSpecification;
@@ -93,7 +88,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse getCurrentUser(String email) {
         return userRepository.findByEmail(EmailNormalizer.normalize(email))
                 .map(userMapper::toResponse)
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(() -> new UserException(UserErrorType.USER_NOT_FOUND));
     }
 
     @Override
@@ -101,7 +96,7 @@ public class UserServiceImpl implements UserService {
     public UserResponse getUserById(UUID id) {
         return userRepository.findById(id)
                 .map(userMapper::toResponse)
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(() -> new UserException(UserErrorType.USER_NOT_FOUND));
     }
 
     @Override
@@ -123,7 +118,7 @@ public class UserServiceImpl implements UserService {
     private void checkPhoneNumberAvailability(String phoneNumber, UUID userId) {
         if (userRepository.existsByPhoneNumberAndIdNot(phoneNumber, userId)) {
             log.info("Profile update rejected: event=PHONE_ALREADY_EXISTS, phone={}", MaskType.PHONE.mask(phoneNumber));
-            throw new PhoneAlreadyExistsException();
+            throw new UserException(UserErrorType.PHONE_ALREADY_EXISTS);
         }
     }
 
@@ -133,7 +128,7 @@ public class UserServiceImpl implements UserService {
         User user = findByIdOrThrow(id);
         validateAdminAction(user, currentUserEmail);
         if (user.isEnabled() == enabled) {
-            throw new UserStatusUnchangedException();
+            throw new UserException(UserErrorType.USER_STATUS_UNCHANGED);
         }
         user.setEnabled(enabled);
         userRepository.save(user);
@@ -152,26 +147,26 @@ public class UserServiceImpl implements UserService {
 
     private void validateAdminAction(User targetUser, String currentUserEmail) {
         User currentUser = userRepository.findByEmail(EmailNormalizer.normalize(currentUserEmail))
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(() -> new UserException(UserErrorType.USER_NOT_FOUND));
         if (targetUser.getId().equals(currentUser.getId())) {
-            throw new SelfActionNotAllowedException();
+            throw new UserException(UserErrorType.SELF_ACTION_NOT_ALLOWED);
         }
         if (targetUser.getRole() == Role.ADMIN) {
-            throw new AdminProtectedException();
+            throw new UserException(UserErrorType.ADMIN_PROTECTED);
         }
     }
 
 
     private User findByIdOrThrow(UUID id) {
         return userRepository.findById(id)
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(() -> new UserException(UserErrorType.USER_NOT_FOUND));
     }
 
     @Override
     @Transactional(readOnly = true)
     public User findByEmail(String email) {
         return userRepository.findByEmail(EmailNormalizer.normalize(email))
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(() -> new UserException(UserErrorType.USER_NOT_FOUND));
     }
 
     @Override
@@ -181,7 +176,7 @@ public class UserServiceImpl implements UserService {
                 ? EmailNormalizer.normalize(identifier)
                 : identifier;
         return userRepository.findByIdentifier(normalized)
-                .orElseThrow(UserNotFoundException::new);
+                .orElseThrow(() -> new UserException(UserErrorType.USER_NOT_FOUND));
     }
 
     @Override
@@ -220,7 +215,7 @@ public class UserServiceImpl implements UserService {
         User user = findByIdOrThrow(id);
 
         if (user.isEmailVerified()) {
-            throw new EmailAlreadyVerifiedException();
+            throw new UserException(UserErrorType.EMAIL_ALREADY_VERIFIED);
         }
 
         String temporaryPassword = CredentialsGenerator.generateTemporaryPassword();
@@ -234,11 +229,11 @@ public class UserServiceImpl implements UserService {
     private void checkDuplicateUser(String email, String phoneNumber) {
         if (userRepository.existsByEmail(email)) {
             log.info("User creation rejected: event=EMAIL_ALREADY_EXISTS, email={}", MaskType.EMAIL.mask(email));
-            throw new EmailAlreadyExistsException();
+            throw new UserException(UserErrorType.EMAIL_ALREADY_EXISTS);
         }
         if (userRepository.existsByPhoneNumber(phoneNumber)) {
             log.info("User creation rejected: event=PHONE_ALREADY_EXISTS, phone={}", MaskType.PHONE.mask(phoneNumber));
-            throw new PhoneAlreadyExistsException();
+            throw new UserException(UserErrorType.PHONE_ALREADY_EXISTS);
         }
     }
 

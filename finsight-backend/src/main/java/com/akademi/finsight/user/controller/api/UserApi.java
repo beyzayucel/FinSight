@@ -2,6 +2,7 @@ package com.akademi.finsight.user.controller.api;
 
 import com.akademi.finsight.common.constants.ApiEndpoints;
 import com.akademi.finsight.common.response.ApiStandardResponse;
+import com.akademi.finsight.common.response.PageResponse;
 import com.akademi.finsight.user.dto.request.CreateUserRequest;
 import com.akademi.finsight.user.dto.request.UpdateUserRequest;
 import com.akademi.finsight.user.dto.response.UserResponse;
@@ -12,7 +13,6 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
@@ -36,7 +36,7 @@ public interface UserApi {
     @ApiResponse(responseCode = "200", description = "Users retrieved successfully")
     @ApiResponse(responseCode = "403", description = "Access denied — requires ADMIN role")
     @GetMapping
-    ResponseEntity<ApiStandardResponse<Page<UserResponse>>> getUsers(
+    ResponseEntity<ApiStandardResponse<PageResponse<UserResponse>>> getUsers(
             @Parameter(description = "Search by email, username, first name, or last name") @RequestParam(required = false) String search,
             @Parameter(description = "Filter by enabled status") @RequestParam(required = false) Boolean enabled,
             @ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable);

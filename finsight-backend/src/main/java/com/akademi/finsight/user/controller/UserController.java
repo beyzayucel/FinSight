@@ -2,6 +2,7 @@ package com.akademi.finsight.user.controller;
 
 import com.akademi.finsight.common.controller.BaseController;
 import com.akademi.finsight.common.response.ApiStandardResponse;
+import com.akademi.finsight.common.response.PageResponse;
 import com.akademi.finsight.user.controller.api.UserApi;
 import com.akademi.finsight.user.dto.request.CreateUserRequest;
 import com.akademi.finsight.user.dto.request.UpdateUserRequest;
@@ -10,7 +11,6 @@ import com.akademi.finsight.user.dto.response.UserStatsResponse;
 import com.akademi.finsight.user.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -30,8 +30,8 @@ public class UserController extends BaseController implements UserApi {
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiStandardResponse<Page<UserResponse>>> getUsers(String search, Boolean enabled, Pageable pageable) {
-        return ok(userService.getUsers(search, enabled, pageable));
+    public ResponseEntity<ApiStandardResponse<PageResponse<UserResponse>>> getUsers(String search, Boolean enabled, Pageable pageable) {
+        return ok(PageResponse.of(userService.getUsers(search, enabled, pageable)));
     }
 
     @Override

@@ -3,6 +3,7 @@ package com.akademi.finsight.integration.infina.controller.api;
 import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
+import com.akademi.finsight.integration.infina.dto.response.fund.FundPortfolioAllocationResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -33,10 +34,10 @@ public interface InfinaApi {
 			@Parameter(description = "Fund Code", example = "TIE")
 			String fundCode,
 
-			@Parameter(description = "Start date (yyyy-MM-dd)", example = "2024-01-01")
+			@Parameter(description = "Start date (yyyy-MM-dd)", example = "2026-01-01")
 			String beginPeriod,
 
-			@Parameter(description = "End date (yyyy-MM-dd)", example = "2024-02-01")
+			@Parameter(description = "End date (yyyy-MM-dd)", example = "2026-02-01")
 			String endPeriod,
 
 			@Parameter(description = "Currency", example = "TRY")
@@ -56,7 +57,7 @@ public interface InfinaApi {
 			@Parameter(description = "Fund Code", example = "TIE")
 			String fundCode,
 
-			@Parameter(description = "Date (yyyy-MM-dd)", example = "2024-02-01")
+			@Parameter(description = "Date (yyyy-MM-dd)", example = "2026-02-01")
 			String date,
 
 			@Parameter(description = "Period codes (comma-separated). "
@@ -64,5 +65,26 @@ public interface InfinaApi {
 							+ "Default: P1D,P1M,P3M,P6M,XYTD,P1Y",
 					example = "P15D")
 			String periods
+	);
+
+	@Operation(summary = "Get fund portfolio allocation",
+			description = "Returns the asset breakdown of a fund's disclosed portfolio.")
+	@ApiResponses({
+			@ApiResponse(responseCode = "200", description = "Fund portfolio allocation retrieved successfully."),
+			@ApiResponse(responseCode = "502", description = "Infina returned an error response."),
+			@ApiResponse(responseCode = "503", description = "Infina service is currently unavailable.",
+					content = @Content(schema = @Schema(implementation = ApiStandardResponse.class)))
+	})
+
+	@GetMapping("/FundPortfolioAllocation")
+	ResponseEntity<ApiStandardResponse<List<FundPortfolioAllocationResponse>>> fundPortfolioAllocation(
+			@Parameter(description = "Fund Code", example = "TIE")
+			String fundCode,
+
+			@Parameter(description = "Disclosure period (yyyy-MM)", example = "2026-05")
+			String period,
+
+			@Parameter(description = "Disclosure id", example = "1359175")
+			Long disclosureId
 	);
 }

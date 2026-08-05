@@ -24,6 +24,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import java.util.Locale;
 
@@ -110,7 +111,16 @@ public class GlobalExceptionHandler {
                 resolveMessage(ErrorType.MISSING_PARAMETER, ex.getParameterName()), request);
     }
 
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<ApiStandardResponse<Void>> handleParameterTypeMismatch(
+            MethodArgumentTypeMismatchException ex, HttpServletRequest request) {
 
+        log.debug("Parameter type mismatch: name={}, requiredType={}, path={}",
+                ex.getName(), ex.getRequiredType(), request.getRequestURI());
+
+        return buildResponse(ErrorType.PARAMETER_TYPE_MISMATCH,
+                resolveMessage(ErrorType.PARAMETER_TYPE_MISMATCH, ex.getName()), request);
+    }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ApiStandardResponse<Void>> handleBadCredentials(

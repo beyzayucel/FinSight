@@ -1,6 +1,5 @@
 package com.akademi.finsight.integration.infina.client.dto.fund;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import tools.jackson.databind.PropertyNamingStrategies;
 import tools.jackson.databind.annotation.JsonNaming;
 
@@ -9,7 +8,6 @@ import java.time.LocalDate;
 import java.util.List;
 
 @JsonNaming(PropertyNamingStrategies.UpperCamelCaseStrategy.class)
-@JsonIgnoreProperties(ignoreUnknown = true)
 public record FundInfoData(
 		String fundCode,
 		LocalDate date,

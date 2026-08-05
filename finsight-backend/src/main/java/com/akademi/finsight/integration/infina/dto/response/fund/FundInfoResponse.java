@@ -4,7 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public record FundInfoResponse (
-		BigDecimal fundDailyYield,
+		List<FundReturnResponse> periodReturns,
 		BigDecimal totalMarketPrice,
 		List<FundAssetDistributionResponse> assetDistribution
 ){}

@@ -35,4 +35,6 @@ public interface UserService {
     void updatePassword(User user, String encodedPassword, boolean clearFirstLogin);
 
     UserStatsResponse getUserStats();
+
+    void resendVerification(UUID id);
 }

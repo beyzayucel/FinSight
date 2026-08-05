@@ -9,6 +9,7 @@ import com.akademi.finsight.user.dto.response.UserResponse;
 import com.akademi.finsight.user.dto.response.UserStatsResponse;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.exception.EmailAlreadyExistsException;
+import com.akademi.finsight.user.exception.EmailAlreadyVerifiedException;
 import com.akademi.finsight.user.exception.PhoneAlreadyExistsException;
 import com.akademi.finsight.user.exception.UserNotFoundException;
 import com.akademi.finsight.user.exception.UserStatusUnchangedException;
@@ -197,6 +198,22 @@ public class UserServiceImpl implements UserService {
         );
     }
 
+    @Override
+    @Transactional
+    public void resendVerification(UUID id) {
+        User user = findByIdOrThrow(id);
+
+        if (user.isEmailVerified()) {
+            throw new EmailAlreadyVerifiedException();
+        }
+
+        String temporaryPassword = CredentialsGenerator.generateTemporaryPassword();
+        user.setPassword(passwordEncoder.encode(temporaryPassword));
+        userRepository.save(user);
+
+        tokenService.resendVerificationToken(user, temporaryPassword);
+        log.info("Verification resent by admin: event=VERIFICATION_RESENT, email={}", MaskType.EMAIL.mask(user.getEmail()));
+    }
 
     private void checkDuplicateUser(String email, String phoneNumber) {
         if (userRepository.existsByEmail(email)) {

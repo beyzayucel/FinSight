@@ -34,24 +34,38 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
     @Value("${app.verification.url}")
     private String verificationBaseUrl;
 
+    @Value("${app.verification.expire-days}")
+    private long verificationExpireDays;
+
 
     public void createAndSendVerificationToken(User user, String temporaryPassword) {
+        generateTokenAndSendEmail(user, temporaryPassword);
+        log.info("Verification mail sent: event=VERIFICATION_CREATED, email={}", MaskType.EMAIL.mask(user.getEmail()));
+    }
+
+    @Override
+    public void resendVerificationToken(User user, String temporaryPassword) {
         repository.deleteByUserId(user.getId());
         repository.flush();
+
+        generateTokenAndSendEmail(user, temporaryPassword);
+        log.info("Verification mail resent: event=VERIFICATION_RESENT, email={}", MaskType.EMAIL.mask(user.getEmail()));
+    }
+
+    private void generateTokenAndSendEmail(User user, String temporaryPassword) {
 
         String token = UUID.randomUUID().toString();
         String hash = passwordEncoder.encode(token);
         VerificationToken verificationToken = VerificationToken.builder()
                 .user(user)
                 .token(hash)
-                .expiresAt(Instant.now().plus(1, ChronoUnit.DAYS))
+                .expiresAt(Instant.now().plus(verificationExpireDays, ChronoUnit.DAYS))
                 .build();
 
         repository.save(verificationToken);
 
         String verificationUrl = verificationBaseUrl + token;
         VerificationTokenRequest tokenRequest = new VerificationTokenRequest(user.getUsername(), user.getEmail(), temporaryPassword, verificationUrl);
-        log.info("Verification mail is being sent to {}", MaskType.EMAIL.mask(user.getEmail()));
 
         emailService.sendVerificationEmail(tokenRequest, LocaleContextHolder.getLocale());
     }

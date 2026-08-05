@@ -77,6 +77,13 @@ public class UserController extends BaseController implements UserApi {
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ApiStandardResponse<Void>> resendVerification(@PathVariable UUID id) {
+        userService.resendVerification(id);
+        return ok();
+    }
+
+    @Override
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiStandardResponse<UserStatsResponse>> getUserStats() {
         return ok(userService.getUserStats());
     }

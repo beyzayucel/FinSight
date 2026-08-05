@@ -107,6 +107,17 @@ public interface UserApi {
 
 
     @Operation(
+            summary = "Resend verification email (Admin only)",
+            description = "Resends the verification email with a new temporary password. Requires ADMIN role."
+    )
+    @ApiResponse(responseCode = "200", description = "Verification email resent")
+    @ApiResponse(responseCode = "403", description = "Access denied — requires ADMIN role")
+    @ApiResponse(responseCode = "404", description = "User not found")
+    @ApiResponse(responseCode = "409", description = "Email is already verified")
+    @PostMapping(ApiEndpoints.Users.RESEND_VERIFICATION)
+    ResponseEntity<ApiStandardResponse<Void>> resendVerification(@PathVariable UUID id);
+
+    @Operation(
             summary = "Get user statistics (Admin only)",
             description = "Returns user count statistics. Requires ADMIN role."
     )

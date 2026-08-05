@@ -18,6 +18,7 @@ public enum ErrorType implements BaseErrorType {
     METHOD_NOT_ALLOWED("error.method.not.allowed", HttpStatus.METHOD_NOT_ALLOWED),
     UNSUPPORTED_MEDIA_TYPE("error.unsupported.media.type", HttpStatus.UNSUPPORTED_MEDIA_TYPE),
     MISSING_PARAMETER("error.missing.parameter", HttpStatus.BAD_REQUEST),
+    PARAMETER_TYPE_MISMATCH("error.parameter.type.mismatch", HttpStatus.BAD_REQUEST),
     INVALID_INPUT("error.invalid.input", HttpStatus.BAD_REQUEST),
 
     // Data integrity

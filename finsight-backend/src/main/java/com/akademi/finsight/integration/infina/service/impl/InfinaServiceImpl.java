@@ -4,8 +4,10 @@ import com.akademi.finsight.integration.infina.client.InfinaServicesClient;
 import com.akademi.finsight.integration.infina.client.dto.benchmark.BenchmarkInfoData;
 import com.akademi.finsight.integration.infina.client.dto.base.InfinaResponse;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundInfoData;
+import com.akademi.finsight.integration.infina.client.dto.fund.FundPortfolioAllocationData;
 import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
+import com.akademi.finsight.integration.infina.dto.response.fund.FundPortfolioAllocationResponse;
 import com.akademi.finsight.integration.infina.exception.InfinaErrorType;
 import com.akademi.finsight.integration.infina.exception.InfinaIntegrationException;
 import com.akademi.finsight.integration.infina.mapper.InfinaMapper;
@@ -50,6 +52,17 @@ public class InfinaServiceImpl implements InfinaService {
 				fundCode);
 
 		return infinaMapper.toFundInfoResponse(data);
+	}
+
+	@Override
+	public List<FundPortfolioAllocationResponse> getFundPortfolioAllocation(String fundCode,
+																			String period,
+																			Long disclosureId){
+		FundPortfolioAllocationData data = callInfina(
+				() -> infinaServicesClient.getFundPortfolioAllocation(fundCode, period, disclosureId),
+				fundCode);
+
+		return infinaMapper.toFundPortfolioAllocationResponseList(data.allocations());
 	}
 
 	private <T> T callInfina(Supplier<InfinaResponse<T>> call, String fundCode) {

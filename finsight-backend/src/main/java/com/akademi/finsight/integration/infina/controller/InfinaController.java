@@ -5,6 +5,7 @@ import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.integration.infina.controller.api.InfinaApi;
 import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
+import com.akademi.finsight.integration.infina.dto.response.fund.FundPortfolioAllocationResponse;
 import com.akademi.finsight.integration.infina.service.InfinaService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -33,5 +34,13 @@ public class InfinaController extends BaseController implements InfinaApi {
 			@RequestParam(value = "date", required = false) String date,
 			@RequestParam(value = "periods", required = false) String periods){
 		return ok(infinaService.getFundInfo(fundCode, date, periods));
+	}
+
+	@Override
+	public ResponseEntity<ApiStandardResponse<List<FundPortfolioAllocationResponse>>> fundPortfolioAllocation(
+			@RequestParam("fundCode") String fundCode,
+			@RequestParam(value = "period", required = false) String period,
+			@RequestParam(value = "disclosureId", required = false) Long disclosureId){
+		return ok(infinaService.getFundPortfolioAllocation(fundCode, period, disclosureId));
 	}
 }

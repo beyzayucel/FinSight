@@ -11,15 +11,11 @@ import java.util.Map;
 @Builder
 public record PortfolioDataDto(
 
-        @NotNull(message = "Şok öncesi portföy değeri boş olamaz.")
-        @Positive(message = "Portföy değeri pozitif olmalıdır.")
+        @NotNull(message = "{error.validation.portfolio.initial_value.not_null}")
+        @Positive(message = "{error.validation.portfolio.initial_value.positive}")
         BigDecimal initialValue,
 
-        /**
-         * Varlık Tipleri ve Ağırlıkları (Toplamı 1.0 / %100 olmalıdır)
-         * Örn: {"EQUITY": 0.40, "BOND": 0.30, "FX": 0.20, "CASH": 0.10}
-         */
-        @NotEmpty(message = "Varlık ağırlıkları boş olamaz.")
+        @NotEmpty(message = "{error.validation.portfolio.asset_weights.not_empty}")
         Map<String, Float> assetWeights
 ) {}
 

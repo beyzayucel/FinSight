@@ -8,18 +8,18 @@ import lombok.Builder;
 @Builder
 public record StressTestInferenceRequestDto(
 
-        @NotBlank(message = "Senaryo anahtarı boş olamaz (Örn: HISSE_SOKU, FAIZ_SOKU).")
+        @NotBlank(message = "{error.validation.stresstest.scenario_key.not_blank}")
         String scenarioKey,
 
         @Valid
-        @NotNull(message = "Mevcut portföy verisi zorunludur.")
+        @NotNull(message = "{error.validation.stresstest.current_portfolio.not_null}")
         PortfolioDataDto currentPortfolio,
 
         @Valid
-        @NotNull(message = "Simülasyon portföy verisi zorunludur.")
+        @NotNull(message = "{error.validation.stresstest.simulation_portfolio.not_null}")
         PortfolioDataDto simulationPortfolio,
 
         @Valid
-        @NotNull(message = "Benchmark portföy verisi zorunludur.")
+        @NotNull(message = "{error.validation.stresstest.benchmark_portfolio.not_null}")
         PortfolioDataDto benchmarkPortfolio
 ) {}

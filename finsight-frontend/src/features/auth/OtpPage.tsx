@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { Button, TextField } from '@/components/ui'
 import { otpVerify, otpResend } from '@/features/auth/authApi'
-import { setTokens, isOtpPending, clearOtpSession, getOtpIdentifier, isOtpExpired, setOtpIdentifier } from '@/lib/authStore'
+import { setTokens, isOtpPending, clearOtpSession, getOtpIdentifier, isOtpExpired, setOtpIdentifier, getPostLoginRoute } from '@/lib/authStore'
 import { getTranslations } from '@/i18n/translations'
 import { ROUTES } from '@/lib/routes'
 import { getApiError } from '@/lib/api/apiError'
@@ -57,7 +57,7 @@ export default function OtpPage() {
 
       clearOtpSession()
       setTokens(result.accessToken, result.refreshToken)
-      navigate(result.firstLogin ? ROUTES.CHANGE_PASSWORD : ROUTES.DASHBOARD, { replace: true })
+      navigate(result.firstLogin ? ROUTES.CHANGE_PASSWORD : getPostLoginRoute(), { replace: true })
     } catch (err) {
       const apiErr = getApiError(err)
 

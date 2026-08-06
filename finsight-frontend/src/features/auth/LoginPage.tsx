@@ -1,11 +1,17 @@
 import { useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import BrandPanel from './components/BrandPanel'
 import LanguageSwitcher from './components/LanguageSwitcher'
 import LoginForm from './components/LoginForm'
 import { translations, type Lang } from '@/i18n/translations'
-import { getLang, setLang as setStoreLang } from '@/lib/authStore'
+import { getLang, setLang as setStoreLang, getAccessToken, getPostLoginRoute } from '@/lib/authStore'
 
 export default function LoginPage() {
+  const token = getAccessToken()
+  if (token) {
+    return <Navigate to={getPostLoginRoute()} replace />
+  }
+
   const stored = getLang()
   const [lang, setLang] = useState<Lang>(stored === 'en' ? 'en' : 'tr')
   const t = translations[lang]

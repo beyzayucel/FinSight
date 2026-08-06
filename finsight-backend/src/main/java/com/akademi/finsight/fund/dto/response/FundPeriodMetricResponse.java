@@ -11,9 +11,12 @@ public record FundPeriodMetricResponse(
         LocalDate dataDate,
         String period,
         BigDecimal totalValue,
+        BigDecimal previousTotalValue,
+        LocalDate previousDate,
         BigDecimal dailyReturn,
         BigDecimal cumulativeReturn,
-        Integer benchmarkDiffBps,
+        BigDecimal benchmarkReturn,
+        BigDecimal benchmarkDiffBps,
         Instant fetchedAt,
         Instant createdAt
 ) {}

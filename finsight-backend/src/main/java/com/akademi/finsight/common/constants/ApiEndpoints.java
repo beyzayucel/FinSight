@@ -42,6 +42,8 @@ public final class ApiEndpoints {
         public static final String BASE = API_V1 + "/funds";
         public static final String BY_ID = "/{id}";
         public static final String MANUAL_SCENARIO = "/scenarios/apply";
+        public static final String SYNC = "/sync";
+        public static final String DASHBOARD = "/{fundCode}/dashboard";
     }
 
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -63,6 +65,7 @@ public final class ApiEndpoints {
         public static final String BASE = API_V1 + "/fund-stock-allocations";
         public static final String BY_ID = "/{id}";
         public static final String BY_FUND_AND_PERIOD = "/funds/{fundCode}/periods/{period}";
+        public static final String BREAKDOWN_BY_FUND = "/funds/{fundCode}/breakdown";
     }
 
     private static final String[] PUBLIC_ENDPOINTS = {

@@ -6,6 +6,7 @@ import com.akademi.finsight.common.response.PageResponse;
 import com.akademi.finsight.fund.controller.api.FundStockAllocationApi;
 import com.akademi.finsight.fund.dto.request.FundStockAllocationRequest;
 import com.akademi.finsight.fund.dto.response.FundStockAllocationResponse;
+import com.akademi.finsight.fund.dto.response.FundStockBreakdownResponse;
 import com.akademi.finsight.fund.service.FundStockAllocationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
@@ -41,6 +42,12 @@ public class FundStockAllocationController extends BaseController implements Fun
     public ResponseEntity<ApiStandardResponse<List<FundStockAllocationResponse>>> getByFundCodeAndPeriod(
             String fundCode, String period) {
         return ok(fundStockAllocationService.getByFundCodeAndPeriod(fundCode, period));
+    }
+
+    @Override
+    public ResponseEntity<ApiStandardResponse<FundStockBreakdownResponse>> getBreakdownByFundCode(
+            String fundCode, String period) {
+        return ok(fundStockAllocationService.getBreakdownByFundCode(fundCode, period));
     }
 
     @Override

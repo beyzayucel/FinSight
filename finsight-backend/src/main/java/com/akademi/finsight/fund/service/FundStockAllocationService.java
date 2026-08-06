@@ -2,6 +2,7 @@ package com.akademi.finsight.fund.service;
 
 import com.akademi.finsight.fund.dto.request.FundStockAllocationRequest;
 import com.akademi.finsight.fund.dto.response.FundStockAllocationResponse;
+import com.akademi.finsight.fund.dto.response.FundStockBreakdownResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
@@ -17,6 +18,8 @@ public interface FundStockAllocationService {
     Page<FundStockAllocationResponse> getAll(Pageable pageable);
 
     List<FundStockAllocationResponse> getByFundCodeAndPeriod(String fundCode, String period);
+
+    FundStockBreakdownResponse getBreakdownByFundCode(String fundCode, String period);
 
     FundStockAllocationResponse update(UUID id, FundStockAllocationRequest request);
 

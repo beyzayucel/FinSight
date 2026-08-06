@@ -45,14 +45,20 @@ public class FundPeriodMetric extends SoftDeletableEntity {
     @Column(name = "total_value", nullable = false, precision = 19, scale = 4)
     private BigDecimal totalValue;
 
+    @Column(name = "previous_total_value", precision = 19, scale = 4)
+    private BigDecimal previousTotalValue;
+
+    @Column(name = "previous_date")
+    private LocalDate previousDate;
+
     @Column(name = "daily_return", nullable = false, precision = 9, scale = 6)
     private BigDecimal dailyReturn;
 
     @Column(name = "cumulative_return", nullable = false, precision = 12, scale = 6)
     private BigDecimal cumulativeReturn;
 
-    @Column(name = "benchmark_diff_bps")
-    private Integer benchmarkDiffBps;
+    @Column(name = "benchmark_return", precision = 12, scale = 6)
+    private BigDecimal benchmarkReturn;
 
     @Column(name = "fetched_at", nullable = false)
     private Instant fetchedAt;

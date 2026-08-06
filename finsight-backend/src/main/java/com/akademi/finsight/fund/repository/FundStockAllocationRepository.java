@@ -6,9 +6,12 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface FundStockAllocationRepository extends JpaRepository<FundStockAllocation, UUID> {
+
+    Optional<FundStockAllocation> findByFundIdAndPeriodAndAssetCode(UUID fundId, String period, String assetCode);
 
     boolean existsByFundIdAndPeriodAndAssetCode(UUID fundId, String period, String assetCode);
 
@@ -23,4 +26,11 @@ public interface FundStockAllocationRepository extends JpaRepository<FundStockAl
             """)
     List<FundStockAllocation> findByFundCodeAndPeriod(@Param("fundCode") String fundCode,
                                                       @Param("period") String period);
+
+    @Query("""
+            SELECT MAX(fsa.period)
+            FROM FundStockAllocation fsa
+            WHERE fsa.fund.code = :fundCode
+            """)
+    Optional<String> findLatestPeriodByFundCode(@Param("fundCode") String fundCode);
 }

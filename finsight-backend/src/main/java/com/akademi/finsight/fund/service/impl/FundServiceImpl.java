@@ -46,6 +46,13 @@ public class FundServiceImpl implements FundService {
 
     @Override
     @Transactional(readOnly = true)
+    public FundResponse getByCode(String code) {
+        return fundMapper.toResponse(fundRepository.findByCode(code)
+                .orElseThrow(FundNotFoundException::new));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
     public Page<FundResponse> getAll(Pageable pageable) {
         return fundRepository.findAll(pageable).map(fundMapper::toResponse);
     }

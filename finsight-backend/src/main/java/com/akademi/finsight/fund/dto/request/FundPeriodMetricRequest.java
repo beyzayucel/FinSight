@@ -24,7 +24,7 @@ public record FundPeriodMetricRequest(
         LocalDate dataDate,
 
         @Schema(description = "Period code the metric was calculated for. Format: PXD / PXW / PXM / PXY / XYTD / XDyyyy-MM-dd",
-                example = "P1M")
+                example = "P10D")
         @NotBlank(message = "{validation.period.required}")
         @Size(max = 16, message = "{validation.period.size}")
         String period,
@@ -35,7 +35,16 @@ public record FundPeriodMetricRequest(
         @Digits(integer = 15, fraction = 4, message = "{validation.total.value.format}")
         BigDecimal totalValue,
 
-        @Schema(description = "Daily return of the fund (matches DECIMAL(9,6))", example = "0.001234")
+        @Schema(description = "Total value of the fund at the start of the period (matches DECIMAL(19,4))",
+                example = "120000000.0000")
+        @DecimalMin(value = "0.0", message = "{validation.total.value.positive}")
+        @Digits(integer = 15, fraction = 4, message = "{validation.total.value.format}")
+        BigDecimal previousTotalValue,
+
+        @Schema(description = "Date the period is measured from", example = "2026-07-06")
+        LocalDate previousDate,
+
+        @Schema(description = "Return of the fund on its last trading day (matches DECIMAL(9,6))", example = "1.888310")
         @NotNull(message = "{validation.daily.return.required}")
         @Digits(integer = 3, fraction = 6, message = "{validation.daily.return.format}")
         BigDecimal dailyReturn,
@@ -45,9 +54,10 @@ public record FundPeriodMetricRequest(
         @Digits(integer = 6, fraction = 6, message = "{validation.cumulative.return.format}")
         BigDecimal cumulativeReturn,
 
-        @Schema(description = "Difference against the benchmark in basis points; empty when the fund has no benchmark",
-                example = "125")
-        Integer benchmarkDiffBps,
+        @Schema(description = "Benchmark return over the period (matches DECIMAL(12,6)); empty when the fund has no benchmark",
+                example = "-1.937454")
+        @Digits(integer = 6, fraction = 6, message = "{validation.benchmark.return.format}")
+        BigDecimal benchmarkReturn,
 
         @Schema(description = "When the metric was fetched from its source; defaults to now on create and stays unchanged on update when omitted",
                 example = "2026-08-05T10:15:30Z")

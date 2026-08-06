@@ -7,9 +7,12 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface FundPeriodMetricRepository extends JpaRepository<FundPeriodMetric, UUID> {
+
+    Optional<FundPeriodMetric> findByFundIdAndDataDateAndPeriod(UUID fundId, LocalDate dataDate, String period);
 
     boolean existsByFundIdAndDataDateAndPeriod(UUID fundId, LocalDate dataDate, String period);
 

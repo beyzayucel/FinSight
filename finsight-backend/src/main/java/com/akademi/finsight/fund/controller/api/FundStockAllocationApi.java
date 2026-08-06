@@ -5,7 +5,9 @@ import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.common.response.PageResponse;
 import com.akademi.finsight.fund.dto.request.FundStockAllocationRequest;
 import com.akademi.finsight.fund.dto.response.FundStockAllocationResponse;
+import com.akademi.finsight.fund.dto.response.FundStockBreakdownResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 import java.util.UUID;
@@ -57,6 +60,20 @@ public interface FundStockAllocationApi {
     ResponseEntity<ApiStandardResponse<List<FundStockAllocationResponse>>> getByFundCodeAndPeriod(
             @PathVariable String fundCode,
             @PathVariable String period);
+
+    @Operation(summary = "Get stock breakdown of a fund",
+            description = """
+                    Returns the heaviest holdings of a fund one by one, ordered by weight descending, with the
+                    remaining ones collapsed into a single 'Others' entry. How many are listed individually is
+                    configured via 'fund.stock-breakdown-limit'. Falls back to the most recent stored disclosure
+                    period when no period is given.""")
+    @ApiResponse(responseCode = "200", description = "Fund stock breakdown retrieved successfully")
+    @GetMapping(ApiEndpoints.FundStockAllocations.BREAKDOWN_BY_FUND)
+    ResponseEntity<ApiStandardResponse<FundStockBreakdownResponse>> getBreakdownByFundCode(
+            @PathVariable String fundCode,
+            @Parameter(description = "Disclosure period (yyyy-MM); defaults to the most recent stored period",
+                    example = "2026-06")
+            @RequestParam(required = false) String period);
 
     @Operation(summary = "Update fund stock allocation",
             description = "Updates an existing fund stock allocation.")

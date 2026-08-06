@@ -2,6 +2,8 @@ package com.akademi.finsight.fund.service.impl;
 
 import com.akademi.finsight.fund.dto.request.FundStockAllocationRequest;
 import com.akademi.finsight.fund.dto.response.FundStockAllocationResponse;
+import com.akademi.finsight.fund.dto.response.FundStockBreakdownResponse;
+import com.akademi.finsight.fund.dto.response.FundStockWeightResponse;
 import com.akademi.finsight.fund.entity.Fund;
 import com.akademi.finsight.fund.entity.FundStockAllocation;
 import com.akademi.finsight.fund.exception.FundNotFoundException;
@@ -17,15 +19,22 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 @Transactional
 public class FundStockAllocationServiceImpl implements FundStockAllocationService {
+
+    private static final String OTHERS_ASSET_CODE = "Others";
+    private static final int STOCK_BREAKDOWN_LIMIT = 10;
 
     private final FundStockAllocationRepository fundStockAllocationRepository;
     private final FundRepository fundRepository;
@@ -70,6 +79,41 @@ public class FundStockAllocationServiceImpl implements FundStockAllocationServic
         }
         return fundStockAllocationMapper.toResponseList(
                 fundStockAllocationRepository.findByFundCodeAndPeriod(fundCode, period));
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public FundStockBreakdownResponse getBreakdownByFundCode(String fundCode, String period) {
+        if (!fundRepository.existsByCode(fundCode)) {
+            throw new FundNotFoundException();
+        }
+
+        String resolvedPeriod = StringUtils.hasText(period)
+                ? period
+                : fundStockAllocationRepository.findLatestPeriodByFundCode(fundCode).orElse(null);
+
+        if (resolvedPeriod == null) {
+            return new FundStockBreakdownResponse(null, List.of());
+        }
+
+        List<FundStockAllocation> allocations =
+                fundStockAllocationRepository.findByFundCodeAndPeriod(fundCode, resolvedPeriod);
+
+        List<FundStockWeightResponse> items = allocations.stream()
+                .limit(STOCK_BREAKDOWN_LIMIT)
+                .map(allocation -> new FundStockWeightResponse(allocation.getAssetCode(), allocation.getWeight()))
+                .collect(Collectors.toCollection(ArrayList::new));
+
+        if (allocations.size() > STOCK_BREAKDOWN_LIMIT) {
+            BigDecimal othersWeight = allocations.stream()
+                    .skip(STOCK_BREAKDOWN_LIMIT)
+                    .map(FundStockAllocation::getWeight)
+                    .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            items.add(new FundStockWeightResponse(OTHERS_ASSET_CODE, othersWeight));
+        }
+
+        return new FundStockBreakdownResponse(resolvedPeriod, items);
     }
 
     @Override

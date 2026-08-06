@@ -19,6 +19,8 @@ public enum FundErrorType implements BaseErrorType {
     FUND_STOCK_ALLOCATION_NOT_FOUND("error.fund.stock.allocation.not.found", HttpStatus.NOT_FOUND),
     FUND_STOCK_ALLOCATION_ALREADY_EXISTS("error.fund.stock.allocation.already.exists", HttpStatus.CONFLICT),
 
+    FUND_SYNC_FAILED("error.fund.sync.failed", HttpStatus.BAD_GATEWAY),
+
     INVALID_SCENARIO_TOTAL("fund.scenario.invalid.total", HttpStatus.BAD_REQUEST),
     INVALID_SCENARIO_DEVIATION("fund.scenario.invalid.deviation", HttpStatus.BAD_REQUEST),
     INVALID_SCENARIO_STOCK_FLOOR("fund.scenario.invalid.stock.floor", HttpStatus.BAD_REQUEST),

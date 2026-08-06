@@ -11,7 +11,6 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 
-import java.time.LocalDate;
 @Getter
 @Setter
 @NoArgsConstructor
@@ -26,6 +25,6 @@ public class Fund extends SoftDeletableEntity {
 	@Column(nullable = false, length = 3)
 	private String code;
 
-	@Column(nullable = false)
-	private LocalDate date;
+	@Column
+	private String name;
 }

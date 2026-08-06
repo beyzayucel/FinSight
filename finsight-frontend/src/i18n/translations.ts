@@ -168,8 +168,6 @@ export const translations = {
     adminConfirmResetLinkMsg: (name: string, email: string) => `${name} (${email}) adresine şifre sıfırlama linki gönderilsin mi?`,
     adminToastResetLinkSent: 'Şifre sıfırlama linki gönderildi',
     adminProfileLoadError: 'Profil yüklenirken bir hata oluştu',
-<<<<<<< HEAD
-    // Performans Karşılaştırması sayfası
     navAnalysisWindowOption: (days: number) => `Son ${days} İşlem Günü`,
     fundInfoLoadingText: 'Fon verileri yükleniyor...',
     fundInfoErrorTitle: 'Fon verisi alınamadı',
@@ -200,7 +198,6 @@ export const translations = {
     pcFootnote:
       'Grafikteki getiriler prototip amaçlı üretilen sentetik veriye dayanır, gerçek piyasa verisi değildir; geçmiş performans gelecekteki performansın garantisi değildir.',
     pcGoToStressTest: 'Stres Testine Geç',
-=======
     auditTitle: 'Son İşlemler',
     auditSearchPlaceholder: 'İşlem ara…',
     auditScopeAll: 'Tümü',
@@ -217,7 +214,6 @@ export const translations = {
     auditUserDeactivated: (actor: string, target: string) => `${actor} pasifleştirdi: ${target}`,
     auditUserDeleted: (actor: string, target: string) => `${actor} sildi: ${target}`,
     auditVerificationResent: (actor: string, target: string) => `${actor} doğrulama gönderdi: ${target}`,
->>>>>>> c202f1d (feat(admin): add activity timeline to admin dashboard)
   },
   en: {
     tagline: 'Analyze with Data, Decide with Confidence',
@@ -386,8 +382,6 @@ export const translations = {
     adminConfirmResetLinkMsg: (name: string, email: string) => `Send password reset link to ${name} (${email})?`,
     adminToastResetLinkSent: 'Password reset link sent',
     adminProfileLoadError: 'Failed to load profile',
-<<<<<<< HEAD
-    // Performance Comparison page
     navAnalysisWindowOption: (days: number) => `Last ${days} Trading Days`,
     fundInfoLoadingText: 'Loading fund data...',
     fundInfoErrorTitle: 'Fund data unavailable',
@@ -418,7 +412,6 @@ export const translations = {
     pcFootnote:
       'Chart returns are based on synthetic prototype data, not real market data; past performance is not a guarantee of future performance.',
     pcGoToStressTest: 'Go to Stress Test',
-=======
     auditTitle: 'Recent Activity',
     auditSearchPlaceholder: 'Search activity…',
     auditScopeAll: 'All',
@@ -435,7 +428,6 @@ export const translations = {
     auditUserDeactivated: (actor: string, target: string) => `${actor} deactivated: ${target}`,
     auditUserDeleted: (actor: string, target: string) => `${actor} deleted: ${target}`,
     auditVerificationResent: (actor: string, target: string) => `${actor} sent verification to: ${target}`,
->>>>>>> c202f1d (feat(admin): add activity timeline to admin dashboard)
   },
 } satisfies Record<Lang, Record<string, unknown>>
 

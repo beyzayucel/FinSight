@@ -3,7 +3,7 @@ package com.akademi.finsight.stresstest.controller.api;
 import com.akademi.finsight.common.constants.ApiEndpoints;
 import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.stresstest.dto.response.StressTestInferenceResponseDto;
-import com.akademi.finsight.stresstest.entity.SimulationType;
+import com.akademi.finsight.stresstest.enums.SimulationType;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;

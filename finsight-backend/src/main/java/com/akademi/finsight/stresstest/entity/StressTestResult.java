@@ -2,6 +2,7 @@ package com.akademi.finsight.stresstest.entity;
 
 import com.akademi.finsight.common.entity.SoftDeletableEntity;
 import com.akademi.finsight.fund.entity.Fund;
+import com.akademi.finsight.stresstest.enums.SimulationType;
 import com.akademi.finsight.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;

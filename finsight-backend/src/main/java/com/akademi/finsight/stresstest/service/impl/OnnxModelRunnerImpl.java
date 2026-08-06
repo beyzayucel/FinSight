@@ -17,6 +17,8 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.Map;
 
+import static com.akademi.finsight.stresstest.enums.AssetType.*;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -69,10 +71,10 @@ public class OnnxModelRunnerImpl implements OnnxModelRunner {
         Map<String, Float> weights = portfolioData.assetWeights();
 
         return new float[] {
-                getWeight(weights, "EQUITY"),
-                getWeight(weights, "BOND"),
-                getWeight(weights, "FX"),
-                getWeight(weights, "CASH")
+                getWeight(weights, EQUITY.name()),
+                getWeight(weights, BOND.name()),
+                getWeight(weights, FX.name()),
+                getWeight(weights, CASH.name())
         };
     }
 

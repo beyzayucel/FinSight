@@ -1,6 +1,7 @@
 package com.akademi.finsight.stresstest.entity;
 
 import com.akademi.finsight.common.entity.SoftDeletableEntity;
+import com.akademi.finsight.stresstest.enums.PortfolioType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;

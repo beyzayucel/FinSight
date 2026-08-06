@@ -4,7 +4,7 @@ import com.akademi.finsight.common.controller.BaseController;
 import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.stresstest.controller.api.StressTestApi;
 import com.akademi.finsight.stresstest.dto.response.StressTestInferenceResponseDto;
-import com.akademi.finsight.stresstest.entity.SimulationType;
+import com.akademi.finsight.stresstest.enums.SimulationType;
 import com.akademi.finsight.stresstest.service.StressTestSimulationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

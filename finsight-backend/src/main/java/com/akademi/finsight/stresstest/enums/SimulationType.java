@@ -1,4 +1,4 @@
-package com.akademi.finsight.stresstest.entity;
+package com.akademi.finsight.stresstest.enums;
 
 public enum SimulationType {
     EQUITY_SHOCK,

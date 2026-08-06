@@ -68,6 +68,13 @@ public final class ApiEndpoints {
         public static final String BREAKDOWN_BY_FUND = "/funds/{fundCode}/breakdown";
     }
 
+	@NoArgsConstructor(access = AccessLevel.PRIVATE)
+	public static final class StressTest {
+		public static final String BASE = API_V1 + "/stress-tests";
+		public static final String RUN = "/run";
+		public static final String LATEST = "/latest";
+	}
+
     private static final String[] PUBLIC_ENDPOINTS = {
             Auth.BASE + Auth.LOGIN,
             Auth.BASE + Auth.REFRESH,

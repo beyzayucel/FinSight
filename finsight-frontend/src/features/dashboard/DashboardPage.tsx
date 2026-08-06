@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import DashboardLayout from './components/DashboardLayout'
 import ManualScenarioTab from './components/ManualScenarioTab'
 import PerformanceComparisonPage from './pages/PerformanceComparisonPage'
+import FundDashboardPage from './pages/FundDashboardPage'
 import { getActiveFund } from './dashboardApi'
 import type { Fund } from './dashboardApi'
 
@@ -100,9 +101,11 @@ export default function DashboardPage() {
 
     switch (activeMenu) {
       case 1:
-        return renderPlaceholder(
-          'Fon Dashboard',
-          'TIE İş Portföy fonunun genel performans, getiri grafikleri ve varlık dağılım detayları.'
+        return (
+          <FundDashboardPage
+            analysisPeriod={period}
+            onGoToAiDecision={() => setActiveMenu(2)}
+          />
         )
       case 3:
         return (

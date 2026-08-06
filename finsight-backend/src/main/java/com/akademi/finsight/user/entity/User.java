@@ -59,4 +59,7 @@ public class User extends SoftDeletableEntity {
 
     private Instant lastLoginAt;
 
+    public String getFullName() {
+        return firstName + " " + lastName;
+    }
 }

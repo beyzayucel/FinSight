@@ -31,15 +31,15 @@ public class OnnxModelRegistry {
 
     private final ExecutorService modelLoaderExecutor = Executors.newFixedThreadPool(2);
 
-    @PostConstruct
+     @PostConstruct
     public void init(){
         this.env = OrtEnvironment.getEnvironment();
         this.sessionOptions = buildSessionOptions();
 
-        CompletableFuture<Void> faizTask = CompletableFuture.runAsync(() -> safeLoad(FAIZ_STRESS), modelLoaderExecutor);
-        CompletableFuture<Void> hisseTask = CompletableFuture.runAsync(() -> safeLoad(HISSE_STRESS), modelLoaderExecutor);
+        CompletableFuture<Void> interestTask = CompletableFuture.runAsync(() -> safeLoad(INTEREST_STRESS), modelLoaderExecutor);
+        CompletableFuture<Void> shareTask = CompletableFuture.runAsync(() -> safeLoad(SHARE_STRESS), modelLoaderExecutor);
 
-        CompletableFuture.allOf(faizTask, hisseTask)
+        CompletableFuture.allOf(interestTask, shareTask)
                 .exceptionally(ex -> {
                     log.warn("Some ONNX models failed to load on startup. System will run in degraded mode.");
                     return null;

@@ -17,7 +17,10 @@ import org.mapstruct.MappingTarget;
 
 import java.util.List;
 
-@Mapper(config = BaseMapperConfig.class)
+@Mapper(
+        config = BaseMapperConfig.class,
+        imports = {PortfolioType.class}
+)
 public interface StressTestResultMapper {
 
     @Mapping(target = "user", ignore = true)

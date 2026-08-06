@@ -8,6 +8,8 @@ import OtpPage from '@/features/auth/OtpPage'
 import ChangePasswordPage from '@/features/auth/ChangePasswordPage'
 import VerifyEmailPage from '@/features/auth/VerifyEmailPage'
 import DashboardPage from '@/features/dashboard/DashboardPage'
+import AdminRoute from '@/components/AdminRoute'
+import AdminDashboardPage from '@/features/admin/AdminDashboardPage'
 
 export default function App() {
   return (
@@ -24,6 +26,11 @@ export default function App() {
         <Route element={<ProtectedRoute />}>
           <Route path={ROUTES.CHANGE_PASSWORD} element={<ChangePasswordPage />} />
           <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+        </Route>
+
+        {/* Admin — token + ROLE_ADMIN yoksa redirect */}
+        <Route element={<AdminRoute />}>
+          <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboardPage />} />
         </Route>
 
         <Route path="*" element={<Navigate to={ROUTES.LOGIN} replace />} />

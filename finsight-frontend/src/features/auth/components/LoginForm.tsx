@@ -8,7 +8,7 @@ import { getApiError } from '@/lib/api/apiError'
 import { MdPersonOutline } from 'react-icons/md'
 import { IoLockClosed } from 'react-icons/io5'
 import { login } from '@/features/auth/authApi'
-import { setTokens, setOtpPending, setOtpIdentifier } from '@/lib/authStore'
+import { setTokens, setOtpPending, setOtpIdentifier, getPostLoginRoute } from '@/lib/authStore'
 
 type LoginFormProps = {
   t: Translations
@@ -47,7 +47,7 @@ export default function LoginForm({ t }: LoginFormProps) {
 
       if (result.type === 'AUTHENTICATED') {
         setTokens(result.accessToken, result.refreshToken)
-        navigate(result.firstLogin ? ROUTES.CHANGE_PASSWORD : ROUTES.DASHBOARD, { replace: true })
+        navigate(result.firstLogin ? ROUTES.CHANGE_PASSWORD : getPostLoginRoute(), { replace: true })
       } else {
         setOtpPending(true)
         setOtpIdentifier(identifier)

@@ -168,6 +168,7 @@ export const translations = {
     adminConfirmResetLinkMsg: (name: string, email: string) => `${name} (${email}) adresine şifre sıfırlama linki gönderilsin mi?`,
     adminToastResetLinkSent: 'Şifre sıfırlama linki gönderildi',
     adminProfileLoadError: 'Profil yüklenirken bir hata oluştu',
+<<<<<<< HEAD
     // Performans Karşılaştırması sayfası
     navAnalysisWindowOption: (days: number) => `Son ${days} İşlem Günü`,
     fundInfoLoadingText: 'Fon verileri yükleniyor...',
@@ -199,6 +200,24 @@ export const translations = {
     pcFootnote:
       'Grafikteki getiriler prototip amaçlı üretilen sentetik veriye dayanır, gerçek piyasa verisi değildir; geçmiş performans gelecekteki performansın garantisi değildir.',
     pcGoToStressTest: 'Stres Testine Geç',
+=======
+    auditTitle: 'Son İşlemler',
+    auditSearchPlaceholder: 'İşlem ara…',
+    auditScopeAll: 'Tümü',
+    auditScopeActive: 'Aktif',
+    auditScopeArchived: 'Arşiv',
+    auditNoRecords: 'Henüz işlem kaydı yok',
+    auditLoginSuccess: (actor: string) => `${actor} giriş yaptı`,
+    auditLogout: (actor: string) => `${actor} çıkış yaptı`,
+    auditPasswordChanged: (actor: string) => `${actor} şifresini değiştirdi`,
+    auditPasswordResetCompleted: (actor: string) => `${actor} için şifre sıfırlandı`,
+    auditUserCreated: (actor: string, target: string) => `${actor} yeni bir portföy yöneticisi oluşturdu: ${target}`,
+    auditUserUpdated: (actor: string, target: string) => `${actor} kullanıcıyı güncelledi: ${target}`,
+    auditUserActivated: (actor: string, target: string) => `${actor} aktifleştirdi: ${target}`,
+    auditUserDeactivated: (actor: string, target: string) => `${actor} pasifleştirdi: ${target}`,
+    auditUserDeleted: (actor: string, target: string) => `${actor} sildi: ${target}`,
+    auditVerificationResent: (actor: string, target: string) => `${actor} doğrulama gönderdi: ${target}`,
+>>>>>>> c202f1d (feat(admin): add activity timeline to admin dashboard)
   },
   en: {
     tagline: 'Analyze with Data, Decide with Confidence',
@@ -367,6 +386,7 @@ export const translations = {
     adminConfirmResetLinkMsg: (name: string, email: string) => `Send password reset link to ${name} (${email})?`,
     adminToastResetLinkSent: 'Password reset link sent',
     adminProfileLoadError: 'Failed to load profile',
+<<<<<<< HEAD
     // Performance Comparison page
     navAnalysisWindowOption: (days: number) => `Last ${days} Trading Days`,
     fundInfoLoadingText: 'Loading fund data...',
@@ -398,6 +418,24 @@ export const translations = {
     pcFootnote:
       'Chart returns are based on synthetic prototype data, not real market data; past performance is not a guarantee of future performance.',
     pcGoToStressTest: 'Go to Stress Test',
+=======
+    auditTitle: 'Recent Activity',
+    auditSearchPlaceholder: 'Search activity…',
+    auditScopeAll: 'All',
+    auditScopeActive: 'Active',
+    auditScopeArchived: 'Archived',
+    auditNoRecords: 'No activity records yet',
+    auditLoginSuccess: (actor: string) => `${actor} signed in`,
+    auditLogout: (actor: string) => `${actor} signed out`,
+    auditPasswordChanged: (actor: string) => `${actor} changed their password`,
+    auditPasswordResetCompleted: (actor: string) => `${actor}'s password was reset`,
+    auditUserCreated: (actor: string, target: string) => `${actor} created a new portfolio manager: ${target}`,
+    auditUserUpdated: (actor: string, target: string) => `${actor} updated user: ${target}`,
+    auditUserActivated: (actor: string, target: string) => `${actor} activated: ${target}`,
+    auditUserDeactivated: (actor: string, target: string) => `${actor} deactivated: ${target}`,
+    auditUserDeleted: (actor: string, target: string) => `${actor} deleted: ${target}`,
+    auditVerificationResent: (actor: string, target: string) => `${actor} sent verification to: ${target}`,
+>>>>>>> c202f1d (feat(admin): add activity timeline to admin dashboard)
   },
 } satisfies Record<Lang, Record<string, unknown>>
 

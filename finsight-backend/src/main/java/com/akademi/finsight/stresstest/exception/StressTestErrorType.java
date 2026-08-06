@@ -15,21 +15,11 @@ public enum StressTestErrorType implements BaseErrorType {
     MODEL_INFERENCE_ERROR("error.stresstest.model.inference.failed", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_SIMULATION_TYPE("error.stresstest.invalid.simulation.type", HttpStatus.BAD_REQUEST);
 
-    StressTestErrorType(String s, HttpStatus httpStatus) {
-    }
-
-    @Override
-    public String getMessageKey() {
-        return "";
-    }
-
-    @Override
-    public HttpStatus getHttpStatus() {
-        return null;
-    }
+    private final String messageKey;
+    private final HttpStatus httpStatus;
 
     @Override
     public String getCode() {
-        return "";
+        return name();
     }
 }

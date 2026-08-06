@@ -1,12 +1,14 @@
 import type { UserStatsResponse } from '../adminApi'
+import type { Translations } from '@/i18n/translations'
 
 type KpiCardsProps = {
   stats: UserStatsResponse | null
   loading: boolean
+  t: Translations
 }
 
 type CardConfig = {
-  label: string
+  labelKey: 'adminKpiTotal' | 'adminKpiActive' | 'adminKpiInactive' | 'adminKpiTodayLogins'
   key: keyof UserStatsResponse
   iconBg: string
   iconColor: string
@@ -16,7 +18,7 @@ type CardConfig = {
 
 const cards: CardConfig[] = [
   {
-    label: 'Toplam Kullanıcı',
+    labelKey: 'adminKpiTotal',
     key: 'totalUsers',
     iconBg: 'bg-admin-gold-wash',
     iconColor: 'stroke-admin-gold',
@@ -31,7 +33,7 @@ const cards: CardConfig[] = [
     ),
   },
   {
-    label: 'Aktif Kullanıcı',
+    labelKey: 'adminKpiActive',
     key: 'activeUsers',
     iconBg: 'bg-admin-green-wash',
     iconColor: 'stroke-admin-green',
@@ -43,7 +45,7 @@ const cards: CardConfig[] = [
     ),
   },
   {
-    label: 'Pasif Kullanıcı',
+    labelKey: 'adminKpiInactive',
     key: 'inactiveUsers',
     iconBg: 'bg-admin-red-wash',
     iconColor: 'stroke-admin-red',
@@ -56,7 +58,7 @@ const cards: CardConfig[] = [
     ),
   },
   {
-    label: 'Bugünkü Giriş',
+    labelKey: 'adminKpiTodayLogins',
     key: 'todayLogins',
     iconBg: 'bg-admin-gold-wash',
     iconColor: 'stroke-admin-gold',
@@ -69,7 +71,7 @@ const cards: CardConfig[] = [
   },
 ]
 
-export default function KpiCards({ stats, loading }: KpiCardsProps) {
+export default function KpiCards({ stats, loading, t }: KpiCardsProps) {
   return (
     <div className="grid grid-cols-4 gap-4 mb-[22px]">
       {cards.map((card) => (
@@ -94,7 +96,7 @@ export default function KpiCards({ stats, loading }: KpiCardsProps) {
             )}
           </div>
           <div className="text-[11.5px] text-admin-text-mute font-medium mt-1 relative z-[1]">
-            {card.label}
+            {t[card.labelKey]}
           </div>
         </div>
       ))}

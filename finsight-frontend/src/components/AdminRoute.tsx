@@ -1,5 +1,6 @@
+import { useState, useEffect } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
-import { getAccessToken, clearTokens } from '@/lib/authStore'
+import { getAccessToken, tryRefreshIfExpired } from '@/lib/authStore'
 import { ROUTES } from '@/lib/routes'
 
 function parseRoles(token: string): string[] {
@@ -11,27 +12,30 @@ function parseRoles(token: string): string[] {
   }
 }
 
-function isTokenExpired(token: string): boolean {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    return payload.exp * 1000 < Date.now() + 5000
-  } catch {
-    return true
-  }
-}
-
 export default function AdminRoute() {
-  const token = getAccessToken()
+  const [status, setStatus] = useState<'checking' | 'ok' | 'expired' | 'forbidden'>('checking')
 
-  if (!token || isTokenExpired(token)) {
-    clearTokens()
-    return <Navigate to={ROUTES.LOGIN} replace />
-  }
+  useEffect(() => {
+    const token = getAccessToken()
+    if (!token) {
+      setStatus('expired')
+      return
+    }
 
-  const roles = parseRoles(token)
-  if (!roles.includes('ROLE_ADMIN')) {
-    return <Navigate to={ROUTES.DASHBOARD} replace />
-  }
+    tryRefreshIfExpired().then((valid) => {
+      if (!valid) {
+        setStatus('expired')
+        return
+      }
+      const freshToken = getAccessToken()!
+      const roles = parseRoles(freshToken)
+      setStatus(roles.includes('ROLE_ADMIN') ? 'ok' : 'forbidden')
+    })
+  }, [])
+
+  if (status === 'checking') return null
+  if (status === 'expired') return <Navigate to={ROUTES.LOGIN} replace />
+  if (status === 'forbidden') return <Navigate to={ROUTES.DASHBOARD} replace />
 
   return <Outlet />
 }

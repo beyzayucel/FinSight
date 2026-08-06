@@ -108,6 +108,10 @@ export function resendVerification(id: string) {
   return api.post<ApiResponse<void>>(`/users/${id}/resend-verification`)
 }
 
+export function getCurrentUser() {
+  return api.get<ApiResponse<UserResponse>>('/users/me')
+}
+
 // ── Password ──
 
 export type ChangePasswordRequest = {

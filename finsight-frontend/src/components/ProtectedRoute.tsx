@@ -1,23 +1,25 @@
+import { useState, useEffect } from 'react'
 import { Navigate, Outlet } from 'react-router-dom'
-import { getAccessToken, clearTokens } from '@/lib/authStore'
+import { getAccessToken, tryRefreshIfExpired } from '@/lib/authStore'
 import { ROUTES } from '@/lib/routes'
 
-function isTokenExpired(token: string): boolean {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    return payload.exp * 1000 < Date.now() + 5000
-  } catch {
-    return true
-  }
-}
-
 export default function ProtectedRoute() {
-  const token = getAccessToken()
+  const [status, setStatus] = useState<'checking' | 'ok' | 'expired'>('checking')
 
-  if (!token || isTokenExpired(token)) {
-    clearTokens()
-    return <Navigate to={ROUTES.LOGIN} replace />
-  }
+  useEffect(() => {
+    const token = getAccessToken()
+    if (!token) {
+      setStatus('expired')
+      return
+    }
+
+    tryRefreshIfExpired().then((valid) => {
+      setStatus(valid ? 'ok' : 'expired')
+    })
+  }, [])
+
+  if (status === 'checking') return null
+  if (status === 'expired') return <Navigate to={ROUTES.LOGIN} replace />
 
   return <Outlet />
 }

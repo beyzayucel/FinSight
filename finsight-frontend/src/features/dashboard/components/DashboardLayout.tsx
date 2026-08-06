@@ -1,5 +1,8 @@
 import React from 'react'
-import { IoChevronDownOutline } from 'react-icons/io5'
+import { useNavigate } from 'react-router-dom'
+import { IoChevronDownOutline, IoLogOutOutline } from 'react-icons/io5'
+import { clearTokens } from '@/lib/authStore'
+import { ROUTES } from '@/lib/routes'
 
 type MenuIndex = 1 | 2 | 3 | 4 | 5
 
@@ -22,6 +25,13 @@ export default function DashboardLayout({
   analysisPeriod = '30',
   onPeriodChange
 }: DashboardLayoutProps) {
+  const navigate = useNavigate()
+
+  function handleLogout() {
+    clearTokens()
+    navigate(ROUTES.LOGIN, { replace: true })
+  }
+
   const menuItems = [
     { index: 1 as MenuIndex, label: 'tr' === 'tr' ? 'Fon Dashboard' : 'Fund Dashboard' },
     { index: 2 as MenuIndex, label: 'tr' === 'tr' ? 'AI Önerisi & Karar' : 'AI Recommendation & Decision' },
@@ -115,7 +125,14 @@ export default function DashboardLayout({
         </div>
 
         {/* Sidebar Alt Bilgi */}
-        <div className="pt-3 border-t border-[#1e273a]/50 mt-4">
+        <div className="pt-3 border-t border-[#1e273a]/50 mt-4 space-y-3">
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center space-x-2.5 px-3 py-2 rounded-lg text-left text-[#edeae0]/70 hover:text-white hover:bg-white/[0.05] transition-all duration-200 outline-none"
+          >
+            <IoLogOutOutline size={16} />
+            <span className="text-xs font-semibold tracking-wide">Çıkış Yap</span>
+          </button>
           <p className="text-[9px] leading-relaxed text-slate-500 font-medium">
             Prototip · veriler CSV tabanlı geçmiş veri setinden okunur.<br />
             Rakamlar temsilidir.

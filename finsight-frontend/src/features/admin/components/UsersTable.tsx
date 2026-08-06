@@ -1,5 +1,6 @@
-import { useState } from 'react'
 import type { UserResponse, PageResponse } from '../adminApi'
+import type { Translations } from '@/i18n/translations'
+import { getLang } from '@/lib/authStore'
 
 type UsersTableProps = {
   data: PageResponse<UserResponse> | null
@@ -15,26 +16,41 @@ type UsersTableProps = {
   onEditClick: (user: UserResponse) => void
   onToggleStatus: (user: UserResponse) => void
   onDeleteClick: (user: UserResponse) => void
+  currentUserEmail: string
+  t: Translations
 }
 
 function getInitials(firstName: string, lastName: string): string {
   return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase()
 }
 
-function formatLastLogin(dateStr: string | null): string {
+const ROLE_MAP: Record<string, 'roleAdmin' | 'roleUser'> = {
+  ADMIN: 'roleAdmin',
+  USER: 'roleUser',
+}
+
+function getRoleLabel(role: string, t: Translations): string {
+  const key = ROLE_MAP[role]
+  if (key) return t[key]
+  return role.charAt(0) + role.slice(1).toLowerCase()
+}
+
+function formatLastLogin(dateStr: string | null, t: Translations): string {
   if (!dateStr) return '—'
 
+  const lang = getLang()
+  const locale = lang === 'en' ? 'en-US' : 'tr-TR'
   const date = new Date(dateStr)
   const now = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const loginDay = new Date(date.getFullYear(), date.getMonth(), date.getDate())
   const diffDays = Math.floor((today.getTime() - loginDay.getTime()) / 86400000)
 
-  const time = date.toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' })
+  const time = date.toLocaleTimeString(locale, { hour: '2-digit', minute: '2-digit' })
 
-  if (diffDays === 0) return `Bugün, ${time}`
-  if (diffDays === 1) return `Dün, ${time}`
-  return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })
+  if (diffDays === 0) return `${t.adminToday}, ${time}`
+  if (diffDays === 1) return `${t.adminYesterday}, ${time}`
+  return date.toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 export default function UsersTable({
@@ -51,6 +67,8 @@ export default function UsersTable({
   onEditClick,
   onToggleStatus,
   onDeleteClick,
+  currentUserEmail,
+  t,
 }: UsersTableProps) {
   const users = data?.content ?? []
   const totalElements = data?.totalElements ?? 0
@@ -61,14 +79,16 @@ export default function UsersTable({
   const from = totalElements === 0 ? 0 : currentPage * pageSize + 1
   const to = Math.min((currentPage + 1) * pageSize, totalElements)
 
+  const headers = [t.adminColName, t.adminColEmail, t.adminColStatus, t.adminColLastLogin, t.adminColActions]
+
   return (
     <div className="bg-white rounded-[18px] shadow-[0_2px_4px_rgba(18,22,31,0.04),0_12px_26px_-14px_rgba(18,22,31,0.12)] border border-[rgba(231,226,214,0.7)] px-[22px] pt-[22px] pb-2">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="font-heading text-[16.5px] font-bold text-admin-ink">Kullanıcılar</h2>
+          <h2 className="font-heading text-[16.5px] font-bold text-admin-ink">{t.adminUsers}</h2>
           <div className="text-xs text-admin-text-faint font-medium mt-0.5">
-            {totalElements} kayıtlı kullanıcı
+            {t.adminRegisteredUsers(totalElements)}
           </div>
         </div>
         <button
@@ -78,7 +98,7 @@ export default function UsersTable({
           <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round" className="w-[13px] h-[13px] stroke-[#241a08] stroke-[2.5]">
             <path d="M12 5v14M5 12h14" />
           </svg>
-          Yeni Kullanıcı
+          {t.adminNewUser}
         </button>
       </div>
 
@@ -91,7 +111,7 @@ export default function UsersTable({
           </svg>
           <input
             type="text"
-            placeholder="İsim veya e-posta ara…"
+            placeholder={t.adminSearchPlaceholder}
             value={search}
             onChange={(e) => onSearchChange(e.target.value)}
             className="w-full bg-admin-ivory border border-admin-line rounded-[10px] py-[9px] pl-8 pr-3 text-[12.5px] font-ibm focus:outline-none focus:border-admin-gold-soft"
@@ -102,9 +122,9 @@ export default function UsersTable({
           onChange={(e) => onStatusFilterChange(e.target.value)}
           className="bg-admin-ivory border border-admin-line rounded-[10px] py-[9px] px-3 pr-7 text-[12.5px] font-medium text-admin-text appearance-none bg-[url('data:image/svg+xml;utf8,<svg%20xmlns=%22http://www.w3.org/2000/svg%22%20width=%2210%22%20height=%226%22%20viewBox=%220%200%2010%206%22><path%20d=%22M1%201l4%204%204-4%22%20stroke=%22%23767a86%22%20stroke-width=%221.4%22%20fill=%22none%22%20stroke-linecap=%22round%22%20stroke-linejoin=%22round%22/></svg>')] bg-no-repeat bg-[position:right_10px_center] cursor-pointer focus:outline-none"
         >
-          <option value="">Tüm Durumlar</option>
-          <option value="true">Aktif</option>
-          <option value="false">Pasif</option>
+          <option value="">{t.adminAllStatuses}</option>
+          <option value="true">{t.adminActive}</option>
+          <option value="false">{t.adminInactive}</option>
         </select>
       </div>
 
@@ -112,7 +132,7 @@ export default function UsersTable({
       <table className="w-full border-collapse">
         <thead>
           <tr>
-            {['Ad Soyad', 'E-posta', 'Durum', 'Son Giriş', 'İşlemler'].map((header) => (
+            {headers.map((header) => (
               <th
                 key={header}
                 className="text-left text-[10.5px] font-semibold tracking-[0.06em] uppercase text-admin-text-faint px-2.5 pb-[11px] border-b border-admin-line"
@@ -134,7 +154,7 @@ export default function UsersTable({
           ) : users.length === 0 ? (
             <tr>
               <td colSpan={5} className="py-8 text-center text-sm text-admin-text-faint">
-                Kullanıcı bulunamadı
+                {t.adminNoUsersFound}
               </td>
             </tr>
           ) : (
@@ -146,12 +166,28 @@ export default function UsersTable({
               >
                 <td className="py-3 px-2.5 border-b border-[#F0ECE1]">
                   <div className="flex items-center gap-2.5">
-                    <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-[#2A3247] to-admin-ink text-admin-gold-soft flex items-center justify-center font-heading font-bold text-[11.5px] shrink-0">
+                    <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-heading font-bold text-[11.5px] shrink-0 ${
+                      user.role === 'ADMIN'
+                        ? 'bg-gradient-to-br from-[#C99738] to-[#8f6620] text-[#241a08]'
+                        : 'bg-gradient-to-br from-[#2A3247] to-admin-ink text-admin-gold-soft'
+                    }`}>
                       {getInitials(user.firstName, user.lastName)}
                     </div>
-                    <span className="font-semibold text-admin-ink text-[13px]">
-                      {user.firstName} {user.lastName}
-                    </span>
+                    <div>
+                      <div className="font-semibold text-admin-ink text-[13px]">
+                        {user.firstName} {user.lastName}
+                        {user.email === currentUserEmail && (
+                          <span className="text-[10px] text-admin-gold font-medium ml-1">({t.adminYou})</span>
+                        )}
+                      </div>
+                      <span className={`inline-block text-[10px] font-semibold px-[7px] py-[1px] rounded-full mt-0.5 ${
+                        user.role === 'ADMIN'
+                          ? 'bg-[#C99738]/15 text-[#C99738]'
+                          : 'bg-admin-ivory text-admin-text-faint'
+                      }`}>
+                        {getRoleLabel(user.role, t)}
+                      </span>
+                    </div>
                   </div>
                 </td>
                 <td className="py-3 px-2.5 border-b border-[#F0ECE1] text-admin-text-mute text-[12.5px]">
@@ -161,24 +197,24 @@ export default function UsersTable({
                   {user.enabled ? (
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-[9px] py-1 rounded-full bg-admin-green-wash text-admin-green">
                       <span className="w-[5px] h-[5px] rounded-full bg-current" />
-                      Aktif
+                      {t.adminActive}
                     </span>
                   ) : (
                     <span className="inline-flex items-center gap-1.5 text-[11px] font-semibold px-[9px] py-1 rounded-full bg-admin-red-wash text-admin-red">
                       <span className="w-[5px] h-[5px] rounded-full bg-current" />
-                      Pasif
+                      {t.adminInactive}
                     </span>
                   )}
                 </td>
                 <td className="py-3 px-2.5 border-b border-[#F0ECE1] text-admin-text-mute text-xs">
-                  {formatLastLogin(user.lastLoginAt)}
+                  {formatLastLogin(user.lastLoginAt, t)}
                 </td>
                 <td className="py-3 px-2.5 border-b border-[#F0ECE1]">
                   <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                     {/* View */}
                     <button
                       onClick={() => onSelectUser(user)}
-                      title="Görüntüle"
+                      title={t.adminView}
                       className="w-7 h-7 rounded-lg flex items-center justify-center border border-admin-line bg-white hover:border-admin-gold-soft hover:bg-admin-gold-wash group transition"
                     >
                       <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round" className="w-[13px] h-[13px] stroke-admin-text-mute group-hover:stroke-admin-gold transition">
@@ -189,7 +225,7 @@ export default function UsersTable({
                     {/* Edit */}
                     <button
                       onClick={() => onEditClick(user)}
-                      title="Düzenle"
+                      title={t.adminEdit}
                       className="w-7 h-7 rounded-lg flex items-center justify-center border border-admin-line bg-white hover:border-admin-gold-soft hover:bg-admin-gold-wash group transition"
                     >
                       <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round" className="w-[13px] h-[13px] stroke-admin-text-mute group-hover:stroke-admin-gold transition">
@@ -200,7 +236,7 @@ export default function UsersTable({
                     {/* Toggle status */}
                     <button
                       onClick={() => onToggleStatus(user)}
-                      title={user.enabled ? 'Pasifleştir' : 'Aktifleştir'}
+                      title={user.enabled ? t.adminDeactivate : t.adminActivate}
                       className={`w-7 h-7 rounded-lg flex items-center justify-center border border-admin-line bg-white transition group ${
                         user.enabled
                           ? 'hover:border-[#e6b3ac] hover:bg-admin-red-wash'
@@ -221,7 +257,7 @@ export default function UsersTable({
                     {/* Delete */}
                     <button
                       onClick={() => onDeleteClick(user)}
-                      title="Sil"
+                      title={t.adminDelete}
                       className="w-7 h-7 rounded-lg flex items-center justify-center border border-admin-line bg-white hover:border-[#e6b3ac] hover:bg-admin-red-wash group transition"
                     >
                       <svg viewBox="0 0 24 24" fill="none" strokeLinecap="round" strokeLinejoin="round" className="w-[13px] h-[13px] stroke-admin-text-mute group-hover:stroke-admin-red transition">
@@ -240,8 +276,8 @@ export default function UsersTable({
       <div className="flex items-center justify-between py-3.5 px-1 text-xs text-admin-text-faint">
         <span>
           {totalElements > 0
-            ? `${totalElements} kullanıcıdan ${from}–${to} arası gösteriliyor`
-            : 'Kayıt yok'}
+            ? t.adminShowingRange(totalElements, from, to)
+            : t.adminNoRecords}
         </span>
         {totalPages > 1 && (
           <div className="flex items-center gap-1.5">
@@ -250,7 +286,7 @@ export default function UsersTable({
               onClick={() => onPageChange(currentPage - 1)}
               className="px-2.5 py-1 rounded-lg border border-admin-line bg-white text-admin-text-mute hover:bg-admin-gold-wash disabled:opacity-40 disabled:cursor-not-allowed transition text-[11px] font-medium"
             >
-              Önceki
+              {t.adminPrev}
             </button>
             <span className="px-2 text-admin-text-mute font-medium">
               {currentPage + 1} / {totalPages}
@@ -260,7 +296,7 @@ export default function UsersTable({
               onClick={() => onPageChange(currentPage + 1)}
               className="px-2.5 py-1 rounded-lg border border-admin-line bg-white text-admin-text-mute hover:bg-admin-gold-wash disabled:opacity-40 disabled:cursor-not-allowed transition text-[11px] font-medium"
             >
-              Sonraki
+              {t.adminNext}
             </button>
           </div>
         )}

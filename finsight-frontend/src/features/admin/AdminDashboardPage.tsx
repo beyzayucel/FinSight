@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { getAccessToken } from '@/lib/authStore'
 import { getApiError } from '@/lib/api/apiError'
+import { getTranslations } from '@/i18n/translations'
 import {
   getUsers,
   getUserStats,
@@ -9,6 +10,7 @@ import {
   changeUserStatus,
   deleteUser,
   resendVerification,
+  getCurrentUser,
   changePassword,
   sendPasswordResetLink,
 } from './adminApi'
@@ -29,8 +31,12 @@ import EditUserModal from './components/EditUserModal'
 import ConfirmModal from './components/ConfirmModal'
 import ChangePasswordModal from './components/ChangePasswordModal'
 
-function parseCurrentUser(token: string | null): { name: string; initials: string; email: string } {
-  if (!token) return { name: 'Yönetici', initials: 'YÖ', email: '' }
+function parseCurrentUser(
+  token: string | null,
+  fallbackName: string,
+  fallbackInitials: string,
+): { name: string; initials: string; email: string } {
+  if (!token) return { name: fallbackName, initials: fallbackInitials, email: '' }
   try {
     const payload = JSON.parse(atob(token.split('.')[1]))
     const email: string = payload.sub ?? ''
@@ -41,7 +47,7 @@ function parseCurrentUser(token: string | null): { name: string; initials: strin
       : name.substring(0, 2).toUpperCase()
     return { name, initials, email }
   } catch {
-    return { name: 'Yönetici', initials: 'YÖ', email: '' }
+    return { name: fallbackName, initials: fallbackInitials, email: '' }
   }
 }
 
@@ -64,6 +70,12 @@ const CONFIRM_INITIAL: ConfirmState = {
 const PAGE_SIZE = 20
 
 export default function AdminDashboardPage() {
+  const t = getTranslations()
+
+  useEffect(() => {
+    document.title = 'Finsight · Management'
+  }, [])
+
   // ── State ──
   const [stats, setStats] = useState<UserStatsResponse | null>(null)
   const [statsLoading, setStatsLoading] = useState(true)
@@ -86,7 +98,8 @@ export default function AdminDashboardPage() {
   const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null)
 
   const token = getAccessToken()
-  const { name: currentUserName, initials: currentUserInitials, email: currentUserEmail } = parseCurrentUser(token)
+  const { name: currentUserName, initials: currentUserInitials, email: currentUserEmail } =
+    parseCurrentUser(token, t.adminFallbackName, t.adminFallbackInitials)
 
   // ── Toast auto-hide ──
   useEffect(() => {
@@ -135,6 +148,13 @@ export default function AdminDashboardPage() {
     loadUsers()
   }, [loadUsers])
 
+  // İlk yüklemede admin profilini göster
+  useEffect(() => {
+    getCurrentUser()
+      .then((res) => setSelectedUser(res.data.data))
+      .catch(() => {})
+  }, [])
+
   // Debounce search
   const [searchInput, setSearchInput] = useState('')
   useEffect(() => {
@@ -167,10 +187,11 @@ export default function AdminDashboardPage() {
 
   function handleToggleStatus(user: UserResponse) {
     const isDisabling = user.enabled
+    const fullName = `${user.firstName} ${user.lastName}`
     setConfirm({
       open: true,
-      title: isDisabling ? 'Kullanıcıyı Pasifleştir' : 'Kullanıcıyı Aktifleştir',
-      message: `${user.firstName} ${user.lastName} ${isDisabling ? 'pasifleştirilsin' : 'aktifleştirilsin'} mi?`,
+      title: isDisabling ? t.adminConfirmDeactivateTitle : t.adminConfirmActivateTitle,
+      message: isDisabling ? t.adminConfirmDeactivateMsg(fullName) : t.adminConfirmActivateMsg(fullName),
       variant: isDisabling ? 'danger' : 'success',
       onConfirm: async () => {
         setConfirm(CONFIRM_INITIAL)
@@ -180,7 +201,7 @@ export default function AdminDashboardPage() {
           if (selectedUser?.id === user.id) {
             setSelectedUser({ ...user, enabled: !user.enabled })
           }
-          setToast({ message: `Kullanıcı ${isDisabling ? 'pasifleştirildi' : 'aktifleştirildi'}`, variant: 'success' })
+          setToast({ message: isDisabling ? t.adminToastDeactivated : t.adminToastActivated, variant: 'success' })
         } catch (err) {
           const apiErr = getApiError(err)
           setToast({ message: apiErr.message, variant: 'error' })
@@ -190,10 +211,11 @@ export default function AdminDashboardPage() {
   }
 
   function handleDelete(user: UserResponse) {
+    const fullName = `${user.firstName} ${user.lastName}`
     setConfirm({
       open: true,
-      title: 'Kullanıcıyı Sil',
-      message: `${user.firstName} ${user.lastName} silinsin mi? Bu işlem geri alınamaz.`,
+      title: t.adminConfirmDeleteTitle,
+      message: t.adminConfirmDeleteMsg(fullName),
       variant: 'danger',
       onConfirm: async () => {
         setConfirm(CONFIRM_INITIAL)
@@ -203,7 +225,7 @@ export default function AdminDashboardPage() {
           if (selectedUser?.id === user.id) {
             setSelectedUser(null)
           }
-          setToast({ message: 'Kullanıcı silindi', variant: 'success' })
+          setToast({ message: t.adminToastDeleted, variant: 'success' })
         } catch (err) {
           const apiErr = getApiError(err)
           setToast({ message: apiErr.message, variant: 'error' })
@@ -213,16 +235,17 @@ export default function AdminDashboardPage() {
   }
 
   function handleResendVerification(user: UserResponse) {
+    const fullName = `${user.firstName} ${user.lastName}`
     setConfirm({
       open: true,
-      title: 'Doğrulama E-postası Gönder',
-      message: `${user.firstName} ${user.lastName} için doğrulama e-postası tekrar gönderilsin mi?`,
+      title: t.adminConfirmVerificationTitle,
+      message: t.adminConfirmVerificationMsg(fullName),
       variant: 'success',
       onConfirm: async () => {
         setConfirm(CONFIRM_INITIAL)
         try {
           await resendVerification(user.id)
-          setToast({ message: 'Doğrulama e-postası gönderildi', variant: 'success' })
+          setToast({ message: t.adminToastVerificationSent, variant: 'success' })
         } catch (err) {
           const apiErr = getApiError(err)
           setToast({ message: apiErr.message, variant: 'error' })
@@ -233,20 +256,21 @@ export default function AdminDashboardPage() {
 
   async function handleChangePassword(data: ChangePasswordRequest) {
     await changePassword(data)
-    setToast({ message: 'Şifre başarıyla değiştirildi', variant: 'success' })
+    setToast({ message: t.adminToastPasswordChanged, variant: 'success' })
   }
 
   function handleSendResetLink(user: UserResponse) {
+    const fullName = `${user.firstName} ${user.lastName}`
     setConfirm({
       open: true,
-      title: 'Şifre Sıfırlama Linki Gönder',
-      message: `${user.firstName} ${user.lastName} (${user.email}) adresine şifre sıfırlama linki gönderilsin mi?`,
+      title: t.adminConfirmResetLinkTitle,
+      message: t.adminConfirmResetLinkMsg(fullName, user.email),
       variant: 'success',
       onConfirm: async () => {
         setConfirm(CONFIRM_INITIAL)
         try {
           await sendPasswordResetLink(user.email)
-          setToast({ message: 'Şifre sıfırlama linki gönderildi', variant: 'success' })
+          setToast({ message: t.adminToastResetLinkSent, variant: 'success' })
         } catch (err) {
           const apiErr = getApiError(err)
           setToast({ message: apiErr.message, variant: 'error' })
@@ -256,17 +280,11 @@ export default function AdminDashboardPage() {
   }
 
   async function handleProfileClick() {
-    if (!currentUserEmail) return
     try {
-      const res = await getUsers({ search: currentUserEmail, size: 1 })
-      const match = res.data.data.content.find((u) => u.email === currentUserEmail)
-      if (match) {
-        setSelectedUser(match)
-      } else {
-        setToast({ message: 'Profil bilgisi bulunamadı', variant: 'error' })
-      }
+      const res = await getCurrentUser()
+      setSelectedUser(res.data.data)
     } catch {
-      setToast({ message: 'Profil yüklenirken bir hata oluştu', variant: 'error' })
+      setToast({ message: t.adminProfileLoadError, variant: 'error' })
     }
   }
 
@@ -284,9 +302,10 @@ export default function AdminDashboardPage() {
       currentUserName={currentUserName}
       currentUserInitials={currentUserInitials}
       onProfileClick={handleProfileClick}
+      t={t}
     >
       {/* KPI Kartları */}
-      <KpiCards stats={stats} loading={statsLoading} />
+      <KpiCards stats={stats} loading={statsLoading} t={t} />
 
       {/* Tablo + Detay paneli */}
       <div className="grid grid-cols-[1fr_320px] gap-5 items-start">
@@ -304,6 +323,8 @@ export default function AdminDashboardPage() {
           onEditClick={setEditUser}
           onToggleStatus={handleToggleStatus}
           onDeleteClick={handleDelete}
+          currentUserEmail={currentUserEmail}
+          t={t}
         />
 
         <UserDetailPanel
@@ -313,6 +334,7 @@ export default function AdminDashboardPage() {
           onResendVerification={handleResendVerification}
           onChangePassword={() => setChangePasswordOpen(true)}
           onSendResetLink={handleSendResetLink}
+          t={t}
         />
       </div>
 
@@ -321,22 +343,27 @@ export default function AdminDashboardPage() {
         open={createModalOpen}
         onClose={() => setCreateModalOpen(false)}
         onSubmit={handleCreate}
+        t={t}
       />
       <EditUserModal
         user={editUser}
         onClose={() => setEditUser(null)}
         onSubmit={handleUpdate}
+        t={t}
       />
       <ChangePasswordModal
         open={changePasswordOpen}
         onClose={() => setChangePasswordOpen(false)}
         onSubmit={handleChangePassword}
+        t={t}
       />
       <ConfirmModal
         open={confirm.open}
         title={confirm.title}
         message={confirm.message}
         variant={confirm.variant}
+        confirmLabel={t.adminConfirmYes}
+        cancelLabel={t.adminConfirmNo}
         onConfirm={confirm.onConfirm}
         onCancel={() => setConfirm(CONFIRM_INITIAL)}
       />

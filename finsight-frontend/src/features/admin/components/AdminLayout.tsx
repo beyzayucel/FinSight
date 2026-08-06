@@ -2,12 +2,14 @@ import type { ReactNode } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { clearTokens } from '@/lib/authStore'
 import { ROUTES } from '@/lib/routes'
+import type { Translations } from '@/i18n/translations'
 
 type AdminLayoutProps = {
   children: ReactNode
   currentUserName?: string
   currentUserInitials?: string
   onProfileClick?: () => void
+  t: Translations
 }
 
 export default function AdminLayout({
@@ -15,6 +17,7 @@ export default function AdminLayout({
   currentUserName = 'Admin',
   currentUserInitials = 'AD',
   onProfileClick,
+  t,
 }: AdminLayoutProps) {
   const navigate = useNavigate()
 
@@ -29,14 +32,14 @@ export default function AdminLayout({
       <aside className="bg-admin-ink text-[#EDEBE4] px-4 py-[26px] flex flex-col sticky top-0 h-screen">
         {/* Brand */}
         <div className="flex items-center gap-2.5 px-2 pb-[22px] mb-3 border-b border-admin-ink-line">
-          <div className="w-8 h-8 rounded-[9px] bg-gradient-to-br from-[#C99738] to-[#8f6620] flex items-center justify-center shrink-0 shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_4px_10px_rgba(185,134,43,0.35)]">
-            <svg viewBox="0 0 24 24" fill="none" className="w-[17px] h-[17px]">
-              <path d="M3 17l5-6 4 4 9-10" stroke="#12161F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
+          <img
+            src="/sidebar-logo.png"
+            alt="FI Logo"
+            className="w-8 h-8 rounded-[9px] shadow-[0_4px_10px_rgba(185,134,43,0.35)] object-cover shrink-0"
+          />
           <div>
             <div className="font-heading text-[15px] font-bold text-[#F6F4EF]">FINSIGHT</div>
-            <div className="text-[10px] font-semibold text-admin-gold-soft tracking-[0.12em] uppercase mt-0.5">Yönetim</div>
+            <div className="text-[10px] font-semibold text-admin-gold-soft tracking-[0.12em] uppercase mt-0.5">{t.adminBrand}</div>
           </div>
         </div>
 
@@ -52,7 +55,7 @@ export default function AdminLayout({
               <rect x="14" y="12" width="7" height="9" rx="1.5" />
               <rect x="3" y="16" width="7" height="5" rx="1.5" />
             </svg>
-            Panel
+            {t.adminPanel}
           </a>
           <a
             href="#"
@@ -64,7 +67,7 @@ export default function AdminLayout({
               <path d="M17 8.2a3.2 3.2 0 110 6.4" />
               <path d="M20 13.9c2 .5 3.4 2.4 3.4 4.6" />
             </svg>
-            Kullanıcı Yönetimi
+            {t.adminUserManagement}
           </a>
         </nav>
 
@@ -81,7 +84,7 @@ export default function AdminLayout({
               <path d="M16 17l5-5-5-5" />
               <path d="M21 12H9" />
             </svg>
-            Çıkış Yap
+            {t.adminLogout}
           </button>
         </div>
       </aside>
@@ -91,8 +94,8 @@ export default function AdminLayout({
         {/* Topbar */}
         <div className="flex items-center gap-[18px] px-8 py-5 bg-admin-ivory/90 backdrop-blur-sm border-b border-admin-line sticky top-0 z-20">
           <div>
-            <h1 className="font-heading text-[19px] font-bold text-admin-ink whitespace-nowrap">Yönetim Paneli</h1>
-            <div className="text-xs text-admin-text-faint mt-0.5 font-medium">Kullanıcı Yönetimi</div>
+            <h1 className="font-heading text-[19px] font-bold text-admin-ink whitespace-nowrap">{t.adminDashboardTitle}</h1>
+            <div className="text-xs text-admin-text-faint mt-0.5 font-medium">{t.adminUserManagement}</div>
           </div>
 
           {/* Topbar actions */}
@@ -100,14 +103,14 @@ export default function AdminLayout({
             <button
               onClick={onProfileClick}
               className="flex items-center gap-[9px] py-[5px] pl-[5px] pr-[11px] rounded-xl bg-white border border-admin-line shadow-sm hover:border-admin-gold-soft hover:bg-admin-gold-wash transition cursor-pointer"
-              title="Profilim"
+              title={t.adminMyProfile}
             >
               <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-admin-gold to-[#8f6620] text-[#241a08] flex items-center justify-center font-heading font-bold text-[11.5px]">
                 {currentUserInitials}
               </div>
               <div className="text-left">
                 <div className="text-[12.5px] font-semibold text-admin-ink">{currentUserName}</div>
-                <div className="text-[10.5px] text-admin-text-faint font-medium">Yönetici</div>
+                <div className="text-[10.5px] text-admin-text-faint font-medium">{t.adminRole}</div>
               </div>
             </button>
           </div>

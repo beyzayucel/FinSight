@@ -71,9 +71,63 @@ export function isOtpExpired() {
   return Date.now() - Number(ts) > OTP_TTL_MS
 }
 
+export function getPostLoginRoute(): string {
+  const token = getAccessToken()
+  if (!token) return '/dashboard'
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    const roles: string[] = payload.roles ?? []
+    return roles.includes('ROLE_ADMIN') ? '/admin' : '/dashboard'
+  } catch {
+    return '/dashboard'
+  }
+}
+
 export function clearOtpSession() {
   otpPending = false
   sessionStorage.removeItem(OTP_PENDING_KEY)
   sessionStorage.removeItem(OTP_IDENTIFIER_KEY)
   sessionStorage.removeItem(OTP_TIMESTAMP_KEY)
+}
+
+export function isTokenExpired(token: string): boolean {
+  try {
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    return payload.exp * 1000 < Date.now() + 5000
+  } catch {
+    return true
+  }
+}
+
+/**
+ * Access token expire olduysa refresh token ile yenile.
+ * Başarılı → true, başarısız → false (clearTokens çağırır).
+ */
+export async function tryRefreshIfExpired(): Promise<boolean> {
+  const token = getAccessToken()
+  if (!token) return false
+  if (!isTokenExpired(token)) return true // hâlâ geçerli
+
+  const rt = getRefreshToken()
+  if (!rt) {
+    clearTokens()
+    return false
+  }
+
+  try {
+    const baseURL = import.meta.env.VITE_API_BASE_URL
+    const res = await fetch(`${baseURL}/auth/refresh`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refreshToken: rt }),
+    })
+    if (!res.ok) throw new Error('refresh failed')
+    const json = await res.json()
+    const data = json.data
+    setTokens(data.accessToken, data.refreshToken)
+    return true
+  } catch {
+    clearTokens()
+    return false
+  }
 }

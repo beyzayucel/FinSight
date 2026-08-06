@@ -1,13 +1,16 @@
 import { useState } from 'react'
+import { getApiError } from '@/lib/api/apiError'
 import type { ChangePasswordRequest } from '../adminApi'
+import type { Translations } from '@/i18n/translations'
 
 type ChangePasswordModalProps = {
   open: boolean
   onClose: () => void
   onSubmit: (data: ChangePasswordRequest) => Promise<void>
+  t: Translations
 }
 
-export default function ChangePasswordModal({ open, onClose, onSubmit }: ChangePasswordModalProps) {
+export default function ChangePasswordModal({ open, onClose, onSubmit, t }: ChangePasswordModalProps) {
   const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirmPassword: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -23,12 +26,12 @@ export default function ChangePasswordModal({ open, onClose, onSubmit }: ChangeP
     setError('')
 
     if (form.newPassword !== form.confirmPassword) {
-      setError('Yeni şifreler eşleşmiyor')
+      setError(t.adminPasswordMismatch)
       return
     }
 
     if (form.newPassword.length < 8) {
-      setError('Yeni şifre en az 8 karakter olmalıdır')
+      setError(t.adminPasswordTooShort)
       return
     }
 
@@ -37,8 +40,8 @@ export default function ChangePasswordModal({ open, onClose, onSubmit }: ChangeP
       await onSubmit({ currentPassword: form.currentPassword, newPassword: form.newPassword })
       setForm({ currentPassword: '', newPassword: '', confirmPassword: '' })
       onClose()
-    } catch (err: any) {
-      setError(err?.response?.data?.error?.message || 'Bir hata oluştu')
+    } catch (err) {
+      setError(getApiError(err).message)
     } finally {
       setLoading(false)
     }
@@ -54,27 +57,27 @@ export default function ChangePasswordModal({ open, onClose, onSubmit }: ChangeP
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-admin-ink/40 backdrop-blur-sm" onClick={handleClose} />
       <div className="relative bg-white rounded-[18px] shadow-2xl border border-admin-line w-full max-w-md mx-4 p-6">
-        <h3 className="font-heading text-lg font-bold text-admin-ink mb-1">Şifre Değiştir</h3>
-        <p className="text-xs text-admin-text-mute mb-5">Mevcut şifrenizi girerek yeni bir şifre belirleyin</p>
+        <h3 className="font-heading text-lg font-bold text-admin-ink mb-1">{t.adminChangePasswordTitle}</h3>
+        <p className="text-xs text-admin-text-mute mb-5">{t.adminChangePasswordSubtitle}</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <PasswordField
-            label="Mevcut Şifre"
+            label={t.adminCurrentPassword}
             value={form.currentPassword}
             onChange={(v) => handleChange('currentPassword', v)}
-            placeholder="Mevcut şifreniz"
+            placeholder={t.adminCurrentPasswordPlaceholder}
           />
           <PasswordField
-            label="Yeni Şifre"
+            label={t.adminNewPassword}
             value={form.newPassword}
             onChange={(v) => handleChange('newPassword', v)}
-            placeholder="En az 8 karakter"
+            placeholder={t.adminNewPasswordPlaceholder}
           />
           <PasswordField
-            label="Yeni Şifre (Tekrar)"
+            label={t.adminNewPasswordConfirm}
             value={form.confirmPassword}
             onChange={(v) => handleChange('confirmPassword', v)}
-            placeholder="Yeni şifreyi tekrar girin"
+            placeholder={t.adminNewPasswordConfirmPlaceholder}
           />
 
           {error && (
@@ -87,14 +90,14 @@ export default function ChangePasswordModal({ open, onClose, onSubmit }: ChangeP
               onClick={handleClose}
               className="flex-1 py-2.5 rounded-[11px] border border-admin-line text-sm font-semibold text-admin-text-mute hover:bg-admin-ivory transition"
             >
-              İptal
+              {t.adminCancel}
             </button>
             <button
               type="submit"
               disabled={loading}
               className="flex-1 py-2.5 rounded-[11px] bg-gradient-to-br from-[#C99738] to-admin-gold text-[#241a08] text-sm font-bold shadow-[0_8px_18px_-6px_rgba(185,134,43,0.5)] hover:brightness-105 disabled:opacity-50 transition"
             >
-              {loading ? 'Değiştiriliyor…' : 'Şifreyi Değiştir'}
+              {loading ? t.adminChangingPassword : t.adminChangePassword}
             </button>
           </div>
         </form>

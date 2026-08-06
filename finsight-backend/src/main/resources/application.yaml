@@ -152,6 +152,10 @@ admin:
   phone-number: ${ADMIN_PHONE_NUMBER}
   password: ${ADMIN_PASSWORD}
 
+fund:
+  code: ${FUND_CODE:TIE}
+  periods: ${FUND_PERIODS:P10D,P20D,P30D,P90D}
+
 infina:
   api:
     base-url: ${INFINA_API_URL}

@@ -42,6 +42,8 @@ public final class ApiEndpoints {
         public static final String BASE = API_V1 + "/funds";
         public static final String BY_ID = "/{id}";
         public static final String MANUAL_SCENARIO = "/scenarios/apply";
+        public static final String SYNC = "/sync";
+        public static final String DASHBOARD = "/{fundCode}/dashboard";
     }
 
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -52,11 +54,26 @@ public final class ApiEndpoints {
     }
 
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
-    public static final class StressTest {
-        public static final String BASE = API_V1 + "/stress-tests";
-        public static final String RUN = "/run";
-        public static final String LATEST = "/latest";
+    public static final class FundPeriodMetrics {
+        public static final String BASE = API_V1 + "/fund-period-metrics";
+        public static final String BY_ID = "/{id}";
+        public static final String LATEST_BY_FUND = "/funds/{fundCode}/latest";
     }
+
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static final class FundStockAllocations {
+        public static final String BASE = API_V1 + "/fund-stock-allocations";
+        public static final String BY_ID = "/{id}";
+        public static final String BY_FUND_AND_PERIOD = "/funds/{fundCode}/periods/{period}";
+        public static final String BREAKDOWN_BY_FUND = "/funds/{fundCode}/breakdown";
+    }
+
+	@NoArgsConstructor(access = AccessLevel.PRIVATE)
+	public static final class StressTest {
+		public static final String BASE = API_V1 + "/stress-tests";
+		public static final String RUN = "/run";
+		public static final String LATEST = "/latest";
+	}
 
     private static final String[] PUBLIC_ENDPOINTS = {
             Auth.BASE + Auth.LOGIN,

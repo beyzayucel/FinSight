@@ -4,5 +4,8 @@ import java.math.BigDecimal;
 
 public record FundPortfolioAllocationResponse (
 		String assetCode,
-		BigDecimal ratio
+		BigDecimal ratio,
+		String period,
+		String assetType,
+		Long disclosureId
 ){}

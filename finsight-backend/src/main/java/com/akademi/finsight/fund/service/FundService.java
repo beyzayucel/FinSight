@@ -13,6 +13,8 @@ public interface FundService {
 
     FundResponse getById(UUID id);
 
+    FundResponse getByCode(String code);
+
     Page<FundResponse> getAll(Pageable pageable);
 
     FundResponse update(UUID id, FundRequest request);

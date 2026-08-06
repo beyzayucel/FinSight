@@ -52,7 +52,7 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
         return stressTestResultMapper.toInferenceResponse(result);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public Optional<StressTestInferenceResponseDto> getLatestSimulationResult(String userEmail, UUID fundId){
         User user = findUser(userEmail);

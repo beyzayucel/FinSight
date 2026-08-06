@@ -39,9 +39,15 @@ public class OnnxModelRegistry {
         CompletableFuture<Void> faizTask = CompletableFuture.runAsync(() -> safeLoad(FAIZ_STRESS), modelLoaderExecutor);
         CompletableFuture<Void> hisseTask = CompletableFuture.runAsync(() -> safeLoad(HISSE_STRESS), modelLoaderExecutor);
 
-        CompletableFuture.allOf(faizTask, hisseTask).join();
+        CompletableFuture.allOf(faizTask, hisseTask)
+                .exceptionally(ex -> {
+                    log.warn("Some ONNX models failed to load on startup. System will run in degraded mode.");
+                    return null;
+                })
+                .join();
 
-        log.info("Model initialization completed. Status: {}", modelAvailability);
+        log.info("Model initialization completed. Availability status: {}", modelAvailability);
+
     }
 
 
@@ -68,7 +74,8 @@ public class OnnxModelRegistry {
             log.info("Model loaded successfully: {}", key);
         }catch (Exception e){
             modelAvailability.put(key, false);
-            log.error("CRITICAL: Failed to load model: {} - {}", key, e.getMessage(), e);
+            //log.error("CRITICAL: Failed to load model: {} - {}", key, e.getMessage(), e);
+            log.warn("ONNX Model [{}] could not be loaded (File might be missing). Feature disabled. Reason: {}", key, e.getMessage());
         }
     }
 

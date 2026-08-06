@@ -25,12 +25,12 @@ public class StressTestController extends BaseController implements StressTestAp
 
     @Override
     public ResponseEntity<ApiStandardResponse<StressTestInferenceResponseDto>> runSimulation(
-            @AuthenticationPrincipal UserDetails userDetails,
+            @AuthenticationPrincipal String email,
             UUID fundId,
             SimulationType simulationType) {
 
         StressTestInferenceResponseDto response = stressTestSimulationService.runSimulation(
-                userDetails.getUsername(),
+                email,
                 fundId,
                 simulationType
         );

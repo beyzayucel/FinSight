@@ -39,7 +39,7 @@ public interface StressTestApi {
     })
     @PostMapping(ApiEndpoints.StressTest.RUN)
     ResponseEntity<ApiStandardResponse<StressTestInferenceResponseDto>> runSimulation(
-            @Parameter(hidden = true) @AuthenticationPrincipal UserDetails userDetails,
+            @Parameter(hidden = true) @AuthenticationPrincipal String email,
             @Parameter(description = "Fund UUID", example = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", required = true)
             @RequestParam("fundId") @NotNull UUID fundId,
             @Parameter(description = "Simulation Scenario Type", example = "EQUITY_SHOCK", required = true)

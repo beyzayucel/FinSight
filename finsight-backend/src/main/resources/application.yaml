@@ -116,6 +116,12 @@ app:
     url: ${PASSWORD_RESET_BASE_URL}
     expire-duration: ${PASSWORD_RESET_EXPIRE_DURATION}
 
+  stress-test:
+    onnx:
+      session:
+        intra-op-num-threads: ${INTRA_OP_NUM_THREADS}
+        inter-op-num-threads: ${INTER_OP_NUM_THREADS}
+
 jwt:
   secret: ${JWT_SECRET}
   access-token-expiry: ${JWT_ACCESS_TOKEN_EXPIRY}

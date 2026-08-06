@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import DashboardLayout from './components/DashboardLayout'
 import ManualScenarioTab from './components/ManualScenarioTab'
+import PerformanceComparisonPage from './pages/PerformanceComparisonPage'
 import { getActiveFund } from './dashboardApi'
 import type { Fund } from './dashboardApi'
 
@@ -33,14 +34,11 @@ export default function DashboardPage() {
     loadData()
   }, [])
 
-  // Refresh recommendation state after decision
-  function handleDecisionSubmitted() {
-    loadData()
-  }
-
-  // Refresh state after applying manual scenario
+  // Manuel senaryo uygulanınca veriyi tazele ve sonucu görmesi için
+  // kullanıcıyı Performans Karşılaştırması'na (menü 3) geçir.
   function handleScenarioApplied() {
     loadData()
+    setActiveMenu(3)
   }
 
   // Render placeholder content for other sidebar pages
@@ -107,9 +105,11 @@ export default function DashboardPage() {
           'TIE İş Portföy fonunun genel performans, getiri grafikleri ve varlık dağılım detayları.'
         )
       case 3:
-        return renderPlaceholder(
-          'Performans Karşılaştırması',
-          'Seçilen fonun diğer yatırım araçları ve endekslerle karşılaştırmalı getiri grafikleri.'
+        return (
+          <PerformanceComparisonPage
+            onGoToManualScenario={() => setActiveMenu(2)}
+            onGoToStressTest={() => setActiveMenu(4)}
+          />
         )
       case 4:
         return renderPlaceholder(

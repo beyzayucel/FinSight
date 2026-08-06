@@ -9,8 +9,10 @@ import com.akademi.finsight.stresstest.exception.StressTestException;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
+
 
 import java.io.InputStream;
 import java.util.Map;
@@ -22,6 +24,7 @@ import static com.akademi.finsight.stresstest.constant.OnnxModelConstants.*;
 @Slf4j
 @Getter
 @Component
+@RequiredArgsConstructor
 public class OnnxModelRegistry {
 
     private OrtEnvironment env;
@@ -29,9 +32,12 @@ public class OnnxModelRegistry {
     private final Map<String,OrtSession> sessions = new ConcurrentHashMap<>();
     private final Map<String,Boolean> modelAvailability = new ConcurrentHashMap<>();
 
+    private final OnnxProperties onnxProperties;
+
     private final ExecutorService modelLoaderExecutor = Executors.newFixedThreadPool(2);
 
-     @PostConstruct
+
+    // @PostConstruct // model çıktığı zaman kullanılacak
     public void init(){
         this.env = OrtEnvironment.getEnvironment();
         this.sessionOptions = buildSessionOptions();
@@ -55,8 +61,8 @@ public class OnnxModelRegistry {
         try {
             OrtSession.SessionOptions options = new OrtSession.SessionOptions();
 
-            options.setIntraOpNumThreads(2);
-            options.setInterOpNumThreads(1);
+            options.setIntraOpNumThreads(onnxProperties.getIntraOpNumThreads());
+            options.setInterOpNumThreads(onnxProperties.getInterOpNumThreads());
 
             options.setOptimizationLevel(OrtSession.SessionOptions.OptLevel.ALL_OPT);
 
@@ -68,21 +74,35 @@ public class OnnxModelRegistry {
     }
 
     private void safeLoad(String key) {
-        try{
+        try {
             loadModel(key);
             modelAvailability.put(key, true);
-            log.info("Model loaded successfully: {}", key);
-        }catch (Exception e){
+            log.info("ONNX Model [{}] loaded successfully.", key);
+
+        } catch (OrtException e) {
             modelAvailability.put(key, false);
-            //log.error("CRITICAL: Failed to load model: {} - {}", key, e.getMessage(), e);
-            log.warn("ONNX Model [{}] could not be loaded (File might be missing). Feature disabled. Reason: {}", key, e.getMessage());
+            log.error("ONNX Engine Error: Failed to initialize C++ session for model [{}]. Reason: {}",
+                    key, e.getMessage(), e);
+
+        } catch (IllegalArgumentException e) {
+            modelAvailability.put(key, false);
+            log.warn("ONNX Model [{}] file is missing or path is invalid. Feature disabled. Reason: {}",
+                    key, e.getMessage());
+
+        } catch (StressTestException e) { //
+            modelAvailability.put(key, false);
+            log.error("Domain Error during loading ONNX model [{}]: Code: {}, Message: {}",
+                    key, e.getCode(), e.getMessage());
+
+        } catch (Exception e) {
+            modelAvailability.put(key, false);
+            log.error("Unexpected error occurred while loading ONNX model [{}]: {}", key, e.getMessage(), e);
         }
     }
 
     private void loadModel(String key) throws Exception {
         String resourcePath = MODEL_PATHS.get(key);
 
-        // Bu durum kabul edilebilir değil bu kısımı kurgula
         if (resourcePath == null){
             log.error("CRITICAL: Invalid model key specified. Key [{}] is not defined in MODEL_PATHS mapping.", key);
             throw new StressTestException(StressTestErrorType.INVALID_MODEL_KEY);

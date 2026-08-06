@@ -8,6 +8,7 @@ import OtpPage from '@/features/auth/OtpPage'
 import ChangePasswordPage from '@/features/auth/ChangePasswordPage'
 import VerifyEmailPage from '@/features/auth/VerifyEmailPage'
 import DashboardPage from '@/features/dashboard/DashboardPage'
+import { DecisionProvider } from '@/features/dashboard/context/DecisionContext'
 import AdminRoute from '@/components/AdminRoute'
 import AdminDashboardPage from '@/features/admin/AdminDashboardPage'
 
@@ -25,7 +26,14 @@ export default function App() {
         {/* Protected — token yoksa login'e atar */}
         <Route element={<ProtectedRoute />}>
           <Route path={ROUTES.CHANGE_PASSWORD} element={<ChangePasswordPage />} />
-          <Route path={ROUTES.DASHBOARD} element={<DashboardPage />} />
+          <Route
+            path={ROUTES.DASHBOARD}
+            element={
+              <DecisionProvider>
+                <DashboardPage />
+              </DecisionProvider>
+            }
+          />
         </Route>
 
         {/* Admin — token + ROLE_ADMIN yoksa redirect */}

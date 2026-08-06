@@ -168,6 +168,37 @@ export const translations = {
     adminConfirmResetLinkMsg: (name: string, email: string) => `${name} (${email}) adresine şifre sıfırlama linki gönderilsin mi?`,
     adminToastResetLinkSent: 'Şifre sıfırlama linki gönderildi',
     adminProfileLoadError: 'Profil yüklenirken bir hata oluştu',
+    // Performans Karşılaştırması sayfası
+    navAnalysisWindowOption: (days: number) => `Son ${days} İşlem Günü`,
+    fundInfoLoadingText: 'Fon verileri yükleniyor...',
+    fundInfoErrorTitle: 'Fon verisi alınamadı',
+    pcTitle: 'Performans Karşılaştırması',
+    pcDescription:
+      'Aynı dönemde üç yaklaşım yan yana: Mevcut Portföy (piyasa hareketleriyle hedeften bir miktar sapmış güncel ağırlıklar), Simülasyon Portföyü (kararınız uygulansaydı) ve Benchmark (fonun stratejik hedef ağırlığı — sabit tutulur, sapmaz).',
+    pcLockedTitle: 'Ekran kilitli',
+    pcLockedMessage:
+      'Önce Manuel Senaryo sekmesinde bir dağılım uygulayın, sonra karşılaştırmayı görüntüleyin.',
+    pcLockedGoToDecision: "Manuel Senaryo'ya git",
+    pcChartTitle: 'Kümülatif Getiri',
+    pcLegendMevcut: 'Mevcut Portföy',
+    pcLegendSimulasyon: 'Simülasyon Portföyü',
+    pcLegendBenchmark: 'Benchmark',
+    pcPeriodLabel: (today: string, days: number, source: string, status: string) =>
+      `Bugün: ${today} · Son ${days} işlem günü · Kaynak: ${source} (${status})`,
+    pcSourceAi: 'AI Önerisi',
+    pcSourceManual: 'Manuel Senaryo',
+    pcStatusAccepted: 'Kabul Edildi',
+    pcStatusRejected: 'Reddedildi',
+    pcSummaryTitle: 'Performans Özeti',
+    pcSummarySubtitle: 'Aynı başlangıç tutarı (₺1.000.000), aynı dönem, aynı hesaplama yöntemi',
+    pcMetricHeader: 'METRİK',
+    pcMetricCurrentValue: 'Güncel Değer',
+    pcMetricTotalReturn: 'Toplam Getiri',
+    pcMetricMaxDrawdown: 'Maksimum Düşüş',
+    pcMetricDailyVolatility: 'Günlük Oynaklık',
+    pcFootnote:
+      'Grafikteki getiriler prototip amaçlı üretilen sentetik veriye dayanır, gerçek piyasa verisi değildir; geçmiş performans gelecekteki performansın garantisi değildir.',
+    pcGoToStressTest: 'Stres Testine Geç',
   },
   en: {
     tagline: 'Analyze with Data, Decide with Confidence',
@@ -336,6 +367,37 @@ export const translations = {
     adminConfirmResetLinkMsg: (name: string, email: string) => `Send password reset link to ${name} (${email})?`,
     adminToastResetLinkSent: 'Password reset link sent',
     adminProfileLoadError: 'Failed to load profile',
+    // Performance Comparison page
+    navAnalysisWindowOption: (days: number) => `Last ${days} Trading Days`,
+    fundInfoLoadingText: 'Loading fund data...',
+    fundInfoErrorTitle: 'Fund data unavailable',
+    pcTitle: 'Performance Comparison',
+    pcDescription:
+      "Three approaches side by side over the same period: Current Portfolio (current weights, drifted from target due to market moves), Simulated Portfolio (if your decision were applied), and Benchmark (the fund's strategic target weight — held fixed).",
+    pcLockedTitle: 'Screen locked',
+    pcLockedMessage:
+      'First apply a distribution in the Manual Scenario tab, then view the comparison.',
+    pcLockedGoToDecision: 'Go to Manual Scenario',
+    pcChartTitle: 'Cumulative Return',
+    pcLegendMevcut: 'Current Portfolio',
+    pcLegendSimulasyon: 'Simulated Portfolio',
+    pcLegendBenchmark: 'Benchmark',
+    pcPeriodLabel: (today: string, days: number, source: string, status: string) =>
+      `Today: ${today} · Last ${days} trading days · Source: ${source} (${status})`,
+    pcSourceAi: 'AI Recommendation',
+    pcSourceManual: 'Manual Scenario',
+    pcStatusAccepted: 'Accepted',
+    pcStatusRejected: 'Rejected',
+    pcSummaryTitle: 'Performance Summary',
+    pcSummarySubtitle: 'Same starting amount (₺1,000,000), same period, same calculation method',
+    pcMetricHeader: 'METRIC',
+    pcMetricCurrentValue: 'Current Value',
+    pcMetricTotalReturn: 'Total Return',
+    pcMetricMaxDrawdown: 'Max Drawdown',
+    pcMetricDailyVolatility: 'Daily Volatility',
+    pcFootnote:
+      'Chart returns are based on synthetic prototype data, not real market data; past performance is not a guarantee of future performance.',
+    pcGoToStressTest: 'Go to Stress Test',
   },
 } satisfies Record<Lang, Record<string, unknown>>
 

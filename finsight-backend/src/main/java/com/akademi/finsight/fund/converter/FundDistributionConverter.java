@@ -2,7 +2,6 @@ package com.akademi.finsight.fund.converter;
 
 import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
 import com.akademi.finsight.fund.entity.AssetCategory;
-import com.akademi.finsight.fund.entity.FundDistribution;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -25,6 +24,21 @@ public class FundDistributionConverter {
             AssetCategory category = categoryConverter.convertToEntityAttribute(dist.category());
             if (Objects.nonNull(category)) {
                 weightsMap.put(category, dist.weight().multiply(BigDecimal.valueOf(100)));
+            }
+        }
+        return weightsMap;
+    }
+
+
+    /**
+     * DTO listesini oransal formatta Map'e dönüştürür (STOCK -> 0.9490)
+     */
+    public Map<AssetCategory, BigDecimal> toWeightsMapFromResponses(List<FundDistributionResponse> distributions) {
+        Map<AssetCategory, BigDecimal> weightsMap = new HashMap<>();
+        for (FundDistributionResponse dist : distributions) {
+            AssetCategory category = categoryConverter.convertToEntityAttribute(dist.category());
+            if (Objects.nonNull(category)) {
+                weightsMap.put(category, dist.weight());
             }
         }
         return weightsMap;

@@ -1,6 +1,7 @@
 package com.akademi.finsight.fund.service.impl;
 
 import com.akademi.finsight.common.masking.MaskType;
+import com.akademi.finsight.fund.config.FundProperties;
 import com.akademi.finsight.fund.converter.FundDistributionConverter;
 import com.akademi.finsight.fund.dto.MacroDataRow;
 import com.akademi.finsight.fund.dto.request.FundModelInputRequest;
@@ -11,11 +12,9 @@ import com.akademi.finsight.fund.entity.*;
 import com.akademi.finsight.fund.exception.FundErrorType;
 import com.akademi.finsight.fund.exception.FundNotFoundException;
 import com.akademi.finsight.fund.exception.FundValidationException;
-import com.akademi.finsight.fund.converter.AssetCategoryConverter;
 import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
 import com.akademi.finsight.fund.mapper.AiRecommendationMapper;
 import com.akademi.finsight.fund.repository.AiRecommendationRepository;
-import com.akademi.finsight.fund.repository.FundDistributionRepository;
 import com.akademi.finsight.fund.service.AiRecommendationService;
 import com.akademi.finsight.fund.service.FundDistributionService;
 import com.akademi.finsight.fund.service.FundService;
@@ -39,10 +38,7 @@ import java.util.*;
 @RequiredArgsConstructor
 public class AiRecommendationServiceImpl implements AiRecommendationService {
 
-    private static final long RECOMMENDATION_TTL_HOURS = 4L;
-    private static final String DEFAULT_FUND_CODE = "TIE";
-    private static final String FUND_NAME_SUFFIX = " İş Portföy – BIST 30 Endeksi";
-
+    private final FundProperties fundProperties;
     private final FundService fundService;
     private final FundDistributionService fundDistributionService;
     private final AiRecommendationRepository aiRecommendationRepository;
@@ -50,7 +46,6 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
     private final UserService userService;
     private final FundDistributionConverter fundDistributionConverter;
     private final AiRecommendationMapper aiRecommendationMapper;
-    private final FundDistributionRepository fundDistributionRepository;
 
 
     @Override
@@ -65,10 +60,10 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
         if (pendingRecommend.isPresent()) {
             AiRecommendation recommendation = pendingRecommend.get();
-            Instant threshold = Instant.now().minus(RECOMMENDATION_TTL_HOURS, ChronoUnit.HOURS);
+            Instant threshold = Instant.now().minus(fundProperties.getRecommendation().getTtlHours(), ChronoUnit.HOURS);
 
             if (recommendation.getCreatedAt().isBefore(threshold)) {
-                log.info("Pending AI recommendation {} is older than {} hours. Soft-deleting it and generating a new one.", recommendation.getId(), RECOMMENDATION_TTL_HOURS);
+                log.info("Pending AI recommendation {} is older than {} hours. Soft-deleting it and generating a new one.", recommendation.getId(), fundProperties.getRecommendation().getTtlHours());
                 recommendation.setDeleted(true);
                 aiRecommendationRepository.save(recommendation);
             } else {
@@ -106,21 +101,14 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
         return aiRecommendationMapper.toResponse(saved);
     }
 
-    private List<FundDistribution> getLatestDistributionsByFundCode(String fundCode) {
-        return fundDistributionRepository.findLatestByFundCode(fundCode);
+    private List<FundDistributionResponse> getLatestDistributionsByFundCode(String fundCode) {
+        return fundDistributionService.getLatestByFundCode(fundCode);
     }
 
     private FundModelInputRequest createModelInput(FundResponse fund) {
-        List<FundDistribution> distributions = getLatestDistributionsByFundCode(fund.code());
+        List<FundDistributionResponse> distributions = getLatestDistributionsByFundCode(fund.code());
 
-        Map<AssetCategory, BigDecimal> weights = new HashMap<>();
-        AssetCategoryConverter categoryConverter = new AssetCategoryConverter();
-        for (FundDistribution dist : distributions) {
-            AssetCategory category = categoryConverter.convertToEntityAttribute(dist.getCategory());
-            if (Objects.nonNull(category)) {
-                weights.put(category, dist.getWeight());
-            }
-        }
+        Map<AssetCategory, BigDecimal> weights = fundDistributionConverter.toWeightsMapFromResponses(distributions);
 
         MacroDataRow macroRow = MacroDataFromDbMock.fetchRandom();
 
@@ -181,7 +169,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
     public FundActivePortfolioResponse getActiveFund() {
         log.info("Fetching active fund...");
 
-        FundResponse fund = fundService.getByCode(DEFAULT_FUND_CODE);
+        FundResponse fund = fundService.getByCode(fundProperties.getCode());
 
         if (Objects.isNull(fund)) {
             log.warn("No active fund found.");
@@ -192,10 +180,9 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
         Map<AssetCategory, BigDecimal> weightsMap = fundDistributionConverter.toPercentageWeightsMap(distributions);
 
-        String fundName = fund.code() + FUND_NAME_SUFFIX;
-
         LocalDate fundDate = distributions.isEmpty() ? LocalDate.now() : distributions.get(0).date();
-        return new FundActivePortfolioResponse(fund.id(), fund.code(), fundName, fundDate, weightsMap);
+
+        return new FundActivePortfolioResponse(fund.id(), fund.code(), fund.name(), fundDate, weightsMap);
     }
 
 

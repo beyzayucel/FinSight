@@ -155,6 +155,8 @@ admin:
 fund:
   code: ${FUND_CODE:TIE}
   periods: ${FUND_PERIODS:P10D,P20D,P30D,P90D}
+  recommendation:
+     ttl-hours: ${FUND_RECOMMENDATION_TTL_HOURS:4}
 
 infina:
   api:

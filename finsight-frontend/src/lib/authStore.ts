@@ -77,9 +77,9 @@ export function getPostLoginRoute(): string {
   try {
     const payload = JSON.parse(atob(token.split('.')[1]))
     const roles: string[] = payload.roles ?? []
-    return roles.includes('ROLE_ADMIN') ? '/admin' : '/dashboard'
+    return roles.includes('ROLE_ADMIN') ? '/admin' : '/fund/dashboard'
   } catch {
-    return '/dashboard'
+    return '/fund/dashboard'
   }
 }
 

@@ -35,7 +35,7 @@ export default function AdminRoute() {
 
   if (status === 'checking') return null
   if (status === 'expired') return <Navigate to={ROUTES.LOGIN} replace />
-  if (status === 'forbidden') return <Navigate to={ROUTES.DASHBOARD} replace />
+  if (status === 'forbidden') return <Navigate to={ROUTES.FUND_DASHBOARD} replace />
 
   return <Outlet />
 }

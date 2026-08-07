@@ -83,6 +83,11 @@ public final class ApiEndpoints {
     public static final class AuditLogs {
         public static final String BASE = API_V1 + "/audit-logs";
     }
+
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static final class AdminDecisions {
+        public static final String BASE = API_V1 + "/admin/decisions";
+    }
     private static final String[] PUBLIC_ENDPOINTS = {
             Auth.BASE + Auth.LOGIN,
             Auth.BASE + Auth.REFRESH,

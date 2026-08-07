@@ -126,3 +126,32 @@ export function changePassword(data: ChangePasswordRequest) {
 export function sendPasswordResetLink(email: string) {
   return api.post<ApiResponse<void>>('/auth/forgot-password', { email })
 }
+
+// ── Audit Log ──
+
+export type AuditLogResponse = {
+  id: string
+  action: string
+  actorFullName: string
+  targetFullName: string
+  createdAt: string
+}
+
+export type AuditLogsParams = {
+  scope?: string
+  search?: string
+  page?: number
+  size?: number
+}
+
+export function getAuditLogs(params: AuditLogsParams = {}) {
+  const query: Record<string, string | number> = {}
+
+  if (params.scope) query.scope = params.scope
+  if (params.search) query.search = params.search
+  if (params.page != null) query.page = params.page
+  if (params.size != null) query.size = params.size
+  query.sort = 'createdAt,desc'
+
+  return api.get<ApiResponse<PageResponse<AuditLogResponse>>>('/audit-logs', { params: query })
+}

@@ -53,7 +53,15 @@ public class AiRecommendationMapper {
             }
         }
 
-        return new AIRecommendationResponse(entity.getId(), entity.getFund().getId(), entity.getStatus(), entity.getRationale(), entity.getExpectedRiskChange(), entity.getNote(), weightsMap);
+        return AIRecommendationResponse.builder()
+                .id(entity.getId())
+                .fundId(entity.getFund().getId())
+                .status(entity.getStatus())
+                .rationale(entity.getRationale())
+                .expectedRiskChange(entity.getExpectedRiskChange())
+                .note(entity.getNote())
+                .weights(weightsMap)
+                .build();
     }
 
 }

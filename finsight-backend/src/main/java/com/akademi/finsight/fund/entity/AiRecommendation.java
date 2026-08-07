@@ -41,7 +41,7 @@ public class AiRecommendation extends SoftDeletableEntity {
     @Column(length = 500)
     private String note;
 
-    @OneToMany(mappedBy = "recommendation", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(mappedBy = "recommendation", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @MapKey(name = "category")
     @MapKeyEnumerated(EnumType.STRING)
     @Builder.Default

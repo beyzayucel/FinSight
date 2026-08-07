@@ -42,6 +42,10 @@ public final class ApiEndpoints {
         public static final String BASE = API_V1 + "/funds";
         public static final String BY_ID = "/{id}";
         public static final String MANUAL_SCENARIO = "/scenarios/apply";
+        public static final String MANUAL_SCENARIO_HISTORY = "/scenarios/history";
+        public static final String DECISION_HISTORY = "/decisions/history";
+        public static final String DECISION_METRICS = "/decisions/metrics";
+        public static final String DECISION_STRESS_TEST = "/decisions/stress-test";
         public static final String SYNC = "/sync";
         public static final String DASHBOARD = "/{fundCode}/dashboard";
     }

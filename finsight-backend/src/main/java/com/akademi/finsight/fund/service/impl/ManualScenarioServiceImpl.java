@@ -4,6 +4,7 @@ import com.akademi.finsight.common.masking.MaskType;
 import com.akademi.finsight.fund.converter.FundDistributionConverter;
 import com.akademi.finsight.fund.dto.request.ManualScenarioRequest;
 import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
+import com.akademi.finsight.fund.dto.response.ManualScenarioResponse;
 import com.akademi.finsight.fund.entity.*;
 import com.akademi.finsight.fund.exception.FundErrorType;
 import com.akademi.finsight.fund.exception.FundValidationException;
@@ -22,6 +23,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -67,6 +69,20 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
 
         manualScenarioRepository.save(scenario);
         log.info("Manual scenario applied and saved successfully. Scenario ID: {}", scenario.getId());
+    }
+
+    @Override
+    @Transactional
+    public List<ManualScenarioResponse> getScenarioHistory(String email, UUID fundId) {
+        log.info("Fetching manual scenario history for user email: {}, fundId: {}", MaskType.EMAIL.mask(email), fundId);
+
+        User user = userService.findByEmail(email);
+
+        List<ManualScenario> scenarios = manualScenarioRepository.findByUserIdAndFundIdOrderByCreatedAtDesc(user.getId(), fundId);
+
+        return scenarios.stream()
+                        .map(manualScenarioMapper::toResponse)
+                        .toList();
     }
 
     private Map<AssetCategory, BigDecimal> fetchCurrentWeightsFromDb(Fund fund) {

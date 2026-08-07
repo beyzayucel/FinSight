@@ -16,10 +16,7 @@ public class FundDistributionConverter {
     private final AssetCategoryConverter categoryConverter = new AssetCategoryConverter();
 
     /**
-     * Dağılım listesini yüzdelik formatta Map'e dönüştürür (STOCK -> 94.90).
-     * Not: FundDistribution.weight artık doğrudan yüzde olarak saklanıyor (fund-dashboard
-     * senkronizasyonu ile) — burada eskiden yapılan ×100 çarpımı taşmaya (overflow) yol
-     * açtığı için kaldırıldı.
+     * Dağılım listesini yüzdelik formatta Map'e dönüştürür (STOCK -> 94.90)
      */
     public Map<AssetCategory, BigDecimal> toPercentageWeightsMap(List<FundDistributionResponse> distributions) {
         Map<AssetCategory, BigDecimal> weightsMap = zeroFilledWeightsMap();
@@ -33,11 +30,7 @@ public class FundDistributionConverter {
     }
 
 
-    /**
-     * DTO listesini oransal formatta Map'e dönüştürür (STOCK -> 0.9490).
-     * Not: kaynak veri artık yüzde (94.90) olduğu için burada gerçekten /100 bölme
-     * gerekiyor — eskiden veri zaten kesir olduğu için hiç dönüşüm yapılmıyordu.
-     */
+
     public Map<AssetCategory, BigDecimal> toWeightsMapFromResponses(List<FundDistributionResponse> distributions) {
         Map<AssetCategory, BigDecimal> weightsMap = zeroFilledWeightsMap();
         for (FundDistributionResponse dist : distributions) {

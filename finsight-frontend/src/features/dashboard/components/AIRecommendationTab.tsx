@@ -16,6 +16,7 @@ export default function AIRecommendationTab({
 }: AIRecommendationTabProps) {
   const [submitting, setSubmitting] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
+  const [note, setNote] = useState<string>('')
 
   const categories: AssetCategory[] = ['STOCK', 'REPO', 'FUTURE', 'FUND']
 
@@ -23,7 +24,7 @@ export default function AIRecommendationTab({
     try {
       setSubmitting(true)
       setError(null)
-      await submitRecommendationDecision(recommendation.id, status)
+      await submitRecommendationDecision(recommendation.id, status, note.trim() || undefined)
       onDecisionSubmitted()
     } catch (err: any) {
       setError(err?.message || 'Karar iletilirken bir hata oluştu.')
@@ -44,7 +45,7 @@ export default function AIRecommendationTab({
   const isDecided = recommendation.status !== 'PENDING'
 
   return (
-    <div className="space-y-4 max-w-[1100px] animate-fade-in select-none">
+    <div className="space-y-4 animate-fade-in select-none">
       {/* 1. Kategori Bazında Karşılaştırma Kartı */}
       <div className="bg-white rounded-xl border border-slate-200/75 shadow-sm p-4 space-y-4">
         <div className="space-y-1.5">
@@ -139,15 +140,6 @@ export default function AIRecommendationTab({
 
       {/* 2. AI Gerekçesi Kartı */}
       <div className="bg-[#fcfaf5] rounded-xl border border-[#e2d5b8] p-4 space-y-3">
-        {/* Badges */}
-        <div className="flex items-center space-x-2">
-          <span className="px-2 py-0.5 rounded bg-[#ecdcb9]/40 border border-[#ecdcb9]/80 text-[#846424] text-[9px] font-extrabold uppercase tracking-wide">
-            R1 - YÜKSEK VOLATİLİTE (3 KAYNAK)
-          </span>
-          <span className="px-2 py-0.5 rounded bg-[#ecdcb9]/40 border border-[#ecdcb9]/80 text-[#846424] text-[9px] font-extrabold uppercase tracking-wide">
-            R2 - LİKİDİTE İHTİYACI (2 KAYNAK)
-          </span>
-        </div>
 
         <div className="space-y-1.5">
           <h4 className="text-xs font-bold text-slate-800">
@@ -165,7 +157,23 @@ export default function AIRecommendationTab({
         </div>
       </div>
 
-      {/* 3. Butonlar / Karar Durumu */}
+      {/* 3. Senaryo Notu (Karar verilmediyse) */}
+      {!isDecided && (
+        <div className="space-y-1.5 bg-white rounded-xl border border-slate-200/75 shadow-sm p-4">
+          <label className="text-[10px] font-bold text-slate-400 tracking-wider uppercase block">
+            Senaryo Notu (opsiyonel)
+          </label>
+          <textarea
+            rows={3}
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder="Örn. AI önerisini kabul ederek portföy riskini azaltmayı hedefliyorum."
+            className="w-full bg-white text-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-xs outline-none focus:border-[#c89834] focus:ring-2 focus:ring-[#c89834]/20 transition-all placeholder-slate-400 resize-none font-medium"
+          />
+        </div>
+      )}
+
+      {/* 4. Butonlar / Karar Durumu */}
       <div className="flex flex-col space-y-3 pt-1">
         {error && (
           <span className="text-xs font-bold text-rose-600">
@@ -174,18 +182,40 @@ export default function AIRecommendationTab({
         )}
 
         {isDecided ? (
-          <div className="flex items-center space-x-2 text-slate-500 font-bold text-xs py-1">
-            {recommendation.status === 'ACCEPTED' ? (
-              <>
-                <IoCheckmarkCircleOutline className="text-emerald-500" size={20} />
-                <span>Bu öneri kabul edildi ve simülasyona uygulandı.</span>
-              </>
-            ) : (
-              <>
-                <IoCloseCircleOutline className="text-rose-500" size={20} />
-                <span>Bu öneri reddedildi.</span>
-              </>
-            )}
+          <div className="space-y-3.5">
+            <div className="flex items-center space-x-3">
+              <button
+                disabled
+                className={`px-5 py-2.5 rounded-xl font-extrabold text-xs tracking-wider uppercase select-none transition-all ${
+                  recommendation.status === 'ACCEPTED'
+                    ? 'bg-[#c89834] text-white opacity-80'
+                    : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                }`}
+              >
+                Kabul Et → Simülasyona Uygula
+              </button>
+              <button
+                disabled
+                className={`px-5 py-2.5 rounded-xl font-extrabold text-xs tracking-wider uppercase select-none border transition-all ${
+                  recommendation.status === 'REJECTED'
+                    ? 'border-rose-300 text-rose-700 bg-rose-50/50 opacity-80'
+                    : 'border-slate-200 text-slate-400 bg-white cursor-not-allowed'
+                }`}
+              >
+                Reddet
+              </button>
+            </div>
+            <div className="flex items-center space-x-1.5 text-xs font-semibold py-1">
+              {recommendation.status === 'ACCEPTED' ? (
+                <span className="text-[#2d7a4d] flex items-center gap-1.5 leading-relaxed">
+                  ✓ AI önerisi kabul edildi. Bu dağılım artık ayrı bir Simülasyon Portföyü olarak kaydedildi — mevcut portföyünüz gerçek emirle değişmedi.
+                </span>
+              ) : (
+                <span className="text-rose-700 flex items-center gap-1.5 leading-relaxed">
+                  ✗ Bu öneri reddedildi.
+                </span>
+              )}
+            </div>
           </div>
         ) : (
           <div className="flex items-center space-x-3">

@@ -10,7 +10,6 @@ type DashboardLayoutProps = {
   activeMenuIndex: MenuIndex
   onMenuChange: (index: MenuIndex) => void
   children: React.ReactNode
-  fundDate?: string
   fundName?: string
   analysisPeriod?: string
   onPeriodChange?: (period: string) => void
@@ -20,7 +19,6 @@ export default function DashboardLayout({
   activeMenuIndex,
   onMenuChange,
   children,
-  fundDate = '28.07.2026',
   fundName = 'TIE İş Portföy – BIST 30 Endeksi',
   analysisPeriod = '30',
   onPeriodChange

@@ -24,8 +24,11 @@ public record FundDashboardResponse(
             BigDecimal changePercent,
             BigDecimal cumulativeReturn,
             BigDecimal benchmarkReturn,
-            BigDecimal benchmarkDiffBps
+            BigDecimal benchmarkDiffBps,
+            List<SeriesPoint> series
     ) {}
+
+    public record SeriesPoint(LocalDate date, BigDecimal fund, BigDecimal benchmark) {}
 
     public record CategoryWeight(String category, BigDecimal weight) {}
 }

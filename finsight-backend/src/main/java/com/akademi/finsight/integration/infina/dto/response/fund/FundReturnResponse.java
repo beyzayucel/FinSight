@@ -5,6 +5,7 @@ import java.time.LocalDate;
 
 public record FundReturnResponse(
 		String period,
-		BigDecimal yield,
-		LocalDate beginDate
+		BigDecimal fundReturn,
+		LocalDate beginDate,
+		BigDecimal benchmarkReturn
 ){}

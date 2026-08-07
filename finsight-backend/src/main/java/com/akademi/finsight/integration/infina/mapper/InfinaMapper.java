@@ -45,11 +45,14 @@ public interface InfinaMapper {
 			return List.of();
 		}
 		List<LocalDate> beginDates = fundInfoData.fundBeginDates();
+		List<BigDecimal> fundBenchmark = fundInfoData.fundBenchmark();
 		int size = Math.min(periods.size(), fundReturn.size());
 		List<FundReturnResponse> returns = new ArrayList<>(size);
 		for (int i = 0; i < size; i++) {
 			LocalDate beginDate = (beginDates != null && i < beginDates.size()) ? beginDates.get(i) : null;
-			returns.add(new FundReturnResponse(periods.get(i), fundReturn.get(i), beginDate));
+			BigDecimal benchmarkReturn = (fundBenchmark != null && i < fundBenchmark.size())
+					? fundBenchmark.get(i) : null;
+			returns.add(new FundReturnResponse(periods.get(i), fundReturn.get(i), beginDate, benchmarkReturn));
 		}
 		return returns;
 	}

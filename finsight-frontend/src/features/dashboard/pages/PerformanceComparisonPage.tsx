@@ -4,7 +4,7 @@ import { MdLockOutline } from 'react-icons/md'
 import { getTranslations } from '@/i18n/translations'
 import { getLang } from '@/lib/authStore'
 import { useDecision } from '@/features/dashboard/context/decisionStore'
-import { runSimulation, type PortfolioMetrics, type SimulationWindow } from '@/features/dashboard/lib/simulation'
+import { runSimulation, type PortfolioMetrics, type SimulationWindow, type Weights } from '@/features/dashboard/lib/simulation'
 import { formatCurrency, formatDate, formatSignedPercent, formatUnsignedPercent } from '@/features/dashboard/lib/formatters'
 import { getLatestAppliedScenario } from '@/features/dashboard/lib/mockDecisionBridge'
 
@@ -16,12 +16,19 @@ const SERIES = [
 
 const WINDOW_OPTIONS: SimulationWindow[] = [10, 20, 30, 90]
 
+export type ReapplyScenario = {
+  weights: Weights
+  sourceLabel: string
+}
+
 type PerformanceComparisonPageProps = {
+  overrideScenario?: ReapplyScenario | null
   onGoToManualScenario: () => void
   onGoToStressTest: () => void
 }
 
 export default function PerformanceComparisonPage({
+  overrideScenario,
   onGoToManualScenario,
   onGoToStressTest,
 }: PerformanceComparisonPageProps) {
@@ -29,9 +36,12 @@ export default function PerformanceComparisonPage({
   const lang = getLang() === 'en' ? 'en' : 'tr'
   const { activeFund, fundInfo, analysisWindow, setAnalysisWindow } = useDecision()
 
-  // Beyza'nın Manuel Senaryo akışı (dashboardApi.ts) localStorage'a yazıyor —
-  // ona dokunmadan son uygulanan senaryoyu buradan okuyoruz.
-  const appliedScenario = useMemo(() => getLatestAppliedScenario(), [])
+  // Karar Geçmişi'nden "↻ Tekrar Uygula" ile gelindiyse o kararın ağırlıkları öncelikli;
+  // aksi halde beyza'nın Manuel Senaryo akışının (dashboardApi.ts) son uyguladığı senaryo.
+  const appliedScenario = useMemo(() => {
+    if (overrideScenario) return { weights: overrideScenario.weights, appliedAt: new Date().toISOString() }
+    return getLatestAppliedScenario()
+  }, [overrideScenario])
 
   const simulation = useMemo(() => {
     if (!appliedScenario || fundInfo.status !== 'ready') return null
@@ -99,7 +109,12 @@ export default function PerformanceComparisonPage({
           <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6 shadow-sm sm:p-8">
             <h2 className="text-lg font-bold text-ink">{t.pcChartTitle}</h2>
             <p className="mt-1 text-sm text-muted">
-              {t.pcPeriodLabel(formatDate(new Date(), lang), analysisWindow, t.pcSourceManual, t.pcStatusAccepted)}
+              {t.pcPeriodLabel(
+                formatDate(new Date(), lang),
+                analysisWindow,
+                overrideScenario?.sourceLabel ?? t.pcSourceManual,
+                t.pcStatusAccepted
+              )}
             </p>
 
             <div className="mt-4 flex flex-wrap gap-5">

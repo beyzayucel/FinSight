@@ -1,6 +1,7 @@
 package com.akademi.finsight.fund.entity;
 
 import com.akademi.finsight.common.entity.SoftDeletableEntity;
+import com.akademi.finsight.stresstest.entity.StressTestResult;
 import com.akademi.finsight.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -30,6 +31,14 @@ public class ManualScenario extends SoftDeletableEntity {
 
     @Column(length = 500)
     private String note;
+
+    @Embedded
+    @Builder.Default
+    private PerformanceMetrics metrics = new PerformanceMetrics();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stress_test_result_id")
+    private StressTestResult stressTestResult;
 
     @OneToMany(mappedBy = "scenario", cascade = CascadeType.ALL, orphanRemoval = true)
     @MapKey(name = "category")

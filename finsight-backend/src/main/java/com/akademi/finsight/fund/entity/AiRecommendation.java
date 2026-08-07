@@ -1,6 +1,7 @@
 package com.akademi.finsight.fund.entity;
 
 import com.akademi.finsight.common.entity.SoftDeletableEntity;
+import com.akademi.finsight.stresstest.entity.StressTestResult;
 import com.akademi.finsight.user.entity.User;
 import jakarta.persistence.*;
 import lombok.*;
@@ -40,6 +41,16 @@ public class AiRecommendation extends SoftDeletableEntity {
 
     @Column(length = 500)
     private String note;
+
+    // Karar Geçmişi ekranı için — hesaplama frontend'de yapılır, backend sadece saklar
+    // (bkz. PerformanceMetrics: ManualScenario'da da aynı desen kullanılıyor).
+    @Embedded
+    @Builder.Default
+    private PerformanceMetrics metrics = new PerformanceMetrics();
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "stress_test_result_id")
+    private StressTestResult stressTestResult;
 
     @OneToMany(mappedBy = "recommendation", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @MapKey(name = "category")

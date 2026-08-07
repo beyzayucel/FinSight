@@ -17,5 +17,8 @@ export const ROUTES = {
   // Eski tek-sayfa adresi; /fund/dashboard'a yönlendiriliyor.
   DASHBOARD: '/dashboard',
 
+  // Yönetim Paneli — sekmeli, sidebar kabuğu ortak (bkz. Ekran 07).
   ADMIN_DASHBOARD: '/admin',
+  ADMIN_PANEL: '/admin/panel',
+  ADMIN_USERS: '/admin/users',
 } as const

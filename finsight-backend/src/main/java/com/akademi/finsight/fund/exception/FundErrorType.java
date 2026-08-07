@@ -25,7 +25,9 @@ public enum FundErrorType implements BaseErrorType {
     INVALID_SCENARIO_DEVIATION("fund.scenario.invalid.deviation", HttpStatus.BAD_REQUEST),
     INVALID_SCENARIO_STOCK_FLOOR("fund.scenario.invalid.stock.floor", HttpStatus.BAD_REQUEST),
 
-    INVALID_INPUT("fund.invalid.input", HttpStatus.BAD_REQUEST);
+    INVALID_INPUT("fund.invalid.input", HttpStatus.BAD_REQUEST),
+    UNAUTHORIZED_RECOMMENDATION("fund.recommendation.unauthorized", HttpStatus.FORBIDDEN),
+    RECOMMENDATION_ALREADY_PROCESSED("fund.recommendation.already.processed", HttpStatus.BAD_REQUEST);
 
     private final String messageKey;
     private final HttpStatus httpStatus;

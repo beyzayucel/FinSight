@@ -1,15 +1,16 @@
 package com.akademi.finsight.fund.service.impl;
 
 import com.akademi.finsight.common.masking.MaskType;
-import com.akademi.finsight.fund.converter.AssetCategoryConverter;
+import com.akademi.finsight.fund.converter.FundDistributionConverter;
 import com.akademi.finsight.fund.dto.request.ManualScenarioRequest;
+import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
 import com.akademi.finsight.fund.entity.*;
 import com.akademi.finsight.fund.exception.FundErrorType;
 import com.akademi.finsight.fund.exception.FundValidationException;
 import com.akademi.finsight.fund.mapper.ManualScenarioMapper;
-import com.akademi.finsight.fund.repository.FundDistributionRepository;
 import com.akademi.finsight.fund.repository.FundRepository;
 import com.akademi.finsight.fund.repository.ManualScenarioRepository;
+import com.akademi.finsight.fund.service.FundDistributionService;
 import com.akademi.finsight.fund.service.ManualScenarioService;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.service.UserService;
@@ -19,10 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -35,7 +34,8 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
     private final ScenarioValidationService validationService;
     private final UserService userService;
     private final ManualScenarioMapper manualScenarioMapper;
-    private final FundDistributionRepository fundDistributionRepository;
+    private final FundDistributionService fundDistributionService;
+    private final FundDistributionConverter fundDistributionConverter;
 
     @Override
     @Transactional
@@ -72,18 +72,9 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
     private Map<AssetCategory, BigDecimal> fetchCurrentWeightsFromDb(Fund fund) {
         log.debug("Fetching latest fund distribution from DB for fund code: {}", fund.getCode());
 
-        List<FundDistribution> distributions = fundDistributionRepository.findLatestByFundCode(fund.getCode());
+        List<FundDistributionResponse> distributions = fundDistributionService.getLatestByFundCode(fund.getCode());
 
-        Map<AssetCategory, BigDecimal> currentWeights = new HashMap<>();
-
-        for (FundDistribution dist : distributions) {
-            BigDecimal percentageWeight = dist.getWeight().multiply(BigDecimal.valueOf(100));
-            AssetCategory category = new AssetCategoryConverter().convertToEntityAttribute(dist.getCategory());
-
-            if (Objects.nonNull(category)) {
-                currentWeights.put(category, percentageWeight);
-            }
-        }
+        Map<AssetCategory, BigDecimal> currentWeights = fundDistributionConverter.toPercentageWeightsMap(distributions);
 
         log.debug("Current weights map generated: {}", currentWeights);
         return currentWeights;

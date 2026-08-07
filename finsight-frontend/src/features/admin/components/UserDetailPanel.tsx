@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { UserResponse } from '../adminApi'
 import type { Translations } from '@/i18n/translations'
 import { getLang } from '@/lib/authStore'
@@ -184,7 +185,7 @@ export default function UserDetailPanel({ user, currentUserEmail, onEditClick, o
   )
 }
 
-function DetailRow({ icon, label, value }: { icon: JSX.Element; label: string; value: string }) {
+function DetailRow({ icon, label, value }: { icon: ReactNode; label: string; value: string }) {
   return (
     <div className="flex items-start gap-[11px]">
       <div className="w-7 h-7 rounded-lg bg-admin-ivory flex items-center justify-center shrink-0 text-admin-gold">

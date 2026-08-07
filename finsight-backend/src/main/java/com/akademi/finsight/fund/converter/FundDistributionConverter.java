@@ -23,7 +23,7 @@ public class FundDistributionConverter {
         for (FundDistributionResponse dist : distributions) {
             AssetCategory category = categoryConverter.convertToEntityAttribute(dist.category());
             if (Objects.nonNull(category)) {
-                weightsMap.put(category, dist.weight().multiply(BigDecimal.valueOf(100)));
+                weightsMap.put(category, dist.weight());
             }
         }
         return weightsMap;
@@ -38,7 +38,7 @@ public class FundDistributionConverter {
         for (FundDistributionResponse dist : distributions) {
             AssetCategory category = categoryConverter.convertToEntityAttribute(dist.category());
             if (Objects.nonNull(category)) {
-                weightsMap.put(category, dist.weight());
+                weightsMap.put(category, dist.weight().divide(BigDecimal.valueOf(100), 6, java.math.RoundingMode.HALF_UP));
             }
         }
         return weightsMap;

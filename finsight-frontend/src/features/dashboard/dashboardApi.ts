@@ -103,9 +103,9 @@ export async function getPendingRecommendation(fundId: string = MOCK_FUND_ID): P
   }
 }
 
-export async function submitRecommendationDecision(recommendationId: string, status: 'ACCEPTED' | 'REJECTED'): Promise<void> {
+export async function submitRecommendationDecision(recommendationId: string, status: 'ACCEPTED' | 'REJECTED', note?: string): Promise<void> {
   try {
-    await api.post(`/funds/recommendations/${recommendationId}/decision`, { status })
+    await api.post(`/funds/recommendations/${recommendationId}/decision`, { status, note })
   } catch {
     console.warn('submitRecommendationDecision API failed, falling back to local storage.')
     const rec = getStoredRecommendation()

@@ -11,10 +11,10 @@ type ManualScenarioTabProps = {
 export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualScenarioTabProps) {
   // Input states initialized to existing fund weights (stored as strings with commas for Turkish UI formatting)
   const [weights, setWeights] = useState<Record<AssetCategory, string>>({
-    STOCK: fund.weights.STOCK.toFixed(2).replace('.', ','),
-    REPO: fund.weights.REPO.toFixed(2).replace('.', ','),
-    FUTURE: fund.weights.FUTURE.toFixed(2).replace('.', ','),
-    FUND: fund.weights.FUND.toFixed(2).replace('.', ',')
+    STOCK: (fund.weights?.STOCK ?? 0).toFixed(2).replace('.', ','),
+    REPO: (fund.weights?.REPO ?? 0).toFixed(2).replace('.', ','),
+    FUTURE: (fund.weights?.FUTURE ?? 0).toFixed(2).replace('.', ','),
+    FUND: (fund.weights?.FUND ?? 0).toFixed(2).replace('.', ',')
   })
 
   const [note, setNote] = useState<string>('')
@@ -25,10 +25,10 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
   // Re-initialize state when fund changes
   useEffect(() => {
     setWeights({
-      STOCK: fund.weights.STOCK.toFixed(2).replace('.', ','),
-      REPO: fund.weights.REPO.toFixed(2).replace('.', ','),
-      FUTURE: fund.weights.FUTURE.toFixed(2).replace('.', ','),
-      FUND: fund.weights.FUND.toFixed(2).replace('.', ',')
+      STOCK: (fund.weights?.STOCK ?? 0).toFixed(2).replace('.', ','),
+      REPO: (fund.weights?.REPO ?? 0).toFixed(2).replace('.', ','),
+      FUTURE: (fund.weights?.FUTURE ?? 0).toFixed(2).replace('.', ','),
+      FUND: (fund.weights?.FUND ?? 0).toFixed(2).replace('.', ',')
     })
     setErrors([])
     setSuccessMsg(null)
@@ -68,7 +68,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
 
     // 3. Deviation limits check (±10% max)
     categories.forEach((cat) => {
-      const current = fund.weights[cat]
+      const current = fund.weights?.[cat] ?? 0
       const target = getParsedWeightForCat(cat)
       const dev = Math.abs(target - current)
       if (dev > 10.00) {
@@ -99,10 +99,10 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
 
   function handleReset() {
     setWeights({
-      STOCK: fund.weights.STOCK.toFixed(2).replace('.', ','),
-      REPO: fund.weights.REPO.toFixed(2).replace('.', ','),
-      FUTURE: fund.weights.FUTURE.toFixed(2).replace('.', ','),
-      FUND: fund.weights.FUND.toFixed(2).replace('.', ',')
+      STOCK: (fund.weights?.STOCK ?? 0).toFixed(2).replace('.', ','),
+      REPO: (fund.weights?.REPO ?? 0).toFixed(2).replace('.', ','),
+      FUTURE: (fund.weights?.FUTURE ?? 0).toFixed(2).replace('.', ','),
+      FUND: (fund.weights?.FUND ?? 0).toFixed(2).replace('.', ',')
     })
     setNote('')
     setSuccessMsg(null)
@@ -137,7 +137,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
   }
 
   return (
-    <div className="space-y-4 max-w-[1100px] animate-fade-in select-none">
+    <div className="space-y-4 animate-fade-in select-none">
       <div className="bg-white rounded-xl border border-slate-200/75 shadow-sm p-4 space-y-4">
         {/* Başlık ve Kılavuz */}
         <div className="space-y-1.5">
@@ -162,7 +162,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
             </thead>
             <tbody className="divide-y divide-slate-100">
               {categories.map((cat) => {
-                const current = fund.weights[cat]
+                const current = fund.weights?.[cat] ?? 0
                 const target = getParsedWeightForCat(cat)
                 const diff = target - current
                 const label = AssetCategoryLabels[cat]?.tr || cat

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import type { AuditLogResponse, PageResponse } from '../adminApi'
 import type { Translations } from '@/i18n/translations'
 import { getLang } from '@/lib/authStore'
@@ -15,7 +15,7 @@ type ActivityTimelineProps = {
 
 type ActionStyle = {
   bg: string
-  icon: JSX.Element
+  icon: ReactNode
 }
 
 const S = 'stroke-[1.8]'

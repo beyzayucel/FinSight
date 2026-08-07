@@ -108,7 +108,6 @@ export default function DashboardShell() {
       onMenuChange={(idx) => {
         navigate(MENU_ROUTES[idx])
       }}
-      fundDate={fund?.date}
       fundName={fund?.name}
       analysisPeriod={period}
       onPeriodChange={(newPeriod) => setPeriod(newPeriod)}

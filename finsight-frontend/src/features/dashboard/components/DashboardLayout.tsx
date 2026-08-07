@@ -41,7 +41,7 @@ export default function DashboardLayout({
   ]
 
   return (
-    <div className="flex min-h-screen bg-[#f7f6f2] text-[#1c2530] font-ibm">
+    <div className="flex h-screen bg-[#f7f6f2] text-[#1c2530] font-ibm">
       {/* ---------- SOL SIDEBAR ---------- */}
       <aside className="w-[264px] flex-shrink-0 bg-gradient-to-b from-[#12161f] to-[#0d1017] text-[#edeae0] flex flex-col justify-between px-[18px] py-[28px] select-none border-r border-[#1e273a]/30 shadow-xl">
         <div className="space-y-3.5">
@@ -133,10 +133,6 @@ export default function DashboardLayout({
             <IoLogOutOutline size={16} />
             <span className="text-xs font-semibold tracking-wide">Çıkış Yap</span>
           </button>
-          <p className="text-[9px] leading-relaxed text-slate-500 font-medium">
-            Prototip · veriler CSV tabanlı geçmiş veri setinden okunur.<br />
-            Rakamlar temsilidir.
-          </p>
         </div>
       </aside>
 

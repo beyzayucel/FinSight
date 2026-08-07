@@ -9,6 +9,7 @@ import com.akademi.finsight.fund.dto.response.AIRecommendationResponse;
 import com.akademi.finsight.fund.dto.response.FundActivePortfolioResponse;
 import com.akademi.finsight.fund.dto.response.FundResponse;
 import com.akademi.finsight.fund.entity.*;
+import com.akademi.finsight.fund.exception.AiRecommendationNotFoundException;
 import com.akademi.finsight.fund.exception.FundErrorType;
 import com.akademi.finsight.fund.exception.FundNotFoundException;
 import com.akademi.finsight.fund.exception.FundValidationException;
@@ -55,6 +56,10 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
         User user = userService.findByEmail(email);
         FundResponse fund = fundService.getById(fundId);
+
+        if (!fund.code().equals(fundProperties.getCode())) {
+            throw new FundValidationException(FundErrorType.UNAUTHORIZED_RECOMMENDATION);
+        }
 
         Optional<AiRecommendation> pendingRecommend = aiRecommendationRepository.findLatestByFundAndUserAndStatus(fundId, email, RecommendationStatus.PENDING);
 
@@ -153,10 +158,14 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
         log.info("Submitting decision for AI recommendation ID: {}, status: {}, user: {}", recommendationId, status, MaskType.EMAIL.mask(email));
 
         AiRecommendation recommendation = aiRecommendationRepository.findById(recommendationId)
-                        .orElseThrow(() -> new RuntimeException("Recommendation not found"));
+                        .orElseThrow(AiRecommendationNotFoundException::new);
 
         if (!recommendation.getUser().getEmail().equals(email)) {
             throw new FundValidationException(FundErrorType.UNAUTHORIZED_RECOMMENDATION);
+        }
+
+        if (recommendation.getStatus() != RecommendationStatus.PENDING) {
+            throw new FundValidationException(FundErrorType.RECOMMENDATION_ALREADY_PROCESSED);
         }
 
         recommendation.setStatus(status);

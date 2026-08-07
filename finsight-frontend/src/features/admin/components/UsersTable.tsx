@@ -82,7 +82,7 @@ export default function UsersTable({
   const headers = [t.adminColName, t.adminColEmail, t.adminColStatus, t.adminColLastLogin, t.adminColActions]
 
   return (
-    <div className="bg-white rounded-[18px] shadow-[0_2px_4px_rgba(18,22,31,0.04),0_12px_26px_-14px_rgba(18,22,31,0.12)] border border-[rgba(231,226,214,0.7)] px-[22px] pt-[22px] pb-2">
+    <div className="flex flex-col bg-white rounded-[18px] shadow-[0_2px_4px_rgba(18,22,31,0.04),0_12px_26px_-14px_rgba(18,22,31,0.12)] border border-[rgba(231,226,214,0.7)] px-[22px] pt-[22px] pb-2">
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
@@ -128,7 +128,7 @@ export default function UsersTable({
         </select>
       </div>
 
-      {/* Table */}
+      <div className="flex-1">
       <table className="w-full border-collapse">
         <thead>
           <tr>
@@ -271,6 +271,7 @@ export default function UsersTable({
           )}
         </tbody>
       </table>
+      </div>
 
       {/* Footer / Pagination */}
       <div className="flex items-center justify-between py-3.5 px-1 text-xs text-admin-text-faint">

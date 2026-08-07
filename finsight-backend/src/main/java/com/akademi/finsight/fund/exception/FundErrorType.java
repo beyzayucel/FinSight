@@ -12,6 +12,8 @@ public enum FundErrorType implements BaseErrorType {
     FUND_NOT_FOUND("error.fund.not.found", HttpStatus.NOT_FOUND),
     FUND_CODE_ALREADY_EXISTS("error.fund.code.already.exists", HttpStatus.CONFLICT),
     FUND_DISTRIBUTION_NOT_FOUND("error.fund.distribution.not.found", HttpStatus.NOT_FOUND),
+    MANUAL_SCENARIO_NOT_FOUND("error.fund.manual.scenario.not.found", HttpStatus.NOT_FOUND),
+    NO_DECISION_TO_ATTACH("error.fund.no.decision.to.attach", HttpStatus.NOT_FOUND),
 
     FUND_PERIOD_METRIC_NOT_FOUND("error.fund.period.metric.not.found", HttpStatus.NOT_FOUND),
     FUND_PERIOD_METRIC_ALREADY_EXISTS("error.fund.period.metric.already.exists", HttpStatus.CONFLICT),

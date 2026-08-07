@@ -14,7 +14,7 @@ type StoredScenario = {
   appliedAt: string
 }
 
-const CATEGORY_TO_ASSET_CLASS: Record<StoredCategory, keyof Weights> = {
+export const CATEGORY_TO_ASSET_CLASS: Record<StoredCategory, keyof Weights> = {
   STOCK: 'hisseSenedi',
   REPO: 'tersRepo',
   FUTURE: 'vadeliIslemNakitTeminati',
@@ -27,26 +27,30 @@ export type AppliedScenario = {
   appliedAt: string
 }
 
-export function getLatestAppliedScenario(): AppliedScenario | null {
+function readStoredList(): StoredScenario[] {
   const raw = localStorage.getItem('finsight_applied_scenarios')
-  if (!raw) return null
-
-  let list: StoredScenario[]
+  if (!raw) return []
   try {
-    list = JSON.parse(raw)
+    const parsed = JSON.parse(raw)
+    return Array.isArray(parsed) ? parsed : []
   } catch {
-    return null
+    return []
   }
+}
 
-  const last = list[list.length - 1]
-  if (!last) return null
-
+function toAppliedScenario(stored: StoredScenario): AppliedScenario {
   const weights = Object.fromEntries(
-    Object.entries(last.weights).map(([category, pct]) => [
+    Object.entries(stored.weights).map(([category, pct]) => [
       CATEGORY_TO_ASSET_CLASS[category as StoredCategory],
       pct / 100,
     ])
   ) as Weights
 
-  return { weights, note: last.note, appliedAt: last.appliedAt }
+  return { weights, note: stored.note, appliedAt: stored.appliedAt }
+}
+
+export function getLatestAppliedScenario(): AppliedScenario | null {
+  const list = readStoredList()
+  const last = list[list.length - 1]
+  return last ? toAppliedScenario(last) : null
 }

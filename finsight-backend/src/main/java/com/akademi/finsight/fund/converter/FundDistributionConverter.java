@@ -19,7 +19,7 @@ public class FundDistributionConverter {
      * Dağılım listesini yüzdelik formatta Map'e dönüştürür (STOCK -> 94.90)
      */
     public Map<AssetCategory, BigDecimal> toPercentageWeightsMap(List<FundDistributionResponse> distributions) {
-        Map<AssetCategory, BigDecimal> weightsMap = new HashMap<>();
+        Map<AssetCategory, BigDecimal> weightsMap = zeroFilledWeightsMap();
         for (FundDistributionResponse dist : distributions) {
             AssetCategory category = categoryConverter.convertToEntityAttribute(dist.category());
             if (Objects.nonNull(category)) {
@@ -30,16 +30,22 @@ public class FundDistributionConverter {
     }
 
 
-    /**
-     * DTO listesini oransal formatta Map'e dönüştürür (STOCK -> 0.9490)
-     */
+
     public Map<AssetCategory, BigDecimal> toWeightsMapFromResponses(List<FundDistributionResponse> distributions) {
-        Map<AssetCategory, BigDecimal> weightsMap = new HashMap<>();
+        Map<AssetCategory, BigDecimal> weightsMap = zeroFilledWeightsMap();
         for (FundDistributionResponse dist : distributions) {
             AssetCategory category = categoryConverter.convertToEntityAttribute(dist.category());
             if (Objects.nonNull(category)) {
-                weightsMap.put(category, dist.weight().divide(BigDecimal.valueOf(100), 6, java.math.RoundingMode.HALF_UP));
+                weightsMap.put(category, dist.weight().divide(BigDecimal.valueOf(100)));
             }
+        }
+        return weightsMap;
+    }
+
+    private Map<AssetCategory, BigDecimal> zeroFilledWeightsMap() {
+        Map<AssetCategory, BigDecimal> weightsMap = new HashMap<>();
+        for (AssetCategory category : AssetCategory.values()) {
+            weightsMap.put(category, BigDecimal.ZERO);
         }
         return weightsMap;
     }

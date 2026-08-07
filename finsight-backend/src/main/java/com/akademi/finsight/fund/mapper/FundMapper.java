@@ -15,4 +15,6 @@ public interface FundMapper {
     void updateEntity(@MappingTarget Fund entity, FundRequest request);
 
     FundResponse toResponse(Fund entity);
+
+    Fund toEntity(FundResponse response);
 }

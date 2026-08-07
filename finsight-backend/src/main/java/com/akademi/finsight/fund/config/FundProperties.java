@@ -16,4 +16,11 @@ public class FundProperties {
     private String code;
 
     private List<String> periods;
+
+    private final Recommendation recommendation = new Recommendation();
+    @Getter
+    @Setter
+    public static class Recommendation {
+        private long ttlHours;
+    }
 }

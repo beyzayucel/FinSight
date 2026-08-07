@@ -16,6 +16,7 @@ import DecisionHistoryPage from '@/features/dashboard/pages/DecisionHistoryPage'
 import { DecisionProvider } from '@/features/dashboard/context/DecisionContext'
 import AdminRoute from '@/components/AdminRoute'
 import AdminDashboardPage from '@/features/admin/AdminDashboardPage'
+import AdminPanelPage from '@/features/admin/AdminPanelPage'
 
 export default function App() {
   return (
@@ -50,9 +51,11 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* Admin — token + ROLE_ADMIN yoksa redirect */}
+        {/* Admin — token + ROLE_ADMIN yoksa redirect. Varsayılan sekme: Panel (bkz. Ekran 07 Bölüm 9). */}
         <Route element={<AdminRoute />}>
-          <Route path={ROUTES.ADMIN_DASHBOARD} element={<AdminDashboardPage />} />
+          <Route path={ROUTES.ADMIN_DASHBOARD} element={<Navigate to={ROUTES.ADMIN_PANEL} replace />} />
+          <Route path={ROUTES.ADMIN_PANEL} element={<AdminPanelPage />} />
+          <Route path={ROUTES.ADMIN_USERS} element={<AdminDashboardPage />} />
         </Route>
 
         {/* Eski /dashboard adresi */}

@@ -34,8 +34,6 @@ public interface AiRecommendationApi {
             @AuthenticationPrincipal String email
     );
 
-
-
     @Operation(summary = "Submit decision on AI recommendation",
             description = "Submits user decision (ACCEPTED/REJECTED) on a pending AI recommendation.")
     @ApiResponse(responseCode = "200", description = "Decision submitted successfully")

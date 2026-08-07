@@ -1,5 +1,7 @@
 package com.akademi.finsight.user.service.impl;
 
+import com.akademi.finsight.audit.entity.AuditActionType;
+import com.akademi.finsight.audit.service.AuditLogService;
 import com.akademi.finsight.auth.refreshtoken.service.RefreshTokenService;
 import com.akademi.finsight.auth.verificationtoken.service.VerificationTokenService;
 import com.akademi.finsight.common.masking.MaskType;
@@ -41,6 +43,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokenService;
     private final VerificationTokenService tokenService;
+    private final AuditLogService auditLogService;
 
     @Override
     @Transactional(readOnly = true)
@@ -67,6 +70,7 @@ public class UserServiceImpl implements UserService {
 
         User savedUser = userRepository.save(user);
         tokenService.createAndSendVerificationToken(savedUser, temporaryPassword);
+        auditLogService.createAuditLogForAdmin(AuditActionType.USER_CREATED, savedUser);
         log.info("User created: event=USER_CREATED, email={}", MaskType.EMAIL.mask(savedUser.getEmail()));
     }
 
@@ -111,6 +115,7 @@ public class UserServiceImpl implements UserService {
         user.setPhoneNumber(request.phoneNumber());
 
         User savedUser = userRepository.save(user);
+        auditLogService.createAuditLogForAdmin(AuditActionType.USER_UPDATED, savedUser);
         log.info("User updated by admin: event=USER_UPDATED, email={}", MaskType.EMAIL.mask(savedUser.getEmail()));
         return userMapper.toResponse(savedUser);
     }
@@ -132,6 +137,8 @@ public class UserServiceImpl implements UserService {
         }
         user.setEnabled(enabled);
         userRepository.save(user);
+        auditLogService.createAuditLogForAdmin(
+                enabled ? AuditActionType.USER_ACTIVATED : AuditActionType.USER_DEACTIVATED, user);
         log.info("User status changed: event=USER_STATUS_CHANGED, email={}, enabled={}", MaskType.EMAIL.mask(user.getEmail()), enabled);
     }
 
@@ -140,6 +147,7 @@ public class UserServiceImpl implements UserService {
     public void deleteUser(UUID id, String currentUserEmail) {
         User user = findByIdOrThrow(id);
         validateAdminAction(user, currentUserEmail);
+        auditLogService.createAuditLogForAdmin(AuditActionType.USER_DELETED, user);
         refreshTokenService.revokeAllByUser(user);
         userRepository.delete(user);
         log.info("User deleted by admin: event=USER_DELETED, email={}", MaskType.EMAIL.mask(user.getEmail()));
@@ -223,6 +231,7 @@ public class UserServiceImpl implements UserService {
         userRepository.save(user);
 
         tokenService.resendVerificationToken(user, temporaryPassword);
+        auditLogService.createAuditLogForAdmin(AuditActionType.VERIFICATION_RESENT, user);
         log.info("Verification resent by admin: event=VERIFICATION_RESENT, email={}", MaskType.EMAIL.mask(user.getEmail()));
     }
 

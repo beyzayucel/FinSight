@@ -1,5 +1,7 @@
 package com.akademi.finsight.auth.service.impl;
 
+import com.akademi.finsight.audit.entity.AuditActionType;
+import com.akademi.finsight.audit.service.AuditLogService;
 import com.akademi.finsight.auth.dto.login.LoginRequest;
 import com.akademi.finsight.auth.dto.login.LoginResult;
 import com.akademi.finsight.auth.dto.login.OtpLoginRequest;
@@ -58,6 +60,7 @@ public class AuthServiceImpl implements AuthService {
     private final NotificationService notificationService;
     private final LoginRateLimitProperties loginRateLimitProperties;
     private final PasswordResetTokenService passwordResetTokenService;
+    private final AuditLogService auditLogService;
 
     @Override
     @Transactional
@@ -74,6 +77,7 @@ public class AuthServiceImpl implements AuthService {
 
         if (user.isFirstLogin()) {
             log.info("First login, OTP bypassed: event=USER_FIRST_LOGIN, email={}", MaskType.EMAIL.mask(user.getEmail()));
+            auditLogService.createAuditLogForSelf(AuditActionType.LOGIN_SUCCESS, user);
             return authenticateAndGenerateTokens(user);
         }
 
@@ -152,6 +156,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional
     public void logout(RefreshTokenRequest request) {
         refreshTokenService.revokeToken(request);
     }
@@ -173,6 +178,7 @@ public class AuthServiceImpl implements AuthService {
 
         userService.updatePassword(user, passwordEncoder.encode(request.newPassword()), user.isFirstLogin());
         refreshTokenService.revokeAllByUser(user);
+        auditLogService.createAuditLogForSelf(AuditActionType.PASSWORD_CHANGED, user);
 
         log.info("Password changed: event=PASSWORD_CHANGED, email={}", MaskType.EMAIL.mask(user.getEmail()));
     }
@@ -196,6 +202,7 @@ public class AuthServiceImpl implements AuthService {
         otpService.validateOtp(user.getEmail(), request.code());
 
         log.info("OTP login successful: event=OTP_LOGIN_SUCCESS, email={}", MaskType.EMAIL.mask(user.getEmail()));
+        auditLogService.createAuditLogForSelf(AuditActionType.LOGIN_SUCCESS, user);
         return authenticateAndGenerateTokens(user);
     }
 
@@ -233,6 +240,7 @@ public class AuthServiceImpl implements AuthService {
         User user = passwordResetTokenService.consumeToken(request.token());
         userService.updatePassword(user, passwordEncoder.encode(request.newPassword()), true);
         refreshTokenService.revokeAllByUser(user);
+        auditLogService.createAuditLogForSelf(AuditActionType.PASSWORD_RESET_COMPLETED, user);
 
         log.info("Password reset completed: event=PASSWORD_RESET_COMPLETED, email={}", MaskType.EMAIL.mask(user.getEmail()));
     }

@@ -1,6 +1,8 @@
 package com.akademi.finsight.auth.refreshtoken.service.impl;
 
 
+import com.akademi.finsight.audit.entity.AuditActionType;
+import com.akademi.finsight.audit.service.AuditLogService;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenRequest;
 import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenResult;
 import com.akademi.finsight.auth.refreshtoken.entity.RefreshToken;
@@ -35,6 +37,8 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     private final RefreshTokenRepository refreshTokenRepository;
     private final JwtProperties jwtProperties;
 
+    private final AuditLogService auditLogService;
+
     @Override
     @Transactional
     public RefreshTokenResult createAndSave(User user) {
@@ -65,6 +69,9 @@ public class RefreshTokenServiceImpl implements RefreshTokenService {
     @Transactional
     public void revokeToken(RefreshTokenRequest request) {
         RefreshToken refreshToken = findByTokenOrThrow(request.refreshToken());
+
+        auditLogService.createAuditLogForSelf(AuditActionType.LOGOUT, refreshToken.getUser());
+
         markAsRevoked(refreshToken);
         log.info("User logged out: event=USER_LOGGED_OUT, email={}", MaskType.EMAIL.mask(refreshToken.getUser().getEmail()));
     }

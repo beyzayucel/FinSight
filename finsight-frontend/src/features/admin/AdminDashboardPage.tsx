@@ -5,6 +5,7 @@ import { getTranslations } from '@/i18n/translations'
 import {
   getUsers,
   getUserStats,
+  getAuditLogs,
   createUser,
   updateUser,
   changeUserStatus,
@@ -17,6 +18,7 @@ import {
 import type {
   UserResponse,
   UserStatsResponse,
+  AuditLogResponse,
   PageResponse,
   CreateUserRequest,
   UpdateUserRequest,
@@ -30,6 +32,7 @@ import CreateUserModal from './components/CreateUserModal'
 import EditUserModal from './components/EditUserModal'
 import ConfirmModal from './components/ConfirmModal'
 import ChangePasswordModal from './components/ChangePasswordModal'
+import ActivityTimeline from './components/ActivityTimeline'
 
 function parseCurrentUser(
   token: string | null,
@@ -94,6 +97,11 @@ export default function AdminDashboardPage() {
 
   const [changePasswordOpen, setChangePasswordOpen] = useState(false)
 
+  const [auditData, setAuditData] = useState<PageResponse<AuditLogResponse> | null>(null)
+  const [auditLoading, setAuditLoading] = useState(true)
+  const [auditSearch, setAuditSearch] = useState('')
+  const [auditScope, setAuditScope] = useState('ALL')
+
   const [confirm, setConfirm] = useState<ConfirmState>(CONFIRM_INITIAL)
   const [toast, setToast] = useState<{ message: string; variant: 'success' | 'error' } | null>(null)
 
@@ -140,6 +148,23 @@ export default function AdminDashboardPage() {
     }
   }, [currentPage, search, statusFilter])
 
+  const loadAuditLogs = useCallback(async () => {
+    setAuditLoading(true)
+    try {
+      const res = await getAuditLogs({
+        scope: auditScope,
+        search: auditSearch || undefined,
+        page: 0,
+        size: 20,
+      })
+      setAuditData(res.data.data)
+    } catch {
+      setAuditData(null)
+    } finally {
+      setAuditLoading(false)
+    }
+  }, [auditScope, auditSearch])
+
   useEffect(() => {
     loadStats()
   }, [loadStats])
@@ -147,6 +172,10 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     loadUsers()
   }, [loadUsers])
+
+  useEffect(() => {
+    loadAuditLogs()
+  }, [loadAuditLogs])
 
   // İlk yüklemede admin profilini göster
   useEffect(() => {
@@ -170,6 +199,7 @@ export default function AdminDashboardPage() {
   function refreshAll() {
     loadStats()
     loadUsers()
+    loadAuditLogs()
   }
 
   async function handleCreate(data: CreateUserRequest) {
@@ -308,7 +338,7 @@ export default function AdminDashboardPage() {
       <KpiCards stats={stats} loading={statsLoading} t={t} />
 
       {/* Tablo + Detay paneli */}
-      <div className="grid grid-cols-[1fr_320px] gap-5 items-start">
+      <div className="grid grid-cols-[1fr_320px] gap-5 items-stretch">
         <UsersTable
           data={usersData}
           loading={usersLoading}
@@ -337,6 +367,16 @@ export default function AdminDashboardPage() {
           t={t}
         />
       </div>
+
+      <ActivityTimeline
+        data={auditData}
+        loading={auditLoading}
+        search={auditSearch}
+        onSearchChange={setAuditSearch}
+        scope={auditScope}
+        onScopeChange={setAuditScope}
+        t={t}
+      />
 
       {/* Modal'lar */}
       <CreateUserModal

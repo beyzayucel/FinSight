@@ -8,6 +8,7 @@ public record FundSyncResponse(
         String fundCode,
         LocalDate dataDate,
         int periodMetricCount,
+        int benchmarkPointCount,
         int distributionCount,
         String allocationPeriod,
         int stockAllocationCount

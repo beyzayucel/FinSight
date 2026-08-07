@@ -11,6 +11,7 @@ public record FundSyncSnapshot(
         BigDecimal totalValue,
         BigDecimal dailyReturn,
         List<PeriodMetric> periodMetrics,
+        List<BenchmarkPoint> benchmarkPoints,
         List<Distribution> distributions,
         String allocationPeriod,
         List<StockAllocation> stockAllocations
@@ -21,6 +22,12 @@ public record FundSyncSnapshot(
             LocalDate previousDate,
             BigDecimal previousTotalValue,
             BigDecimal cumulativeReturn,
+            BigDecimal benchmarkReturn
+    ) {}
+
+    public record BenchmarkPoint(
+            LocalDate date,
+            BigDecimal fundReturn,
             BigDecimal benchmarkReturn
     ) {}
 

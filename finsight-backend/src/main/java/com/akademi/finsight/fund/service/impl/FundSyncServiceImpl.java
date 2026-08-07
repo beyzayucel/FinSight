@@ -5,7 +5,6 @@ import com.akademi.finsight.fund.dto.response.FundSyncResponse;
 import com.akademi.finsight.fund.dto.sync.FundSyncSnapshot;
 import com.akademi.finsight.fund.exception.FundSyncException;
 import com.akademi.finsight.fund.service.FundSyncService;
-import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundAssetDistributionResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundPortfolioAllocationResponse;
@@ -27,6 +26,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.TreeMap;
 
 @Slf4j
 @Service
@@ -35,6 +35,7 @@ public class FundSyncServiceImpl implements FundSyncService {
 
     private static final String DAILY_RETURN_PERIOD = "P1D";
     private static final String STOCK_ASSET_TYPE_PREFIX = "HİSSE";
+    private static final String DAY_PERIOD = "P\\d+D";
     private static final int TOTAL_VALUE_SCALE = 4;
     private static final int RETURN_SCALE = 6;
     private static final int WEIGHT_SCALE = 6;
@@ -47,10 +48,7 @@ public class FundSyncServiceImpl implements FundSyncService {
     public FundSyncResponse sync() {
         String fundCode = fundProperties.getCode();
 
-        Set<String> requestedPeriods = new LinkedHashSet<>();
-        requestedPeriods.add(DAILY_RETURN_PERIOD);
-        requestedPeriods.addAll(fundProperties.getPeriods());
-        String periods = String.join(",", requestedPeriods);
+        String periods = buildRequestedPeriods();
         log.info("Fund sync started: fundCode={}, periods={}", fundCode, periods);
 
         FundInfoResponse fundInfo = infinaService.getFundInfo(fundCode, null, periods);
@@ -58,8 +56,6 @@ public class FundSyncServiceImpl implements FundSyncService {
         LocalDate dataDate = required(fundInfo.fundDate(), fundCode, "fundDate");
         BigDecimal totalValue = scaled(required(fundInfo.totalMarketPrice(), fundCode, "totalMarketPrice"),
                 TOTAL_VALUE_SCALE);
-
-        LocalDate benchmarkEndDate = fundInfo.date() != null ? fundInfo.date() : dataDate.plusDays(1);
 
         StockBreakdown stockBreakdown = resolveStockBreakdown(fundCode);
 
@@ -69,7 +65,8 @@ public class FundSyncServiceImpl implements FundSyncService {
                 dataDate,
                 totalValue,
                 resolveDailyReturn(fundInfo, fundCode),
-                resolvePeriodMetrics(fundCode, benchmarkEndDate, fundInfo.periodReturns()),
+                resolvePeriodMetrics(fundCode, fundInfo.periodReturns()),
+                resolveBenchmarkPoints(dataDate, fundInfo.periodReturns()),
                 resolveDistributions(fundInfo.assetDistribution()),
                 stockBreakdown.period(),
                 stockBreakdown.allocations());
@@ -77,17 +74,36 @@ public class FundSyncServiceImpl implements FundSyncService {
         return fundSyncPersister.persist(snapshot);
     }
 
+    private String buildRequestedPeriods() {
+        Set<String> requestedPeriods = new LinkedHashSet<>();
+        requestedPeriods.add(DAILY_RETURN_PERIOD);
+        requestedPeriods.addAll(fundProperties.getPeriods());
+
+        int longestPeriod = fundProperties.getPeriods().stream()
+                .filter(period -> period.matches(DAY_PERIOD))
+                .mapToInt(period -> Integer.parseInt(period.substring(1, period.length() - 1)))
+                .max()
+                .orElse(0);
+
+        for (int day = 1; day <= longestPeriod; day++) {
+            requestedPeriods.add("P" + day + "D");
+        }
+
+        return String.join(",", requestedPeriods);
+    }
+
     private List<FundSyncSnapshot.PeriodMetric> resolvePeriodMetrics(String fundCode,
-                                                                    LocalDate benchmarkEndDate,
                                                                     List<FundReturnResponse> periodReturns) {
+        Set<String> configuredPeriods = new LinkedHashSet<>(fundProperties.getPeriods());
         List<FundSyncSnapshot.PeriodMetric> metrics = new ArrayList<>();
 
-        for (FundReturnResponse periodReturn : periodReturns) {
-            if (DAILY_RETURN_PERIOD.equals(periodReturn.period())) {
-                continue;
-            }
-            if (periodReturn.period() == null || periodReturn.beginDate() == null
-                    || periodReturn.yield() == null) {
+        List<FundReturnResponse> configuredReturns = periodReturns.stream()
+                .filter(periodReturn -> !DAILY_RETURN_PERIOD.equals(periodReturn.period()))
+                .filter(periodReturn -> configuredPeriods.contains(periodReturn.period()))
+                .toList();
+
+        for (FundReturnResponse periodReturn : configuredReturns) {
+            if (periodReturn.beginDate() == null || periodReturn.fundReturn() == null) {
                 log.warn("Skipping period with incomplete data: fundCode={}, period={}",
                         fundCode, periodReturn.period());
                 continue;
@@ -102,8 +118,10 @@ public class FundSyncServiceImpl implements FundSyncService {
                     beginInfo.totalMarketPrice() == null
                             ? null
                             : scaled(beginInfo.totalMarketPrice(), TOTAL_VALUE_SCALE),
-                    scaled(periodReturn.yield(), RETURN_SCALE),
-                    benchmarkReturn(fundCode, periodReturn.period(), beginDate, benchmarkEndDate)));
+                    scaled(periodReturn.fundReturn(), RETURN_SCALE),
+                    periodReturn.benchmarkReturn() == null
+                            ? null
+                            : scaled(periodReturn.benchmarkReturn(), RETURN_SCALE)));
         }
 
         if (metrics.isEmpty()) {
@@ -114,28 +132,39 @@ public class FundSyncServiceImpl implements FundSyncService {
         return metrics;
     }
 
-    private BigDecimal benchmarkReturn(String fundCode,
-                                       String period,
-                                       LocalDate beginDate,
-                                       LocalDate benchmarkEndDate) {
-        List<BenchmarkInfoResponse> benchmarkInfos = infinaService.getBenchmarkInfo(
-                fundCode, beginDate.toString(), benchmarkEndDate.toString(), null);
+    private List<FundSyncSnapshot.BenchmarkPoint> resolveBenchmarkPoints(LocalDate dataDate,
+                                                                         List<FundReturnResponse> periodReturns) {
+        TreeMap<LocalDate, FundSyncSnapshot.BenchmarkPoint> byDate = new TreeMap<>();
 
-        if (benchmarkInfos.isEmpty() || benchmarkInfos.getFirst().benchmarkYield() == null) {
-            log.warn("No benchmark yield for period: fundCode={}, period={}", fundCode, period);
-            return null;
+        for (FundReturnResponse periodReturn : periodReturns) {
+            if (periodReturn.beginDate() == null || periodReturn.fundReturn() == null
+                    || !periodReturn.beginDate().isBefore(dataDate)) {
+                continue;
+            }
+            byDate.putIfAbsent(periodReturn.beginDate(), new FundSyncSnapshot.BenchmarkPoint(
+                    periodReturn.beginDate(),
+                    scaled(periodReturn.fundReturn(), RETURN_SCALE),
+                    periodReturn.benchmarkReturn() == null
+                            ? null
+                            : scaled(periodReturn.benchmarkReturn(), RETURN_SCALE)));
         }
 
-        return scaled(benchmarkInfos.getFirst().benchmarkYield(), RETURN_SCALE);
+        if (byDate.isEmpty()) {
+            return List.of();
+        }
+
+        byDate.put(dataDate, new FundSyncSnapshot.BenchmarkPoint(dataDate, BigDecimal.ZERO, BigDecimal.ZERO));
+
+        return List.copyOf(byDate.values());
     }
 
     private BigDecimal resolveDailyReturn(FundInfoResponse fundInfo, String fundCode) {
         return fundInfo.periodReturns().stream()
                 .filter(periodReturn -> DAILY_RETURN_PERIOD.equals(periodReturn.period())
-                        && periodReturn.yield() != null)
-                .map(FundReturnResponse::yield)
+                        && periodReturn.fundReturn() != null)
+                .map(FundReturnResponse::fundReturn)
                 .findFirst()
-                .map(yield -> scaled(yield, RETURN_SCALE))
+                .map(fundReturn -> scaled(fundReturn, RETURN_SCALE))
                 .orElseThrow(() -> {
                     log.warn("Infina response has no {} return: event=FUND_SYNC_FAILED, fundCode={}",
                             DAILY_RETURN_PERIOD, fundCode);

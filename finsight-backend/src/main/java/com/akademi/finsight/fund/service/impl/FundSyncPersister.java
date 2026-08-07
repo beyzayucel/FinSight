@@ -3,9 +3,11 @@ package com.akademi.finsight.fund.service.impl;
 import com.akademi.finsight.fund.dto.response.FundSyncResponse;
 import com.akademi.finsight.fund.dto.sync.FundSyncSnapshot;
 import com.akademi.finsight.fund.entity.Fund;
+import com.akademi.finsight.fund.entity.FundBenchmarkPoint;
 import com.akademi.finsight.fund.entity.FundDistribution;
 import com.akademi.finsight.fund.entity.FundPeriodMetric;
 import com.akademi.finsight.fund.entity.FundStockAllocation;
+import com.akademi.finsight.fund.repository.FundBenchmarkPointRepository;
 import com.akademi.finsight.fund.repository.FundDistributionRepository;
 import com.akademi.finsight.fund.repository.FundPeriodMetricRepository;
 import com.akademi.finsight.fund.repository.FundRepository;
@@ -25,25 +27,29 @@ public class FundSyncPersister {
 
     private final FundRepository fundRepository;
     private final FundPeriodMetricRepository fundPeriodMetricRepository;
+    private final FundBenchmarkPointRepository fundBenchmarkPointRepository;
     private final FundDistributionRepository fundDistributionRepository;
     private final FundStockAllocationRepository fundStockAllocationRepository;
 
     public FundSyncResponse persist(FundSyncSnapshot snapshot) {
         Fund fund = upsertFund(snapshot);
         upsertPeriodMetrics(fund, snapshot);
+        upsertBenchmarkPoints(fund, snapshot);
         upsertDistributions(fund, snapshot);
         upsertStockAllocations(fund, snapshot);
 
-        log.info("Fund data synced: fundId={}, fundCode={}, dataDate={}, periodMetrics={}, distributions={}, "
-                        + "allocationPeriod={}, stockAllocations={}",
+        log.info("Fund data synced: fundId={}, fundCode={}, dataDate={}, periodMetrics={}, benchmarkPoints={}, "
+                        + "distributions={}, allocationPeriod={}, stockAllocations={}",
                 fund.getId(), fund.getCode(), snapshot.dataDate(), snapshot.periodMetrics().size(),
-                snapshot.distributions().size(), snapshot.allocationPeriod(), snapshot.stockAllocations().size());
+                snapshot.benchmarkPoints().size(), snapshot.distributions().size(), snapshot.allocationPeriod(),
+                snapshot.stockAllocations().size());
 
         return new FundSyncResponse(
                 fund.getId(),
                 fund.getCode(),
                 snapshot.dataDate(),
                 snapshot.periodMetrics().size(),
+                snapshot.benchmarkPoints().size(),
                 snapshot.distributions().size(),
                 snapshot.allocationPeriod(),
                 snapshot.stockAllocations().size());
@@ -81,6 +87,25 @@ public class FundSyncPersister {
             entity.setFetchedAt(fetchedAt);
 
             fundPeriodMetricRepository.save(entity);
+        }
+    }
+
+    private void upsertBenchmarkPoints(Fund fund, FundSyncSnapshot snapshot) {
+        Instant fetchedAt = Instant.now();
+
+        for (FundSyncSnapshot.BenchmarkPoint point : snapshot.benchmarkPoints()) {
+            FundBenchmarkPoint entity = fundBenchmarkPointRepository
+                    .findByFundIdAndDataDate(fund.getId(), point.date())
+                    .orElseGet(() -> FundBenchmarkPoint.builder()
+                            .fund(fund)
+                            .dataDate(point.date())
+                            .build());
+
+            entity.setFundReturn(point.fundReturn());
+            entity.setBenchmarkReturn(point.benchmarkReturn());
+            entity.setFetchedAt(fetchedAt);
+
+            fundBenchmarkPointRepository.save(entity);
         }
     }
 

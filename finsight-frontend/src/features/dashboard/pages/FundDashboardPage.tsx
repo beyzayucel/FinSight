@@ -59,13 +59,19 @@ function formatBps(value: number): string {
   return `${rounded > 0 ? '+' : ''}${rounded} bps`
 }
 
-/** "2026-07-08" → "08.07" — grafik ekseni için kısa biçim. */
+function daysSince(iso: string): number {
+  const [y, m, d] = iso.split('-').map(Number)
+  const then = new Date(y, m - 1, d)
+  const now = new Date()
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  return Math.round((today.getTime() - then.getTime()) / 86_400_000)
+}
+
 function formatAxisDate(iso: string): string {
   const [, m, d] = iso.split('-')
   return `${d}.${m}`
 }
 
-/** Endeks değerini pencere başına göre değişime çevirir: 103.4 → "+3,40%" */
 function formatIndexChange(index: number): string {
   return formatSignedPercent(index - 100)
 }
@@ -81,18 +87,31 @@ function StockBreakdownModal({
 }) {
   const maxWeight = Math.max(...items.map((i) => i.weight), 1)
 
+  useEffect(() => {
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={onClose}
     >
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="stock-breakdown-title"
         className="w-full max-w-lg bg-white rounded-2xl shadow-2xl p-6 space-y-4 animate-fade-in"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between">
           <div>
-            <h3 className="text-lg font-bold text-slate-800">Hisse Senedi Alt Kırılımı</h3>
+            <h3 id="stock-breakdown-title" className="text-lg font-bold text-slate-800">
+              Hisse Senedi Alt Kırılımı
+            </h3>
             <p className="text-[11px] text-slate-500 font-medium mt-1 leading-relaxed">
               Kaynak: KAP Aylık Portföy Açıklaması · {formatMonthPeriod(period)} · Analiz
               Dönemi'nden bağımsız (aylık güncellenir)
@@ -200,6 +219,10 @@ export default function FundDashboardPage({ analysisPeriod, onGoToAiDecision }: 
   const changePositive = period.change >= 0
   const dailyPositive = data.dailyReturn >= 0
   const benchAbove = period.benchmarkDiffBps >= 0
+  const cumulativePositive = period.cumulativeReturn >= 0
+  const dataAge = daysSince(data.fund.dataDate)
+  // Fon NAV'ı bir gün gecikmeli; hafta sonuyla birlikte 3 güne kadar normal.
+  const dataStale = dataAge > 3
 
   return (
     <div className="space-y-5 animate-fade-in">
@@ -210,9 +233,16 @@ export default function FundDashboardPage({ analysisPeriod, onGoToAiDecision }: 
       {/* ---------- KPI KARTLARI ---------- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         {/* Toplam Portföy Değeri — çevrilebilir kart */}
-        <div
-          className="min-h-[160px] cursor-pointer select-none [perspective:1200px]"
+        <button
+          type="button"
           onClick={() => setFlipped((f) => !f)}
+          aria-pressed={flipped}
+          aria-label={
+            flipped
+              ? 'Güncel portföy değerine dön'
+              : `${periodDays} gün önceki portföy değerini gör`
+          }
+          className="min-h-[160px] w-full text-left cursor-pointer select-none [perspective:1200px] rounded-2xl outline-none focus-visible:ring-2 focus-visible:ring-[#c89834] focus-visible:ring-offset-2"
         >
           <div
             className={`relative h-full w-full transition-transform duration-500 [transform-style:preserve-3d] ${
@@ -228,8 +258,13 @@ export default function FundDashboardPage({ analysisPeriod, onGoToAiDecision }: 
                 <div className="text-[clamp(17px,1.2vw+7px,26px)] leading-tight tracking-tight font-bold font-mono text-slate-800 whitespace-nowrap">
                   {formatCurrency(data.totalValue)}
                 </div>
-                <span className="inline-block text-[10px] font-semibold font-mono text-slate-600 bg-slate-100 rounded-md px-2 py-1">
+                <span
+                  className={`inline-block text-[10px] font-semibold font-mono rounded-md px-2 py-1 ${
+                    dataStale ? 'bg-amber-100 text-amber-800' : 'text-slate-600 bg-slate-100'
+                  }`}
+                >
                   Veri Tarihi: {formatIsoDate(data.fund.dataDate)}
+                  {dataAge > 0 && ` · ${dataAge} gün önce`}
                 </span>
               </div>
               <span className="flex items-center gap-1.5 text-[10px] text-slate-400 font-medium">
@@ -257,6 +292,9 @@ export default function FundDashboardPage({ analysisPeriod, onGoToAiDecision }: 
                   {formatCurrency(Math.abs(period.change))} (
                   {formatSignedPercent(period.changePercent)})
                 </span>
+                <span className="block text-[9px] font-medium text-amber-700/70 leading-snug">
+                  Büyüklük değişimi — yatırımcı giriş/çıkışları dahil, fon getirisi değildir
+                </span>
               </div>
               <span className="flex items-center gap-1.5 text-[10px] text-amber-700/70 font-medium">
                 <IoSyncOutline size={12} />
@@ -264,7 +302,7 @@ export default function FundDashboardPage({ analysisPeriod, onGoToAiDecision }: 
               </span>
             </div>
           </div>
-        </div>
+        </button>
 
         {/* Günlük Getiri */}
         <div className="min-h-[160px] bg-white rounded-2xl border border-slate-200/80 shadow-sm p-5 flex flex-col justify-start space-y-2 select-none">
@@ -291,8 +329,12 @@ export default function FundDashboardPage({ analysisPeriod, onGoToAiDecision }: 
           <div className="text-[clamp(17px,1.2vw+7px,26px)] leading-tight tracking-tight font-bold font-mono text-slate-800 whitespace-nowrap">
             {formatSignedPercent(period.cumulativeReturn)}
           </div>
-          <span className="inline-flex w-fit items-center text-[10px] font-semibold font-mono rounded-md px-2 py-1 bg-emerald-50 text-emerald-700">
-            son {periodDays} gün
+          <span
+            className={`inline-flex w-fit items-center gap-1 text-[10px] font-semibold font-mono rounded-md px-2 py-1 ${
+              cumulativePositive ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-600'
+            }`}
+          >
+            {cumulativePositive ? '▲' : '▼'} son {periodDays} gün · {period.days} işlem günü
           </span>
         </div>
 
@@ -309,7 +351,8 @@ export default function FundDashboardPage({ analysisPeriod, onGoToAiDecision }: 
               benchAbove ? 'bg-emerald-50 text-emerald-700' : 'bg-rose-50 text-rose-600'
             }`}
           >
-            {benchAbove ? '▲ benchmark üstü' : '▼ benchmark altı'}
+            {benchAbove ? '▲ benchmark üstü' : '▼ benchmark altı'} ·{' '}
+            {formatSignedPercent(period.benchmarkDiffBps / 100)}
           </span>
         </div>
       </div>

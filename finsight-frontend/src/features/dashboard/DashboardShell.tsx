@@ -70,6 +70,10 @@ export default function DashboardShell() {
 
   const activeMenu = resolveActiveMenu(location.pathname)
 
+  const assetClassCount = fund
+    ? Object.values(fund.weights).filter((weight) => weight > 0).length
+    : undefined
+
   function renderMainContent() {
     if (loading) {
       return (
@@ -109,6 +113,7 @@ export default function DashboardShell() {
         navigate(MENU_ROUTES[idx])
       }}
       fundName={fund?.name}
+      assetClassCount={assetClassCount}
       analysisPeriod={period}
       onPeriodChange={(newPeriod) => setPeriod(newPeriod)}
     >

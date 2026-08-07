@@ -11,6 +11,7 @@ type DashboardLayoutProps = {
   onMenuChange: (index: MenuIndex) => void
   children: React.ReactNode
   fundName?: string
+  assetClassCount?: number
   analysisPeriod?: string
   onPeriodChange?: (period: string) => void
 }
@@ -20,6 +21,7 @@ export default function DashboardLayout({
   onMenuChange,
   children,
   fundName = 'TIE İş Portföy – BIST 30 Endeksi',
+  assetClassCount,
   analysisPeriod = '30',
   onPeriodChange
 }: DashboardLayoutProps) {
@@ -31,11 +33,11 @@ export default function DashboardLayout({
   }
 
   const menuItems = [
-    { index: 1 as MenuIndex, label: 'tr' === 'tr' ? 'Fon Dashboard' : 'Fund Dashboard' },
-    { index: 2 as MenuIndex, label: 'tr' === 'tr' ? 'AI Önerisi & Karar' : 'AI Recommendation & Decision' },
-    { index: 3 as MenuIndex, label: 'tr' === 'tr' ? 'Performans Karşılaştırması' : 'Performance Comparison' },
-    { index: 4 as MenuIndex, label: 'tr' === 'tr' ? 'Stres Testi' : 'Stress Test' },
-    { index: 5 as MenuIndex, label: 'tr' === 'tr' ? 'Karar Geçmişi' : 'Decision History' }
+    { index: 1 as MenuIndex, label: 'Fon Dashboard' },
+    { index: 2 as MenuIndex, label: 'AI Önerisi & Karar' },
+    { index: 3 as MenuIndex, label: 'Performans Karşılaştırması' },
+    { index: 4 as MenuIndex, label: 'Stres Testi' },
+    { index: 5 as MenuIndex, label: 'Karar Geçmişi' }
   ]
 
   return (
@@ -43,21 +45,25 @@ export default function DashboardLayout({
       {/* ---------- SOL SIDEBAR ---------- */}
       <aside className="w-[264px] flex-shrink-0 bg-gradient-to-b from-[#12161f] to-[#0d1017] text-[#edeae0] flex flex-col justify-between px-[18px] py-[28px] select-none border-r border-[#1e273a]/30 shadow-xl">
         <div className="space-y-3.5">
-          <div className="flex items-center space-x-2.5 mb-5 mt-1">
-            <img
-              src="/sidebar-logo.png"
-              alt="Fi Logo"
-              className="h-8 w-8 rounded-lg shadow-md select-none object-cover"
-            />
+          <div className="flex items-center space-x-3 mb-5 mt-1">
+            <span className="flex h-14 w-14 flex-shrink-0 items-center justify-center overflow-hidden">
+              <img
+                src="/sidebar-logo.png"
+                alt="Finsight logosu"
+                className="h-full w-full scale-[1.6] select-none object-contain"
+              />
+            </span>
             <div>
-              <h2 className="text-sm font-extrabold text-[#edeae0] tracking-wider uppercase leading-none">
+              <h2 className="text-base font-extrabold text-[#edeae0] tracking-wider uppercase leading-none">
                 FINSIGHT
               </h2>
-              <p className="text-[9px] font-bold text-slate-400 tracking-wider uppercase mt-0.5 leading-none">
+              <p className="text-[9px] font-bold text-slate-400 tracking-wider uppercase mt-1 leading-tight">
                 Karar Destek Platformu
               </p>
             </div>
-          </div>          {/* Analiz Dönemi Seçici (.windowpicker) */}
+          </div>
+
+          {/* Analiz Dönemi Seçici (.windowpicker) */}
           <div className="p-2.5 pb-3 bg-white/[0.04] border border-white/[0.08] rounded-xl space-y-1.5">
             <label className="text-[9px] font-extrabold tracking-wider text-slate-400 uppercase block">
               Analiz Dönemi
@@ -88,7 +94,7 @@ export default function DashboardLayout({
               {fundName}
             </h4>
             <span className="text-[9.5px] text-slate-400 font-medium block">
-              4 varlık sınıfı · Mevcut Portföy
+              {assetClassCount ? `${assetClassCount} varlık sınıfı · ` : ''}Mevcut Portföy
             </span>
           </div>
 

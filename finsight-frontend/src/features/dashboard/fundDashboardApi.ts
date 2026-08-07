@@ -8,7 +8,13 @@ export type FundDashboardPeriodCode = 'P10D' | 'P20D' | 'P30D' | 'P90D'
 export type FundDashboardFund = {
   code: string
   name: string
-  dataDate: string // ISO: 2026-08-05
+  dataDate: string 
+}
+
+export type FundBenchmarkSeriesPoint = {
+  date: string 
+  fund: number
+  benchmark: number | null
 }
 
 export type FundDashboardPeriod = {
@@ -22,16 +28,16 @@ export type FundDashboardPeriod = {
   cumulativeReturn: number
   benchmarkReturn: number
   benchmarkDiffBps: number
+  series: FundBenchmarkSeriesPoint[]
 }
 
 export type FundDistributionItem = {
-  /** Backend kategoriyi doğrudan Türkçe metin döner: "Hisse Senedi", "Ters-Repo"... */
   category: string
   weight: number
 }
 
 export type StockBreakdownItem = {
-  assetCode: string // "ASELS", "Others"...
+  assetCode: string 
   weight: number
 }
 

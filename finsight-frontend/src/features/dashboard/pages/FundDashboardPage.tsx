@@ -1,5 +1,16 @@
 import { useEffect, useMemo, useState } from 'react'
-import { CartesianGrid, Cell, Line, LineChart, Pie, PieChart, ResponsiveContainer, YAxis } from 'recharts'
+import {
+  CartesianGrid,
+  Cell,
+  Line,
+  LineChart,
+  Pie,
+  PieChart,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
 import { IoClose, IoSyncOutline } from 'react-icons/io5'
 import { getFundDashboard } from '../fundDashboardApi'
 import type { FundDashboard, FundDashboardPeriod, StockBreakdownItem } from '../fundDashboardApi'
@@ -48,36 +59,15 @@ function formatBps(value: number): string {
   return `${rounded > 0 ? '+' : ''}${rounded} bps`
 }
 
-/** Basit deterministik sözde-rastgele üreteç — benchmark grafiği temsili (mock). */
-function mulberry32(seed: number) {
-  return function () {
-    seed |= 0
-    seed = (seed + 0x6d2b79f5) | 0
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed)
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296
-  }
+/** "2026-07-08" → "08.07" — grafik ekseni için kısa biçim. */
+function formatAxisDate(iso: string): string {
+  const [, m, d] = iso.split('-')
+  return `${d}.${m}`
 }
 
-function buildMockBenchmarkSeries(days: number, fundReturn: number, benchmarkReturn: number) {
-  const rand = mulberry32(days * 7919)
-  const points: { fon: number; benchmark: number }[] = [{ fon: 100, benchmark: 100 }]
-  let fon = 100
-  let bench = 100
-  // Rastgele yürüyüş; son nokta dönemin gerçek birikimli getirisine oturtulur.
-  for (let i = 1; i <= days; i++) {
-    fon += (rand() - 0.5) * 1.6
-    bench += (rand() - 0.5) * 1.4
-    points.push({ fon, benchmark: bench })
-  }
-  const fonTarget = 100 + fundReturn
-  const benchTarget = 100 + benchmarkReturn
-  const fonDrift = (fonTarget - fon) / days
-  const benchDrift = (benchTarget - bench) / days
-  return points.map((p, i) => ({
-    fon: p.fon + fonDrift * i,
-    benchmark: p.benchmark + benchDrift * i,
-  }))
+/** Endeks değerini pencere başına göre değişime çevirir: 103.4 → "+3,40%" */
+function formatIndexChange(index: number): string {
+  return formatSignedPercent(index - 100)
 }
 
 function StockBreakdownModal({
@@ -178,14 +168,7 @@ export default function FundDashboardPage({ analysisPeriod, onGoToAiDecision }: 
     return data.periods.find((p) => p.code === `P${analysisPeriod}D`) ?? data.periods[0]
   }, [data, analysisPeriod])
 
-  const benchmarkSeries = useMemo(() => {
-    if (!period) return []
-    return buildMockBenchmarkSeries(
-      nominalDays(period.code),
-      period.cumulativeReturn,
-      period.benchmarkReturn
-    )
-  }, [period])
+  const benchmarkSeries = period?.series ?? []
 
   if (loading) {
     return (
@@ -396,48 +379,83 @@ export default function FundDashboardPage({ analysisPeriod, onGoToAiDecision }: 
           </button>
         </div>
 
-        {/* Benchmark Karşılaştırması — temsili (mock) seri */}
+        {/* Benchmark Karşılaştırması */}
         <div className="lg:col-span-7 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col">
           <div>
             <h3 className="text-base font-bold text-slate-800">Benchmark Karşılaştırması</h3>
             <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-              Fon getirisi vs. karma benchmark · son {periodDays} gün · temsili seri
+              Fon getirisi vs. karma benchmark · son {periodDays} gün ({period.days} işlem günü) ·{' '}
+              {formatIsoDate(period.previousDate)} = 100
             </p>
           </div>
 
-          <div className="flex items-center gap-5 mt-4">
-            <span className="flex items-center gap-2 text-[11px] font-medium text-slate-500">
-              <span className="inline-block w-5 border-t-2 border-[#c89834]" /> Fon
-            </span>
-            <span className="flex items-center gap-2 text-[11px] font-medium text-slate-500">
-              <span className="inline-block w-5 border-t-2 border-[#1c2530]" /> Benchmark
-            </span>
-          </div>
+          {benchmarkSeries.length === 0 ? (
+            <div className="flex-1 min-h-[200px] flex items-center justify-center">
+              <p className="max-w-[260px] text-center text-xs text-slate-400 font-medium leading-relaxed">
+                Bu dönem için benchmark serisi henüz oluşmamış. Fon senkronizasyonu çalıştığında
+                grafik dolacak.
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="flex items-center gap-5 mt-4">
+                <span className="flex items-center gap-2 text-[11px] font-medium text-slate-500">
+                  <span className="inline-block w-5 border-t-2 border-[#c89834]" /> Fon
+                </span>
+                <span className="flex items-center gap-2 text-[11px] font-medium text-slate-500">
+                  <span className="inline-block w-5 border-t-2 border-[#1c2530]" /> Benchmark
+                </span>
+              </div>
 
-          <div className="flex-1 min-h-[200px] mt-3">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={benchmarkSeries} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
-                <CartesianGrid vertical={false} stroke="#e5e7eb" />
-                <YAxis hide domain={['dataMin', 'dataMax']} />
-                <Line
-                  type="monotone"
-                  dataKey="fon"
-                  stroke="#c89834"
-                  strokeWidth={2.5}
-                  dot={false}
-                  isAnimationActive={false}
-                />
-                <Line
-                  type="monotone"
-                  dataKey="benchmark"
-                  stroke="#1c2530"
-                  strokeWidth={2}
-                  dot={false}
-                  isAnimationActive={false}
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+              <div className="flex-1 min-h-[200px] mt-3">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={benchmarkSeries} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                    <CartesianGrid vertical={false} stroke="#e5e7eb" />
+                    <XAxis
+                      dataKey="date"
+                      tickFormatter={formatAxisDate}
+                      tick={{ fontSize: 10, fill: '#94a3b8' }}
+                      tickLine={false}
+                      axisLine={false}
+                      minTickGap={28}
+                    />
+                    <YAxis hide domain={['dataMin', 'dataMax']} />
+                    <Tooltip
+                      labelFormatter={(label) =>
+                        `${formatIsoDate(String(label))} · ${formatIsoDate(period.previousDate)}'dan beri`
+                      }
+                      formatter={(value, name) => [
+                        formatIndexChange(Number(value)),
+                        name === 'fund' ? 'Fon' : 'Benchmark',
+                      ]}
+                      contentStyle={{
+                        borderRadius: '0.75rem',
+                        border: '1px solid #e2e8f0',
+                        fontSize: '11px',
+                      }}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="fund"
+                      stroke="#c89834"
+                      strokeWidth={2.5}
+                      dot={false}
+                      isAnimationActive={false}
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="benchmark"
+                      stroke="#1c2530"
+                      strokeWidth={2}
+                      dot={false}
+                      isAnimationActive={false}
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </>
+          )}
         </div>
       </div>
 

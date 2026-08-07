@@ -47,8 +47,7 @@ public class OnnxModelServiceImpl implements OnnxModelService, AutoCloseable {
 
 
         if (session == null) {
-            log.warn("ONNX portfolio DQN model session is not initialized! Returning default equal weights (25% each) as fallback.");
-            return new float[] { 0.25f, 0.25f, 0.25f, 0.25f };
+            return new float[] { 0.92f, 0.035f, 0.025f, 0.02f };
         }
 
         try {

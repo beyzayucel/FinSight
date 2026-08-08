@@ -41,20 +41,20 @@ public class OnnxModelServiceImpl implements OnnxModelService, AutoCloseable {
 
     @Override
     public float[] getAction(float[] stateInput) {
-        if (stateInput == null || stateInput.length != 13) {
-            throw new IllegalArgumentException("State input must have exactly 13 elements.");
+        if (stateInput == null || stateInput.length == 0) {
+            throw new IllegalArgumentException("State input cannot be null or empty.");
         }
 
-
         if (session == null) {
-            return new float[] { 0.92f, 0.035f, 0.025f, 0.02f };
+            log.warn("ONNX model session is not available. Falling back to current portfolio weights heuristic.");
+            return calculateHeuristicFallback(stateInput);
         }
 
         try {
-            log.info("Running ONNX model inference. Input array: {}", java.util.Arrays.toString(stateInput));
+            log.info("Running ONNX model inference. Input size: {}, array: {}", stateInput.length, java.util.Arrays.toString(stateInput));
 
-            float[][] inputData = new float[1][13];
-            System.arraycopy(stateInput, 0, inputData[0], 0, 13);
+            float[][] inputData = new float[1][stateInput.length];
+            System.arraycopy(stateInput, 0, inputData[0], 0, stateInput.length);
 
             try (OnnxTensor inputTensor = OnnxTensor.createTensor(env, inputData)) {
                 String inputName = session.getInputNames().iterator().next();
@@ -67,9 +67,50 @@ public class OnnxModelServiceImpl implements OnnxModelService, AutoCloseable {
                 }
             }
         } catch (OrtException e) {
-            log.error("Error running ONNX model inference", e);
-            throw new RuntimeException("ONNX model execution failed", e);
+            log.error("Error running ONNX model inference, falling back to heuristic weights", e);
+            return calculateHeuristicFallback(stateInput);
         }
+    }
+
+    private float[] calculateHeuristicFallback(float[] stateInput) {
+        int len = stateInput.length;
+        if (len < 4) {
+            return new float[] { 0.915f, 0.055f, 0.02f, 0.01f };
+        }
+
+        // stateInput'un son 4 elemanı: [stock_weight, repo_weight, future_weight, fund_weight]
+        float currentStock = stateInput[len - 4];
+        float currentRepo = stateInput[len - 3];
+        float currentFuture = stateInput[len - 2];
+        float currentFund = stateInput[len - 1];
+
+        // Eğer mevcut hisse ağırlığı 0 veya çok düşükse default dağılımı kullan
+        if (currentStock <= 0.01f) {
+            return new float[] { 0.915f, 0.055f, 0.02f, 0.01f };
+        }
+
+        // Akıllı Rebalancing Önerisi:
+        // Hisse senedi tarafındaki volatilite riskini azaltmak için hisseyi yaklaşık %3.5 kademeli azaltıp,
+        // ters-repo ve teminat tarafına pay aktararak portföy riskini optimize eder.
+        float reduction = Math.min(0.035f, currentStock * 0.037f);
+        float targetStock = Math.max(0.80f, currentStock - reduction);
+        float diff = currentStock - targetStock;
+
+        float targetRepo = currentRepo + (diff * 0.65f);
+        float targetFuture = currentFuture + (diff * 0.25f);
+        float targetFund = currentFund + (diff * 0.10f);
+
+        float total = targetStock + targetRepo + targetFuture + targetFund;
+        if (total <= 0.001f) {
+            return new float[] { 0.915f, 0.055f, 0.02f, 0.01f };
+        }
+
+        return new float[] {
+                targetStock / total,
+                targetRepo / total,
+                targetFuture / total,
+                targetFund / total
+        };
     }
 
     @Override

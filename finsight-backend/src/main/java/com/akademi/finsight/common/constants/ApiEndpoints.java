@@ -95,6 +95,12 @@ public final class ApiEndpoints {
         public static final String COMPARE = "/{fundCode}";
     }
 
+
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static final class MacroData {
+        public static final String BASE = API_V1 + "/macro-data";
+        public static final String SYNC = "/sync";
+    }
     private static final String[] PUBLIC_ENDPOINTS = {
             Auth.BASE + Auth.LOGIN,
             Auth.BASE + Auth.REFRESH,

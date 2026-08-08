@@ -18,6 +18,8 @@ public interface FundPeriodMetricService {
 
     List<FundPeriodMetricResponse> getLatestByFundCode(String fundCode);
 
+    FundPeriodMetricResponse getLatestByFundCodeAndPeriod(String fundCode, String period);
+
     FundPeriodMetricResponse update(UUID id, FundPeriodMetricRequest request);
 
     void delete(UUID id);

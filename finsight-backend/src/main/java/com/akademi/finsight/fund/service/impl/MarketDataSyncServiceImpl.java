@@ -1,8 +1,8 @@
 package com.akademi.finsight.fund.service.impl;
 
-import com.akademi.finsight.fund.entity.MacroData;
-import com.akademi.finsight.fund.repository.MacroDataRepository;
-import com.akademi.finsight.fund.service.MacroDataSyncService;
+import com.akademi.finsight.fund.entity.MarketData;
+import com.akademi.finsight.fund.repository.MarketDataRepository;
+import com.akademi.finsight.fund.service.MarketDataSyncService;
 import com.akademi.finsight.integration.infina.dto.response.fx.FxPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.economic.EconomicPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.index.IndexPriceResponse;
@@ -16,37 +16,41 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
 
-import static com.akademi.finsight.fund.constant.MacroConstants.*;
+import org.springframework.beans.factory.annotation.Value;
+
+import static com.akademi.finsight.fund.constant.MarketConstants.*;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class MacroDataSyncServiceImpl implements MacroDataSyncService {
+public class MarketDataSyncServiceImpl implements MarketDataSyncService {
 
     private final InfinaService infinaService;
-    private final MacroDataRepository macroDataRepository;
+    private final MarketDataRepository marketDataRepository;
+
+    @Value("${market.sync.zone:Europe/Istanbul}")
+    private String zone;
 
     private static final int RETURN_SCALE = 12;
 
     @Override
     @Transactional
-    public MacroData sync(LocalDate date) {
-        if (date == null) {
-            date = LocalDate.now();
-        }
+    public MarketData sync() {
+        LocalDate date = LocalDate.now(ZoneId.of(zone));
 
-        if (date.getDayOfWeek() == DayOfWeek.SATURDAY) {
+        if (DayOfWeek.SATURDAY.equals(date.getDayOfWeek())) {
             date = date.minusDays(1);
-        } else if (date.getDayOfWeek() == DayOfWeek.SUNDAY) {
+        } else if (DayOfWeek.SUNDAY.equals(date.getDayOfWeek())) {
             date = date.minusDays(2);
         }
 
-        log.info("Starting macro data sync for date: {}", date);
+        log.info("Starting market data sync for date: {}", date);
 
         String dateRange = "[" + date.minusDays(5) + "," + date + "]";
 
@@ -57,7 +61,7 @@ public class MacroDataSyncServiceImpl implements MacroDataSyncService {
         BigDecimal annualInflation = fetchEconomicPrice(INFLATION_CODE, date);
         BigDecimal policyRate = fetchEconomicPrice(POLICY_RATE_CODE, date);
 
-        MacroData macroData = MacroData.builder()
+        MarketData marketData = MarketData.builder()
                 .date(date)
                 .usdReturn(usdReturn)
                 .goldReturn(goldReturn)
@@ -68,8 +72,8 @@ public class MacroDataSyncServiceImpl implements MacroDataSyncService {
                 .policyRate(policyRate)
                 .build();
 
-        MacroData saved = macroDataRepository.save(macroData);
-        log.info("Macro data synced successfully for date: {}", date);
+        MarketData saved = marketDataRepository.save(marketData);
+        log.info("Market data synced successfully for date: {}", date);
         return saved;
     }
 

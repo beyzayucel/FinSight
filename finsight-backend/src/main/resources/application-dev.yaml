@@ -8,6 +8,16 @@ spring:
       hibernate:
         format_sql: true
 
+management:
+  endpoint:
+    health:
+      show-details: always
+      group:
+        readiness:
+          show-details: always
+        liveness:
+          show-details: always
+
 logging:
   level:
     root: INFO

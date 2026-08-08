@@ -15,7 +15,8 @@ public enum StressTestErrorType implements BaseErrorType {
     MODEL_INFERENCE_ERROR("error.stresstest.model.inference.failed", HttpStatus.INTERNAL_SERVER_ERROR),
     INVALID_SIMULATION_TYPE("error.stresstest.invalid.simulation.type", HttpStatus.BAD_REQUEST),
     RESULT_NOT_FOUND("error.stresstest.result.not.found", HttpStatus.NOT_FOUND),
-    RESULT_ACCESS_DENIED("error.stresstest.result.access.denied", HttpStatus.FORBIDDEN);
+    RESULT_ACCESS_DENIED("error.stresstest.result.access.denied", HttpStatus.FORBIDDEN),
+    INVALID_ANALYSIS_PERIOD("error.stresstest.invalid.analysis.period", HttpStatus.BAD_REQUEST);
 
     private final String messageKey;
     private final HttpStatus httpStatus;

@@ -129,6 +129,9 @@ app:
         intra-op-num-threads: ${INTRA_OP_NUM_THREADS}
         inter-op-num-threads: ${INTER_OP_NUM_THREADS}
 
+  fastapi:
+    base-url: ${FASTAPI_BASE_URL}
+
 jwt:
   secret: ${JWT_SECRET}
   access-token-expiry: ${JWT_ACCESS_TOKEN_EXPIRY}
@@ -168,9 +171,29 @@ fund:
   recommendation:
      ttl-hours: ${FUND_RECOMMENDATION_TTL_HOURS:4}
 
+market:
+  sync:
+    cron: ${MARKET_SYNC_CRON:0 0 8-17 * * *}
+    zone: ${MARKET_SYNC_ZONE:Europe/Istanbul}
+
 infina:
   api:
     base-url: ${INFINA_API_URL}
     key: ${INFINA_API_KEY}
     connect-timeout: ${INFINA_API_CONNECT_TIMEOUT:3s}
     read-timeout: ${INFINA_API_READ_TIMEOUT:10s}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, prometheus
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      group:
+        readiness:
+          include: readinessState, db, redis
+        liveness:
+          include: livenessState

@@ -11,6 +11,8 @@ import java.util.UUID;
 
 public interface FundStockAllocationRepository extends JpaRepository<FundStockAllocation, UUID> {
 
+    List<FundStockAllocation> findByFundId(UUID fundId);
+
     Optional<FundStockAllocation> findByFundIdAndPeriodAndAssetCode(UUID fundId, String period, String assetCode);
 
     boolean existsByFundIdAndPeriodAndAssetCode(UUID fundId, String period, String assetCode);

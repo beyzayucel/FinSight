@@ -6,7 +6,7 @@ import lombok.NoArgsConstructor;
 import java.math.BigDecimal;
 
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class MacroConstants {
+public final class MarketConstants {
 
     public static final String USD_TRY_CODE = "USD/TRY";
     public static final String GOLD_CODE = "XAUUSD";

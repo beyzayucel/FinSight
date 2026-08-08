@@ -3,7 +3,7 @@ package com.akademi.finsight.fund.dto;
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public record MacroDataRow(
+public record MarketDataRow(
         LocalDate date,
         BigDecimal usdReturn,
         BigDecimal goldReturn,

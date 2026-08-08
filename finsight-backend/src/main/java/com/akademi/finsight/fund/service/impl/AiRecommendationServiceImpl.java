@@ -2,9 +2,9 @@ package com.akademi.finsight.fund.service.impl;
 
 import com.akademi.finsight.common.masking.MaskType;
 import com.akademi.finsight.fund.config.FundProperties;
-import com.akademi.finsight.fund.constant.MacroConstants;
+import com.akademi.finsight.fund.constant.MarketConstants;
 import com.akademi.finsight.fund.converter.FundDistributionConverter;
-import com.akademi.finsight.fund.dto.MacroDataRow;
+import com.akademi.finsight.fund.dto.MarketDataRow;
 import com.akademi.finsight.fund.dto.request.FundModelInputRequest;
 import com.akademi.finsight.fund.dto.response.AIRecommendationResponse;
 import com.akademi.finsight.fund.dto.response.FundResponse;
@@ -17,14 +17,12 @@ import com.akademi.finsight.fund.dto.response.FundPeriodMetricResponse;
 import com.akademi.finsight.fund.mapper.AiRecommendationMapper;
 import com.akademi.finsight.fund.performancecomparison.service.PortfolioSimulationCalculationService;
 import com.akademi.finsight.fund.repository.AiRecommendationRepository;
-import com.akademi.finsight.fund.repository.MacroDataRepository;
+import com.akademi.finsight.fund.repository.MarketDataRepository;
 import com.akademi.finsight.fund.service.AiRecommendationService;
 import com.akademi.finsight.fund.service.FundDistributionService;
 import com.akademi.finsight.fund.service.FundPeriodMetricService;
 import com.akademi.finsight.fund.service.FundService;
 import com.akademi.finsight.fund.service.OnnxModelService;
-import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
-import com.akademi.finsight.integration.infina.service.InfinaService;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -53,8 +51,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
     private final UserService userService;
     private final FundDistributionConverter fundDistributionConverter;
     private final AiRecommendationMapper aiRecommendationMapper;
-    private final MacroDataRepository macroDataRepository;
-    private final InfinaService infinaService;
+    private final MarketDataRepository marketDataRepository;
     private final PortfolioSimulationCalculationService portfolioSimulationCalculationService;
 
 
@@ -121,28 +118,28 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
         Map<AssetCategory, BigDecimal> weights = fundDistributionConverter.toWeightsMapFromResponses(distributions);
 
-        MacroDataRow macroRow = macroDataRepository.findFirstByOrderByDateDesc()
-                .map(macroData -> new MacroDataRow(
-                        macroData.getDate(),
-                        macroData.getUsdReturn(),
-                        macroData.getGoldReturn(),
-                        macroData.getBrentReturn(),
-                        macroData.getUs10yReturn(),
-                        macroData.getCdsSpreadBps(),
-                        macroData.getAnnualInflation(),
-                        macroData.getPolicyRate()
+        MarketDataRow marketRow = marketDataRepository.findFirstByOrderByDateDesc()
+                .map(marketData -> new MarketDataRow(
+                        marketData.getDate(),
+                        marketData.getUsdReturn(),
+                        marketData.getGoldReturn(),
+                        marketData.getBrentReturn(),
+                        marketData.getUs10yReturn(),
+                        marketData.getCdsSpreadBps(),
+                        marketData.getAnnualInflation(),
+                        marketData.getPolicyRate()
                 ))
                 .orElseGet(() -> {
-                    log.warn("MacroData table is empty, falling back to safe default values.");
-                    return new MacroDataRow(
+                    log.warn("MarketData table is empty, falling back to safe default values.");
+                    return new MarketDataRow(
                             LocalDate.now(),
                             BigDecimal.ZERO,
                             BigDecimal.ZERO,
                             BigDecimal.ZERO,
                             BigDecimal.ZERO,
-                            MacroConstants.DEFAULT_CDS,
-                            MacroConstants.DEFAULT_INFLATION,
-                            MacroConstants.DEFAULT_POLICY_RATE
+                            MarketConstants.DEFAULT_CDS,
+                            MarketConstants.DEFAULT_INFLATION,
+                            MarketConstants.DEFAULT_POLICY_RATE
                     );
                 });
 
@@ -171,33 +168,18 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
             }
         }
 
-        try {
-            FundInfoResponse fundInfo = infinaService.getFundInfo(fund.code(), null, null);
-            if (fundInfo != null) {
-                if (fundInfo.investorCount() != null) {
-                    investorCount = BigDecimal.valueOf(fundInfo.investorCount());
-                }
-                if (fundInfo.totalMarketPrice() != null) {
-                    portfolioValue = fundInfo.totalMarketPrice();
-                    activeValue = fundInfo.totalMarketPrice();
-                }
-            }
-        } catch (Exception e) {
-            log.warn("Could not fetch additional fund info for {}: {}", fund.code(), e.getMessage());
-        }
-
         return FundModelInputRequest.builder()
                 .stockWeight(weights.getOrDefault(AssetCategory.STOCK, BigDecimal.ZERO))
                 .repoWeight(weights.getOrDefault(AssetCategory.REPO, BigDecimal.ZERO))
                 .futureWeight(weights.getOrDefault(AssetCategory.FUTURE, BigDecimal.ZERO))
                 .fundWeight(weights.getOrDefault(AssetCategory.FUND, BigDecimal.ZERO))
-                .usdReturn(macroRow.usdReturn())
-                .goldReturn(macroRow.goldReturn())
-                .brentReturn(macroRow.brentReturn())
-                .us10yReturn(macroRow.us10yReturn())
-                .cdsSpreadBps(macroRow.cdsSpreadBps())
-                .annualInflation(macroRow.annualInflation())
-                .policyRate(macroRow.policyRate())
+                .usdReturn(marketRow.usdReturn())
+                .goldReturn(marketRow.goldReturn())
+                .brentReturn(marketRow.brentReturn())
+                .us10yReturn(marketRow.us10yReturn())
+                .cdsSpreadBps(marketRow.cdsSpreadBps())
+                .annualInflation(marketRow.annualInflation())
+                .policyRate(marketRow.policyRate())
                 .fundReturn(fundReturn)
                 .portfolioGrowth(portfolioGrowth)
                 .activeValue(activeValue)

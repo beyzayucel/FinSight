@@ -2,25 +2,23 @@ package com.akademi.finsight.fund.controller;
 
 import com.akademi.finsight.common.controller.BaseController;
 import com.akademi.finsight.common.response.ApiStandardResponse;
-import com.akademi.finsight.fund.controller.api.MacroDataSyncApi;
-import com.akademi.finsight.fund.entity.MacroData;
-import com.akademi.finsight.fund.service.MacroDataSyncService;
+import com.akademi.finsight.fund.controller.api.MarketDataSyncApi;
+import com.akademi.finsight.fund.entity.MarketData;
+import com.akademi.finsight.fund.service.MarketDataSyncService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.time.LocalDate;
-
 @RestController
 @RequiredArgsConstructor
-public class MacroDataSyncController extends BaseController implements MacroDataSyncApi {
+public class MarketDataSyncController extends BaseController implements MarketDataSyncApi {
 
-    private final MacroDataSyncService macroDataSyncService;
+    private final MarketDataSyncService marketSyncService;
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiStandardResponse<MacroData>> sync() {
-        return ok(macroDataSyncService.sync(LocalDate.now()));
+    public ResponseEntity<ApiStandardResponse<MarketData>> sync() {
+        return ok(marketSyncService.sync());
     }
 }

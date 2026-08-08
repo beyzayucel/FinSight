@@ -15,6 +15,7 @@ import com.akademi.finsight.fund.exception.FundNotFoundException;
 import com.akademi.finsight.fund.exception.FundValidationException;
 import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
 import com.akademi.finsight.fund.mapper.AiRecommendationMapper;
+import com.akademi.finsight.fund.performancecomparison.service.PortfolioSimulationCalculationService;
 import com.akademi.finsight.fund.repository.AiRecommendationRepository;
 import com.akademi.finsight.fund.service.AiRecommendationService;
 import com.akademi.finsight.fund.service.FundDistributionService;
@@ -47,6 +48,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
     private final UserService userService;
     private final FundDistributionConverter fundDistributionConverter;
     private final AiRecommendationMapper aiRecommendationMapper;
+    private final PortfolioSimulationCalculationService portfolioSimulationCalculationService;
 
 
     @Override
@@ -170,6 +172,12 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
         recommendation.setStatus(status);
         recommendation.setNote(note);
+
+        if (status == RecommendationStatus.ACCEPTED) {
+            portfolioSimulationCalculationService.attachSnapshot(
+                    recommendation, recommendation.getFund().getCode(), 30, recommendation.getSimulationWeights());
+        }
+
         aiRecommendationRepository.save(recommendation);
     }
 
@@ -193,6 +201,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
         return new FundActivePortfolioResponse(fund.id(), fund.code(), fund.name(), fundDate, weightsMap);
     }
+
 
 
     private void addWeightToEntity(AiRecommendation aiRecommendation, AssetCategory assetCategory, BigDecimal recommended, BigDecimal current) {

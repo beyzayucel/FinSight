@@ -7,11 +7,8 @@ import { ROUTES } from '@/lib/routes'
 import { AssetCategoryLabels } from '../dashboardApi'
 import type { AssetCategory } from '../dashboardApi'
 import { useDashboardOutlet } from '../DashboardShell'
-import { CATEGORY_TO_ASSET_CLASS } from '../lib/mockDecisionBridge'
 import { getDecisionHistory, type DecisionRecord } from '../lib/decisionHistoryApi'
 import { formatDate, formatSignedPercent, formatUnsignedPercent } from '../lib/formatters'
-import type { Weights } from '../lib/simulation'
-import type { ReapplyScenario } from './PerformanceComparisonPage'
 
 const ASSET_CATEGORIES: AssetCategory[] = ['STOCK', 'REPO', 'FUTURE', 'FUND']
 
@@ -33,13 +30,6 @@ function statusLabel(record: DecisionRecord): { text: string; sourceTag: string 
   return { text: 'Manuel senaryo uygulandı', sourceTag: 'Manuel' }
 }
 
-function toSimulationWeights(record: DecisionRecord): Weights {
-  const weights = {} as Weights
-  for (const w of record.weights) {
-    weights[CATEGORY_TO_ASSET_CLASS[w.category]] = w.targetWeight / 100
-  }
-  return weights
-}
 
 export default function DecisionHistoryPage() {
   const t = getTranslations()
@@ -69,9 +59,8 @@ export default function DecisionHistoryPage() {
     }
   }, [fund.id])
 
-  function handleReapply(weights: Weights, sourceLabel: string) {
-    const reapplyScenario: ReapplyScenario = { weights, sourceLabel }
-    navigate(ROUTES.FUND_PERFORMANCE, { state: { reapplyScenario } })
+  function handleReapply() {
+    navigate(ROUTES.FUND_PERFORMANCE)
   }
 
   const isLoading = history === null && !error
@@ -253,9 +242,7 @@ export default function DecisionHistoryPage() {
                     {canReapply && (
                       <button
                         type="button"
-                        onClick={() =>
-                          handleReapply(toSimulationWeights(record), record.source === 'AI' ? t.pcSourceAi : t.pcSourceManual)
-                        }
+                        onClick={() => handleReapply()}
                         className="px-4 py-2 rounded-xl border border-[#c89834]/40 text-[#c89834] font-bold text-[11px] tracking-wide uppercase hover:bg-[#c89834]/10 transition-all cursor-pointer"
                       >
                         ↻ Tekrar Uygula (bugünün verisiyle)

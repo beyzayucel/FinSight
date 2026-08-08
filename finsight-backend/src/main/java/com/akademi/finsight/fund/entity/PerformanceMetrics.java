@@ -38,4 +38,7 @@ public class PerformanceMetrics {
     // Karar Geçmişi özet satırındaki "Süre: X işlem günü" için.
     @Column(name = "analysis_window_days")
     private Integer analysisWindowDays;
+
+    @Column(name = "simulated_portfolio_value", precision = 18, scale = 2)
+    private BigDecimal simulatedPortfolioValue;
 }

@@ -203,7 +203,7 @@ export const translations = {
       'Aynı dönemde üç yaklaşım yan yana: Mevcut Portföy (piyasa hareketleriyle hedeften bir miktar sapmış güncel ağırlıklar), Simülasyon Portföyü (kararınız uygulansaydı) ve Benchmark (fonun stratejik hedef ağırlığı — sabit tutulur, sapmaz).',
     pcLockedTitle: 'Ekran kilitli',
     pcLockedMessage:
-      'Önce Manuel Senaryo sekmesinde bir dağılım uygulayın, sonra karşılaştırmayı görüntüleyin.',
+      'Önce Ekran 3\'te bir karar verin (Kabul Et ya da Manuel Senaryo Uygula), sonra karşılaştırmayı görüntüleyin.',
     pcLockedGoToDecision: "Manuel Senaryo'ya git",
     pcChartTitle: 'Kümülatif Getiri',
     pcLegendMevcut: 'Mevcut Portföy',
@@ -223,7 +223,7 @@ export const translations = {
     pcMetricMaxDrawdown: 'Maksimum Düşüş',
     pcMetricDailyVolatility: 'Günlük Oynaklık',
     pcFootnote:
-      'Grafikteki getiriler prototip amaçlı üretilen sentetik veriye dayanır, gerçek piyasa verisi değildir; geçmiş performans gelecekteki performansın garantisi değildir.',
+      'Veriler CSV tabanlı geçmiş veri setinden okunur; geçmiş performans gelecekteki performansın garantisi değildir.',
     pcGoToStressTest: 'Stres Testine Geç',
     auditTitle: 'Son İşlemler',
     auditSearchPlaceholder: 'İşlem ara…',
@@ -444,7 +444,7 @@ export const translations = {
       "Three approaches side by side over the same period: Current Portfolio (current weights, drifted from target due to market moves), Simulated Portfolio (if your decision were applied), and Benchmark (the fund's strategic target weight — held fixed).",
     pcLockedTitle: 'Screen locked',
     pcLockedMessage:
-      'First apply a distribution in the Manual Scenario tab, then view the comparison.',
+      'First make a decision on Screen 3 (Accept or Apply Manual Scenario), then view the comparison.',
     pcLockedGoToDecision: 'Go to Manual Scenario',
     pcChartTitle: 'Cumulative Return',
     pcLegendMevcut: 'Current Portfolio',
@@ -464,7 +464,7 @@ export const translations = {
     pcMetricMaxDrawdown: 'Max Drawdown',
     pcMetricDailyVolatility: 'Daily Volatility',
     pcFootnote:
-      'Chart returns are based on synthetic prototype data, not real market data; past performance is not a guarantee of future performance.',
+      'Data is read from a CSV-based historical dataset; past performance is not a guarantee of future performance.',
     pcGoToStressTest: 'Go to Stress Test',
     auditTitle: 'Recent Activity',
     auditSearchPlaceholder: 'Search activity…',

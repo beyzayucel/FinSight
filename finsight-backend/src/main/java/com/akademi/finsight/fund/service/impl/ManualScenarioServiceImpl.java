@@ -9,6 +9,7 @@ import com.akademi.finsight.fund.entity.*;
 import com.akademi.finsight.fund.exception.FundErrorType;
 import com.akademi.finsight.fund.exception.FundValidationException;
 import com.akademi.finsight.fund.mapper.ManualScenarioMapper;
+import com.akademi.finsight.fund.performancecomparison.service.PortfolioSimulationCalculationService;
 import com.akademi.finsight.fund.repository.FundRepository;
 import com.akademi.finsight.fund.repository.ManualScenarioRepository;
 import com.akademi.finsight.fund.service.FundDistributionService;
@@ -38,6 +39,7 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
     private final ManualScenarioMapper manualScenarioMapper;
     private final FundDistributionService fundDistributionService;
     private final FundDistributionConverter fundDistributionConverter;
+    private final PortfolioSimulationCalculationService portfolioSimulationCalculationService;
 
     @Override
     @Transactional
@@ -66,6 +68,8 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
             ManualScenarioWeight weight = manualScenarioMapper.toWeightEntity(category, targetWeight, currentWeight, scenario);
             scenario.addWeight(weight);
         }
+
+        portfolioSimulationCalculationService.attachSnapshot(scenario, fund.getCode(), 30, targetWeights);
 
         manualScenarioRepository.save(scenario);
         log.info("Manual scenario applied and saved successfully. Scenario ID: {}", scenario.getId());

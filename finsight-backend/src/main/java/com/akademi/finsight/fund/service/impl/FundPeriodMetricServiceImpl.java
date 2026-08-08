@@ -75,6 +75,17 @@ public class FundPeriodMetricServiceImpl implements FundPeriodMetricService {
     }
 
     @Override
+    @Transactional(readOnly = true)
+    public FundPeriodMetricResponse getLatestByFundCodeAndPeriod(String fundCode, String period) {
+        if (!fundRepository.existsByCode(fundCode)) {
+            throw new FundNotFoundException();
+        }
+        return fundPeriodMetricRepository.findLatestByFundCodeAndPeriod(fundCode, period)
+                .map(fundPeriodMetricMapper::toResponse)
+                .orElseThrow(FundPeriodMetricNotFoundException::new);
+    }
+
+    @Override
     public FundPeriodMetricResponse update(UUID id, FundPeriodMetricRequest request) {
         FundPeriodMetric entity = getEntity(id);
         Fund fund = getFund(request.fundId());

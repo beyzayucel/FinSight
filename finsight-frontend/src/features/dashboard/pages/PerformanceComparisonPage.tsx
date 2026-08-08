@@ -1,52 +1,60 @@
-import { useMemo } from 'react'
-import { CartesianGrid, Line, LineChart, ResponsiveContainer, YAxis } from 'recharts'
-import { MdLockOutline } from 'react-icons/md'
+import { useCallback, useEffect, useState } from 'react'
+import { CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { MdInfoOutline } from 'react-icons/md'
 import { getTranslations } from '@/i18n/translations'
 import { getLang } from '@/lib/authStore'
 import { useDecision } from '@/features/dashboard/context/decisionStore'
-import { runSimulation, type PortfolioMetrics, type SimulationWindow, type Weights } from '@/features/dashboard/lib/simulation'
 import { formatCurrency, formatDate, formatSignedPercent, formatUnsignedPercent } from '@/features/dashboard/lib/formatters'
-import { getLatestAppliedScenario } from '@/features/dashboard/lib/mockDecisionBridge'
+import {
+  getPerformanceComparison,
+  mergeToChartPoints,
+  type ChartPoint,
+  type PerformanceComparisonResponse,
+  type PortfolioMetrics,
+} from '@/features/dashboard/lib/performanceComparisonApi'
+import type { SimulationWindow } from '@/features/dashboard/lib/simulation'
 
 const SERIES = [
-  { key: 'mevcut' as const, colorVar: '--color-sidebar-muted', dash: '6 3', width: 2 },
-  { key: 'simulasyon' as const, colorVar: '--color-gold', dash: undefined, width: 3 },
-  { key: 'benchmark' as const, colorVar: '--color-ink', dash: '3 3', width: 2 },
+  { key: 'mevcut' as const, color: '#6b7683', dash: '6 3', width: 2 },
+  { key: 'simulasyon' as const, color: '#B9862B', dash: undefined, width: 3 },
+  { key: 'benchmark' as const, color: '#1c2530', dash: '3 3', width: 2 },
 ]
 
 const WINDOW_OPTIONS: SimulationWindow[] = [10, 20, 30, 90]
 
-export type ReapplyScenario = {
-  weights: Weights
-  sourceLabel: string
-}
-
-type PerformanceComparisonPageProps = {
-  overrideScenario?: ReapplyScenario | null
+type Props = {
   onGoToManualScenario: () => void
   onGoToStressTest: () => void
 }
 
-export default function PerformanceComparisonPage({
-  overrideScenario,
-  onGoToManualScenario,
-  onGoToStressTest,
-}: PerformanceComparisonPageProps) {
+type FetchState =
+  | { status: 'idle' }
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | { status: 'ready'; data: PerformanceComparisonResponse; chartPoints: ChartPoint[] }
+
+export default function PerformanceComparisonPage({ onGoToManualScenario, onGoToStressTest }: Props) {
   const t = getTranslations()
   const lang = getLang() === 'en' ? 'en' : 'tr'
-  const { activeFund, fundInfo, analysisWindow, setAnalysisWindow } = useDecision()
+  const { activeFund, analysisWindow, setAnalysisWindow } = useDecision()
 
-  // Karar Geçmişi'nden "↻ Tekrar Uygula" ile gelindiyse o kararın ağırlıkları öncelikli;
-  // aksi halde beyza'nın Manuel Senaryo akışının (dashboardApi.ts) son uyguladığı senaryo.
-  const appliedScenario = useMemo(() => {
-    if (overrideScenario) return { weights: overrideScenario.weights, appliedAt: new Date().toISOString() }
-    return getLatestAppliedScenario()
-  }, [overrideScenario])
+  const [state, setState] = useState<FetchState>({ status: 'idle' })
 
-  const simulation = useMemo(() => {
-    if (!appliedScenario || fundInfo.status !== 'ready') return null
-    return runSimulation(activeFund.code, analysisWindow, fundInfo.refWeights, appliedScenario.weights, fundInfo.baseValue)
-  }, [activeFund.code, analysisWindow, appliedScenario, fundInfo])
+  const fetchData = useCallback(async () => {
+    setState({ status: 'loading' })
+    try {
+      const data = await getPerformanceComparison(activeFund.code, analysisWindow)
+      const chartPoints = mergeToChartPoints(data)
+      setState({ status: 'ready', data, chartPoints })
+    } catch (err) {
+      const message = err instanceof Error ? err.message : t.fundInfoErrorTitle
+      setState({ status: 'error', message })
+    }
+  }, [activeFund.code, analysisWindow, t.fundInfoErrorTitle])
+
+  useEffect(() => {
+    fetchData()
+  }, [fetchData])
 
   const legend: { key: 'mevcut' | 'simulasyon' | 'benchmark'; label: string }[] = [
     { key: 'mevcut', label: t.pcLegendMevcut },
@@ -85,34 +93,30 @@ export default function PerformanceComparisonPage({
       </div>
       <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted">{t.pcDescription}</p>
 
-      {fundInfo.status === 'loading' ? (
+      {state.status === 'loading' || state.status === 'idle' ? (
         <p className="mt-8 text-sm text-muted">{t.fundInfoLoadingText}</p>
-      ) : fundInfo.status === 'error' ? (
+      ) : state.status === 'error' ? (
         <div className="mt-8 rounded-2xl bg-red-50 px-6 py-8 text-center text-sm font-medium text-red-600 shadow-sm">
-          {t.fundInfoErrorTitle}: {fundInfo.message}
+          {t.fundInfoErrorTitle}: {state.message}
         </div>
-      ) : !appliedScenario || !simulation ? (
-        <div className="mt-8 flex flex-col items-center gap-3 rounded-2xl border border-black/5 bg-white px-8 py-16 text-center shadow-sm">
-          <MdLockOutline className="h-10 w-10 text-muted" />
-          <p className="text-base font-semibold text-ink">{t.pcLockedTitle}</p>
-          <p className="max-w-md text-sm text-muted">{t.pcLockedMessage}</p>
-          <button
-            type="button"
-            onClick={onGoToManualScenario}
-            className="mt-2 rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-dark"
-          >
-            {t.pcLockedGoToDecision}
-          </button>
+      ) : !state.data.simulationPortfolio ? (
+        /* Senaryo uygulanmamış — empty state */
+        <div className="mt-8 rounded-2xl border border-black/5 bg-[#f5f0e8] px-6 py-5 shadow-sm">
+          <div className="flex items-start gap-3">
+            <MdInfoOutline className="mt-0.5 h-5 w-5 flex-shrink-0 text-muted" />
+            <p className="text-sm text-muted">{t.pcLockedMessage}</p>
+          </div>
         </div>
       ) : (
         <>
+          {/* ── Kümülatif Getiri grafiği ──────────────────────────────── */}
           <div className="mt-8 rounded-2xl border border-black/5 bg-white p-6 shadow-sm sm:p-8">
             <h2 className="text-lg font-bold text-ink">{t.pcChartTitle}</h2>
             <p className="mt-1 text-sm text-muted">
               {t.pcPeriodLabel(
                 formatDate(new Date(), lang),
                 analysisWindow,
-                overrideScenario?.sourceLabel ?? t.pcSourceManual,
+                state.data.scenarioSource === 'MANUAL' ? t.pcSourceManual : t.pcSourceAi,
                 t.pcStatusAccepted
               )}
             </p>
@@ -125,7 +129,7 @@ export default function PerformanceComparisonPage({
                     <span
                       className="inline-block h-0 w-5 border-t-2"
                       style={{
-                        borderColor: `var(${series.colorVar})`,
+                        borderColor: series.color,
                         borderStyle: series.dash ? 'dashed' : 'solid',
                       }}
                     />
@@ -137,19 +141,45 @@ export default function PerformanceComparisonPage({
 
             <div className="mt-4 h-80 w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={simulation.points} margin={{ top: 8, right: 8, left: 8, bottom: 8 }}>
+                <LineChart data={state.chartPoints} margin={{ top: 8, right: 16, left: 4, bottom: 8 }}>
                   <CartesianGrid vertical={false} stroke="#e5e7eb" />
-                  <YAxis hide domain={['dataMin', 'dataMax']} />
+                  <YAxis
+                    domain={['dataMin', 'dataMax']}
+                    tick={{ fontSize: 11, fill: '#6b7683' }}
+                    axisLine={false}
+                    tickLine={false}
+                    tickFormatter={(v: number) => `${v.toFixed(1)}%`}
+                    width={52}
+                    label={{ value: t.pcChartTitle, angle: -90, position: 'insideLeft', style: { fontSize: 11, fill: '#6b7683' }, offset: 8 }}
+                  />
+                  <XAxis
+                    dataKey="dateLabel"
+                    tick={{ fontSize: 11, fill: '#6b7683' }}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                    tickLine={false}
+                    interval="preserveStartEnd"
+                  />
+                  <Tooltip
+                    contentStyle={{ borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13 }}
+                    formatter={(value: number, name: string) => {
+                      const label = name === 'mevcut' ? t.pcLegendMevcut
+                        : name === 'simulasyon' ? t.pcLegendSimulasyon
+                        : t.pcLegendBenchmark
+                      return [`${value.toFixed(2)}%`, label]
+                    }}
+                    labelFormatter={(label: string) => label}
+                  />
                   {SERIES.map((series) => (
                     <Line
                       key={series.key}
                       type="monotone"
                       dataKey={series.key}
-                      stroke={`var(${series.colorVar})`}
+                      stroke={series.color}
                       strokeWidth={series.width}
                       strokeDasharray={series.dash}
                       dot={false}
                       isAnimationActive={false}
+                      connectNulls={false}
                     />
                   ))}
                 </LineChart>
@@ -157,6 +187,7 @@ export default function PerformanceComparisonPage({
             </div>
           </div>
 
+          {/* ── Performans Özeti tablosu ──────────────────────────────── */}
           <div className="mt-6 rounded-2xl border border-black/5 bg-white p-6 shadow-sm sm:p-8">
             <h2 className="text-lg font-bold text-ink">{t.pcSummaryTitle}</h2>
             <p className="mt-1 text-sm text-muted">{t.pcSummarySubtitle}</p>
@@ -172,28 +203,39 @@ export default function PerformanceComparisonPage({
                   </tr>
                 </thead>
                 <tbody>
-                  {rows.map((row) => (
-                    <tr key={row.label} className="border-t border-black/5">
-                      <td className="py-3 pr-4 font-medium text-ink">{row.label}</td>
-                      {(['mevcut', 'simulasyon', 'benchmark'] as const).map((key) => {
-                        const metrics = simulation.metrics[key]
-                        const value =
-                          row.label === t.pcMetricTotalReturn
-                            ? metrics.totalReturnPct
-                            : row.label === t.pcMetricMaxDrawdown
-                              ? metrics.maxDrawdownPct
-                              : 0
-                        return (
-                          <td
-                            key={key}
-                            className={`py-3 pr-4 font-semibold ${row.colored ? toneClass(value) : 'text-ink'}`}
-                          >
-                            {row.format(metrics)}
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  ))}
+                  {rows.map((row) => {
+                    const metricsMap = {
+                      mevcut: state.data.currentPortfolio.metrics,
+                      simulasyon: state.data.simulationPortfolio!.metrics,
+                      benchmark: state.data.benchmarkPortfolio?.metrics,
+                    }
+
+                    return (
+                      <tr key={row.label} className="border-t border-black/5">
+                        <td className="py-3 pr-4 font-medium text-ink">{row.label}</td>
+                        {(['mevcut', 'simulasyon', 'benchmark'] as const).map((key) => {
+                          const metrics = metricsMap[key]
+                          if (!metrics) {
+                            return <td key={key} className="py-3 pr-4 text-muted">—</td>
+                          }
+                          const value =
+                            row.label === t.pcMetricTotalReturn
+                              ? metrics.totalReturnPct
+                              : row.label === t.pcMetricMaxDrawdown
+                                ? metrics.maxDrawdownPct
+                                : 0
+                          return (
+                            <td
+                              key={key}
+                              className={`py-3 pr-4 font-semibold ${row.colored ? toneClass(value) : 'text-ink'}`}
+                            >
+                              {row.format(metrics)}
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    )
+                  })}
                 </tbody>
               </table>
             </div>

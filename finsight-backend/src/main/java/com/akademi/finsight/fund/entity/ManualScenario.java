@@ -8,6 +8,8 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 
+import java.math.BigDecimal;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +21,7 @@ import java.util.Map;
 @AllArgsConstructor
 @SuperBuilder
 @SQLDelete(sql = "UPDATE manual_scenario SET deleted = 1, deleted_at = SYSDATETIMEOFFSET() WHERE id = ?")
-public class ManualScenario extends SoftDeletableEntity {
+public class ManualScenario extends SoftDeletableEntity implements ScenarioWeightSource, MetricsHolder {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -51,4 +53,10 @@ public class ManualScenario extends SoftDeletableEntity {
         weight.setScenario(this);
     }
 
+    @Override
+    public Map<AssetCategory, BigDecimal> getSimulationWeights() {
+        Map<AssetCategory, BigDecimal> result = new EnumMap<>(AssetCategory.class);
+        weights.forEach((cat, w) -> result.put(cat, w.getTargetWeight()));
+        return result;
+    }
 }

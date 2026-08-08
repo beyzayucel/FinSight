@@ -30,4 +30,18 @@ public interface FundPeriodMetricRepository extends JpaRepository<FundPeriodMetr
             ORDER BY fpm.period
             """)
     List<FundPeriodMetric> findLatestByFundCode(@Param("fundCode") String fundCode);
+
+    @Query("""
+            SELECT fpm
+            FROM FundPeriodMetric fpm
+            WHERE fpm.fund.code = :fundCode
+              AND fpm.period = :period
+              AND fpm.dataDate = (
+                  SELECT MAX(latest.dataDate)
+                  FROM FundPeriodMetric latest
+                  WHERE latest.fund.code = :fundCode
+              )
+            """)
+    Optional<FundPeriodMetric> findLatestByFundCodeAndPeriod(@Param("fundCode") String fundCode,
+                                                             @Param("period") String period);
 }

@@ -88,6 +88,13 @@ public final class ApiEndpoints {
     public static final class AdminDecisions {
         public static final String BASE = API_V1 + "/admin/decisions";
     }
+
+    @NoArgsConstructor(access = AccessLevel.PRIVATE)
+    public static final class PerformanceComparison {
+        public static final String BASE = API_V1 + "/performance-comparison";
+        public static final String COMPARE = "/{fundCode}";
+    }
+
     private static final String[] PUBLIC_ENDPOINTS = {
             Auth.BASE + Auth.LOGIN,
             Auth.BASE + Auth.REFRESH,

@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { submitRecommendationDecision, AssetCategoryLabels } from '../dashboardApi'
 import type { AIRecommendation, AssetCategory } from '../dashboardApi'
-import { IoCheckmarkCircleOutline, IoCloseCircleOutline, IoTrendingDown } from 'react-icons/io5'
+import { IoTrendingDown } from 'react-icons/io5'
 
 type AIRecommendationTabProps = {
   recommendation: AIRecommendation

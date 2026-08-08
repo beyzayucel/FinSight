@@ -9,6 +9,5 @@ import java.util.UUID;
 public interface AiRecommendationService {
     AIRecommendationResponse getPendingRecommendation(UUID fundId, String email);
     void submitRecommendationDecision(UUID recommendationId, String email, RecommendationStatus status, String note);
-    FundActivePortfolioResponse getActiveFund();
 }
 

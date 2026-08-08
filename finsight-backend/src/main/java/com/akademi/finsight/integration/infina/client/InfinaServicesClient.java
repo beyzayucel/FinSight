@@ -6,6 +6,9 @@ import com.akademi.finsight.integration.infina.client.dto.fund.CumulativeReturns
 import com.akademi.finsight.integration.infina.client.dto.fund.FundDailyReturnData;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundInfoData;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundPortfolioAllocationData;
+import com.akademi.finsight.integration.infina.client.dto.fx.FxPriceData;
+import com.akademi.finsight.integration.infina.client.dto.index.IndexPriceData;
+import com.akademi.finsight.integration.infina.client.dto.economic.EconomicPriceData;
 import com.akademi.finsight.integration.infina.constant.InfinaEndpoints;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
@@ -45,5 +48,23 @@ public interface InfinaServicesClient {
 			@RequestParam(value = "fundCode") String fundCode,
 			@RequestParam(value = "beginDate") String beginDate,
 			@RequestParam(value = "endDate", required = false) String endDate
+	);
+
+	@GetExchange(InfinaEndpoints.FX_PRICE)
+	InfinaResponse<FxPriceData> getFxPrices(
+			@RequestParam(value = "asset_code", required = false) String assetCode,
+			@RequestParam(value = "data_date", required = false) String dataDate
+	);
+
+	@GetExchange(InfinaEndpoints.INDEX_PRICE)
+	InfinaResponse<IndexPriceData> getIndexPrices(
+			@RequestParam(value = "asset_code", required = false) String assetCode,
+			@RequestParam(value = "data_date", required = false) String dataDate
+	);
+
+	@GetExchange(InfinaEndpoints.ECONOMIC_PRICE)
+	InfinaResponse<EconomicPriceData> getEconomicPrices(
+			@RequestParam(value = "asset_code", required = false) String assetCode,
+			@RequestParam(value = "data_date", required = false) String dataDate
 	);
 }

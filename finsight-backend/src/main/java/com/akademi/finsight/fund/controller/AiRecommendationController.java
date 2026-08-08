@@ -25,11 +25,6 @@ public class AiRecommendationController extends BaseController implements AiReco
     }
 
     @Override
-    public ResponseEntity<ApiStandardResponse<FundActivePortfolioResponse>> getActiveFund() {
-        return ok(aiRecommendationService.getActiveFund());
-    }
-
-    @Override
     public ResponseEntity<ApiStandardResponse<Void>> submitDecision(UUID recommendationId, String email, FundDecisionRequest request) {
         aiRecommendationService.submitRecommendationDecision(recommendationId, email, request.status(), request.note());
         return ok();

@@ -2,20 +2,28 @@ package com.akademi.finsight.fund.dto.request;
 
 import lombok.Builder;
 
+import java.math.BigDecimal;
+
 @Builder
 public record FundModelInputRequest(
-        float stockWeight,
-        float repoWeight,
-        float futureWeight,
-        float fundWeight,
+        BigDecimal stockWeight,
+        BigDecimal repoWeight,
+        BigDecimal futureWeight,
+        BigDecimal fundWeight,
 
-        float usdReturn,
-        float goldReturn,
-        float brentReturn,
-        float us10yReturn,
-        float cdsSpreadBps,
-        float annualInflation,
-        float policyRate
-)
+        BigDecimal usdReturn,
+        BigDecimal goldReturn,
+        BigDecimal brentReturn,
+        BigDecimal us10yReturn,
+        BigDecimal cdsSpreadBps,
+        BigDecimal annualInflation,
+        BigDecimal policyRate,
 
-{}
+        BigDecimal fundReturn,
+        BigDecimal portfolioGrowth,
+
+        BigDecimal activeValue,
+        BigDecimal portfolioValue,
+        BigDecimal cashValue,
+        BigDecimal investorCount
+) {}

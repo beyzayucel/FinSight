@@ -3,6 +3,7 @@ package com.akademi.finsight.stresstest.controller.api;
 import com.akademi.finsight.common.constants.ApiEndpoints;
 import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.stresstest.dto.request.PortfolioDataDto;
+import com.akademi.finsight.stresstest.dto.request.SaveStressTestDecisionRequestDto;
 import com.akademi.finsight.stresstest.dto.response.StressTestInferenceResponseDto;
 import com.akademi.finsight.stresstest.enums.SimulationType;
 import io.swagger.v3.oas.annotations.Operation;
@@ -43,7 +44,7 @@ public interface StressTestApi {
     @PostMapping("/run")
     ResponseEntity<ApiStandardResponse<StressTestInferenceResponseDto>> runSimulation(
             @AuthenticationPrincipal String userEmail,
-            @RequestParam("fundId") UUID fundId,
+            @RequestParam("fundId") String fundId,
             @RequestParam("simulationType") SimulationType simulationType,
             @Valid @RequestBody PortfolioDataDto portfolioDataDto);
 
@@ -61,7 +62,7 @@ public interface StressTestApi {
     ResponseEntity<ApiStandardResponse<StressTestInferenceResponseDto>> getLatestSimulationResult(
             @Parameter(hidden = true) @AuthenticationPrincipal String email,
             @Parameter(description = "Fund UUID", example = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", required = true)
-            @RequestParam("fundId") @NotNull UUID fundId
+            @RequestParam("fundId") @NotNull String fundId
     );
 
     @Operation(
@@ -78,8 +79,18 @@ public interface StressTestApi {
     ResponseEntity<ApiStandardResponse<StressTestInferenceResponseDto>> getSimulationResultByPeriod(
             @Parameter(hidden = true) @AuthenticationPrincipal String email,
             @Parameter(description = "Fund UUID", example = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", required = true)
-            @RequestParam("fundId") @NotNull UUID fundId,
+            @RequestParam("fundId") @NotNull String fundId,
             @Parameter(description = "Analysis period in days ago", example = "30", required = true)
-            @RequestParam(value = "daysAgo", defaultValue = "30") int daysAgo
+            @RequestParam(value = "daysAgo", defaultValue = "30") String daysAgo
     );
+
+    @Operation(summary = "Save stress test decision record to history")
+    @PostMapping("/save")
+    ResponseEntity<ApiStandardResponse<Void>> saveDecisionRecord(
+            @AuthenticationPrincipal String userEmail,
+            @Valid @RequestBody SaveStressTestDecisionRequestDto requestDto
+    );
+
+
+
 }

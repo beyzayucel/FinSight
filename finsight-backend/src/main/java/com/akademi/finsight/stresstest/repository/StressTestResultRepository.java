@@ -9,10 +9,11 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface StressTestResultRepository extends JpaRepository<StressTestResult, UUID> {
-    Optional<StressTestResult> findFirstByUserIdAndFundIdOrderByCreatedAtDesc(UUID id, UUID fundId);
+    Optional<StressTestResult> findFirstByUserIdAndFundIdOrderByCreatedAtDesc(String id, String fundId);
     Optional<StressTestResult> findFirstByUserIdAndFundIdAndCreatedAtLessThanEqualOrderByCreatedAtDesc(
             UUID userId,
-            UUID fundId,
+            String fundId,
             LocalDateTime targetDateTime
     );
+
 }

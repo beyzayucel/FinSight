@@ -1,18 +1,14 @@
 package com.akademi.finsight.stresstest.service.impl;
 
 import com.akademi.finsight.fund.entity.Fund;
-import com.akademi.finsight.fund.entity.FundPeriodMetric;
-import com.akademi.finsight.fund.entity.FundStockAllocation;
 import com.akademi.finsight.fund.exception.FundNotFoundException;
-import com.akademi.finsight.fund.repository.FundPeriodMetricRepository;
 import com.akademi.finsight.fund.repository.FundRepository;
-import com.akademi.finsight.fund.repository.FundStockAllocationRepository;
 import com.akademi.finsight.stresstest.dto.request.PortfolioDataDto;
-import com.akademi.finsight.stresstest.dto.request.StressTestInferenceRequestDto;
+import com.akademi.finsight.stresstest.dto.request.SaveStressTestDecisionRequestDto;
 import com.akademi.finsight.stresstest.dto.response.ModelInferenceResult;
-import com.akademi.finsight.stresstest.dto.response.PortfolioResultDto;
 import com.akademi.finsight.stresstest.dto.response.StressTestInferenceResponseDto;
-import com.akademi.finsight.stresstest.engine.StressTestCalculationEngine;
+import com.akademi.finsight.stresstest.engine.StressTestStrategyFactory;
+import com.akademi.finsight.stresstest.enums.ExecutionStrategyType;
 import com.akademi.finsight.stresstest.enums.PortfolioType;
 import com.akademi.finsight.stresstest.enums.SimulationType;
 import com.akademi.finsight.stresstest.entity.StressTestResult;
@@ -35,7 +31,6 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -44,7 +39,7 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
 
     private final UserRepository userRepository;
     private final FundRepository fundRepository;
-    private final StressTestCalculationEngine calculationEngine;
+    private final StressTestStrategyFactory strategyFactory;
     private final LLMCommentGenerator llmCommentGenerator;
     private final StressTestResultRepository stressTestResultRepository;
     private final StressTestResultMapper stressTestResultMapper;
@@ -53,7 +48,7 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
     @Override
     public StressTestInferenceResponseDto runSimulation(
             String userEmail,
-            UUID fundId,
+            String fundId,
             SimulationType simulationType,
             PortfolioDataDto currentPortfolio) {
 
@@ -85,11 +80,11 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
 
     @Transactional(readOnly = true)
     @Override
-    public Optional<StressTestInferenceResponseDto> getLatestSimulationResult(String userEmail, UUID fundId) {
+    public Optional<StressTestInferenceResponseDto> getLatestSimulationResult(String userEmail, String fundId) {
         User user = findUser(userEmail);
 
         return stressTestResultRepository
-                .findFirstByUserIdAndFundIdOrderByCreatedAtDesc(user.getId(), fundId)
+                .findFirstByUserIdAndFundIdOrderByCreatedAtDesc(user.getId().toString(), fundId)
                 .map(result -> {
                     StressTestInferenceResponseDto response = stressTestResultMapper.toInferenceResponse(result);
                     String comment = llmCommentGenerator.generateComment(result.getSimulationType());
@@ -97,12 +92,17 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
                 });
     }
 
+
     @Transactional(readOnly = true)
     @Override
     public Optional<StressTestInferenceResponseDto> getSimulationResultByPeriod(
-            String userEmail, UUID fundId, int daysAgo) {
+            String userEmail, String fundId, String lookbackDays) {
 
         User user = findUser(userEmail);
+
+        // "90d", "3M" gibi periyot string'ini güne çeviren küçük bir helper
+        int daysAgo = parsePeriodToDays(lookbackDays); // Örn: "3M" veya "90" -> 90 gün
+
         LocalDateTime targetDateTime = LocalDate.now().minusDays(daysAgo).atTime(LocalTime.MAX);
 
         return stressTestResultRepository
@@ -113,6 +113,31 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
                     String comment = llmCommentGenerator.generateComment(result.getSimulationType());
                     return response.toBuilder().llmComment(comment).build();
                 });
+    }
+
+    @Transactional
+    @Override
+    public void saveDecisionRecord(String userEmail, SaveStressTestDecisionRequestDto requestDto) {
+        User user = findUser(userEmail);
+        Fund fund = findFund(requestDto.fundId());
+
+        // Var olan DTO'yu kullanarak simülasyon koşturabilir veya var olan sonucu geçmişe kaydedebilirsin:
+        StressTestResult entity = createStressTestResult(user, fund, requestDto.scenarioKey());
+
+        // DB'ye kaydetme işlemi:
+        stressTestResultRepository.save(entity);
+        log.info("Stress test decision saved successfully for user: {} and fund: {}", userEmail, fund.getCode());
+    }
+
+    private int parsePeriodToDays(String period) {
+        if (period == null) return 0;
+        return switch (period.toUpperCase()) {
+            case "1M", "30D" -> 30;
+            case "3M", "90D" -> 90;
+            case "6M", "180D" -> 180;
+            case "1Y", "365D" -> 365;
+            default -> Integer.parseInt(period); // Sayı olarak geçildiyse
+        };
     }
 
     private void validatePortfolio(PortfolioDataDto portfolio) {
@@ -135,7 +160,12 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
     }
 
     private ModelInferenceResult runModel(String scenarioKey, PortfolioDataDto portfolio) {
-        return calculationEngine.runInference(scenarioKey, portfolio);
+        return runModel(scenarioKey, portfolio, ExecutionStrategyType.MANUAL_RULE);
+    }
+
+    private ModelInferenceResult runModel(String scenarioKey, PortfolioDataDto portfolio, ExecutionStrategyType strategyType) {
+        ExecutionStrategyType activeStrategy = (strategyType != null) ? strategyType : ExecutionStrategyType.MANUAL_RULE;
+        return strategyFactory.getEngine(activeStrategy).runInference(scenarioKey, portfolio);
     }
 
     private StressTestResult createStressTestResult(User user, Fund fund, SimulationType simulationType) {
@@ -153,12 +183,6 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
                 .build();
     }
 
-    /**
-     * Simülasyon Portföyü: şu an FE bu ekrandan alternatif ağırlık göndermiyor,
-     * bu yüzden geçici olarak sabit bir "önerilen" ağırlık setine düşüyor.
-     * FE ileride özel ağırlık göndermeye başlarsa customWeights parametresini
-     * gerçek veriyle doldurman yeterli — imza zaten buna hazır.
-     */
     private PortfolioDataDto buildSimulationPortfolioData(BigDecimal initialValue, Map<String, Float> customWeights) {
         Map<String, Float> weights = (customWeights != null && !customWeights.isEmpty())
                 ? customWeights
@@ -167,11 +191,6 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
         return createPortfolioData(initialValue, weights);
     }
 
-    /**
-     * Benchmark Portföyü: ayrı bir Benchmark entity'si olmadığı için sabit
-     * referans ağırlıklarla oluşturuluyor — initialValue artık current
-     * portföyle aynı, böylece kıyaslama tutarlı oluyor.
-     */
     private PortfolioDataDto buildBenchmarkPortfolioData(BigDecimal initialValue) {
         Map<String, Float> benchmarkWeights = Map.of(
                 "EQUITY", 0.50f,
@@ -190,5 +209,19 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
                 .expectedImpactRate(result.expectedImpactRate())
                 .postShockValue(result.postShockValue())
                 .build();
+    }
+
+    // findFund metodunda koda göre fon bulma:
+    private Fund findFund(String fundIdOrCode) {
+        // Eğer fon kodu ("TIE") geliyorsa koda göre, UUID geliyorsa id'ye göre ara:
+        return fundRepository.findByCode(fundIdOrCode)
+                .orElseGet(() -> {
+                    try {
+                        return fundRepository.findById(UUID.fromString(fundIdOrCode))
+                                .orElseThrow(FundNotFoundException::new);
+                    } catch (IllegalArgumentException e) {
+                        throw new FundNotFoundException();
+                    }
+                });
     }
 }

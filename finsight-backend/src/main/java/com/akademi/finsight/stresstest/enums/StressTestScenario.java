@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public enum StressTestScenario {
 
+    // TODO: LLM geldiğinde bu kısım değiştirilecek
     HISSE_STRESS(
             "BIST 100 endeksinde anlık %-10 düşüş",
             "Hisse senedi piyasalarındaki dik düşüş, özkaynak ağırlıklı portföylerde doğrudan kayba yol açar. " +

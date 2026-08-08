@@ -39,7 +39,7 @@ export type AIRecommendation = {
 }
 
 // Mock database in localStorage
-const MOCK_FUND_ID = '3678be54-536f-492f-962e-37ab1ef4d1b6'
+const MOCK_FUND_ID = '084867bb-92cb-4c1f-af08-9d1725f932cc'
 const MOCK_REC_ID = 'f1a2b3c4-d5e6-4f7g-8h9i-0j1k2l3m4n5o'
 
 const DEFAULT_FUND: Fund = {
@@ -168,6 +168,15 @@ export type ManualScenarioRequest = {
   weights: Record<AssetCategory, number>
 }
 
+// features/stresstest/... dosyasının içinde
+export async function runStressTest(params: { fundId: string; simulationType: string }, body: any) {
+    const response = await api.post(`/stress-tests/run`, body, { params })
+    
+    // BURADA 'return response.data' YAPILIYORDU:
+    // Backend veriyi 'data' field'ı içinde sarmalayıp gönderdiği için:
+    return response.data.data  // <-- Buraya ikinci '.data'yı ekle!
+}
+
 export async function applyManualScenario(data: ManualScenarioRequest): Promise<void> {
   try {
     await api.post('/funds/scenarios/apply', data)
@@ -188,6 +197,8 @@ export async function applyManualScenario(data: ManualScenarioRequest): Promise<
     setStoredRecommendation(rec)
   }
 }
+
+
 
 // Reset functions for mock data
 export function resetMockData() {

@@ -25,18 +25,15 @@ export function DecisionProvider({ children }: { children: ReactNode }) {
   const [decision, setDecision] = useState<Decision | null>(null)
   const [fundInfo, setFundInfo] = useState<FundInfoState>({ status: 'loading' })
   const [fundId, setFundId] = useState<string | null>(null)
+  const [isPerformanceViewed, setIsPerformanceViewed] = useState<boolean>(false)
 
-  // Manuel senaryoyu backend'e kaydetmek (POST /funds/scenarios/apply) için fonun gerçek UUID'si gerekiyor.
   useEffect(() => {
     let cancelled = false
     getFundIdByCode(ACTIVE_FUND.code)
       .then((id) => {
         if (!cancelled) setFundId(id)
       })
-      .catch(() => {
-        // Sessizce yutuluyor — fundId sadece manuel senaryo göndermek için gerekli,
-        // sayfanın geri kalanı (Performans Karşılaştırması vb.) buna bağlı değil.
-      })
+      .catch(() => {})
     return () => {
       cancelled = true
     }
@@ -73,13 +70,19 @@ export function DecisionProvider({ children }: { children: ReactNode }) {
       analysisWindow,
       setAnalysisWindow,
       decision,
-      acceptAiRecommendation: () =>
-        setDecision({ source: 'ai', status: 'accepted', weights: AI_WEIGHTS, decidedAt: new Date().toISOString() }),
+      isPerformanceViewed,
+      markPerformanceViewed: () => setIsPerformanceViewed(true),
+
+      acceptAiRecommendation: () => {
+        setIsPerformanceViewed(false)
+        setDecision({ source: 'ai', status: 'accepted', weights: AI_WEIGHTS, decidedAt: new Date().toISOString() })
+      },
       applyManualScenario: async (weights: Weights, note?: string) => {
         if (!fundId) {
           throw new Error('Fon kimliği henüz yüklenmedi, lütfen birazdan tekrar deneyin.')
         }
         await submitManualScenario(fundId, weights, note)
+        setIsPerformanceViewed(false)
         setDecision({
           source: 'manual',
           status: 'accepted',
@@ -88,9 +91,9 @@ export function DecisionProvider({ children }: { children: ReactNode }) {
           decidedAt: new Date().toISOString(),
         })
       },
-      // K4: Reddedilen kararda simülasyon ağırlıkları mevcut portföy ile birebir aynı olmalı
       rejectRecommendation: () => {
         if (fundInfo.status !== 'ready') return
+        setIsPerformanceViewed(false)
         setDecision({
           source: 'ai',
           status: 'rejected',
@@ -98,9 +101,12 @@ export function DecisionProvider({ children }: { children: ReactNode }) {
           decidedAt: new Date().toISOString(),
         })
       },
-      resetDecision: () => setDecision(null),
+      resetDecision: () => {
+        setDecision(null)
+        setIsPerformanceViewed(false)
+      },
     }),
-    [analysisWindow, decision, fundInfo, fundId]
+    [analysisWindow, decision, fundInfo, fundId, isPerformanceViewed]
   )
 
   return <DecisionContext.Provider value={value}>{children}</DecisionContext.Provider>

@@ -21,6 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -87,10 +88,37 @@ public class PortfolioSimulationCalculationServiceImpl implements PortfolioSimul
                 holder.getMetrics().setMaxDrawdownPct(simulationCurve.metrics().maxDrawdownPct());
                 holder.getMetrics().setDailyVolatilityPct(simulationCurve.metrics().dailyVolatilityPct());
                 holder.getMetrics().setAnalysisWindowDays(analysisWindow);
+                holder.getMetrics().setBenchmarkDiffPct(calculateBenchmarkDiffPct(
+                        fundCode, analysisWindow, simulationCurve.metrics().totalReturnPct()));
             }
         } catch (Exception e) {
             log.warn("Simulation snapshot failed. Reason: {}", e.getMessage());
         }
+    }
+
+    /**
+     * Karar Geçmişi'ndeki "Benchmark farkı" satırı bu alandan okunur. Hesap Fon Dashboard'daki
+     * {@code benchmarkDiffBps} ile aynı (portföy getirisi - benchmark getirisi); tek fark, burada
+     * mevcut portföy yerine kararın simülasyon portföyü kıyaslanıyor — metrik zaten o karara
+     * iliştiriliyor. Puan (yüzde puanı) cinsinden, bps'e çevrilmeden saklanır.
+     */
+    private BigDecimal calculateBenchmarkDiffPct(String fundCode, int analysisWindow,
+                                                 BigDecimal simulationReturnPct) {
+        if (simulationReturnPct == null) {
+            return null;
+        }
+
+        String period = PERIOD_PREFIX + analysisWindow + PERIOD_SUFFIX;
+        BigDecimal benchmarkReturnPct = fundPeriodMetricService
+                .getLatestByFundCodeAndPeriod(fundCode, period)
+                .benchmarkReturn();
+
+        if (benchmarkReturnPct == null) {
+            log.debug("No benchmark return for fund {} period {}; benchmark diff left empty.", fundCode, period);
+            return null;
+        }
+
+        return simulationReturnPct.subtract(benchmarkReturnPct).setScale(2, RoundingMode.HALF_UP);
     }
 
     private Optional<BigDecimal> resolveCurrentStockWeight(String fundCode) {

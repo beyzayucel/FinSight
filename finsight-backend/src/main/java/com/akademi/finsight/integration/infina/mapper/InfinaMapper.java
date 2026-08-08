@@ -2,9 +2,13 @@ package com.akademi.finsight.integration.infina.mapper;
 
 import com.akademi.finsight.common.mapper.BaseMapperConfig;
 import com.akademi.finsight.integration.infina.client.dto.benchmark.BenchmarkInfo;
+import com.akademi.finsight.integration.infina.client.dto.fund.CumulativeReturnEntry;
+import com.akademi.finsight.integration.infina.client.dto.fund.FundDailyReturn;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundInfoData;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundPortfolioAllocation;
 import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
+import com.akademi.finsight.integration.infina.dto.response.fund.CumulativeReturnEntryResponse;
+import com.akademi.finsight.integration.infina.dto.response.fund.FundDailyReturnResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundPortfolioAllocationResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundReturnResponse;
@@ -37,6 +41,12 @@ public interface InfinaMapper {
 	FundPortfolioAllocationResponse toFundPortfolioAllocationResponse(FundPortfolioAllocation fundPortfolioAllocation);
 
 	List<FundPortfolioAllocationResponse> toFundPortfolioAllocationResponseList(List<FundPortfolioAllocation> allocations);
+
+	FundDailyReturnResponse toFundDailyReturnResponse(FundDailyReturn fundDailyReturn);
+
+	CumulativeReturnEntryResponse toCumulativeReturnEntryResponse(CumulativeReturnEntry entry);
+
+	List<CumulativeReturnEntryResponse> toCumulativeReturnEntryResponseList(List<CumulativeReturnEntry> entries);
 
 	default List<FundReturnResponse> toFundReturns(FundInfoData fundInfoData) {
 		List<String> periods = fundInfoData.periods();

@@ -1,6 +1,8 @@
 package com.akademi.finsight.integration.infina.service;
 
 import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
+import com.akademi.finsight.integration.infina.dto.response.fund.CumulativeReturnEntryResponse;
+import com.akademi.finsight.integration.infina.dto.response.fund.FundDailyReturnResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundPortfolioAllocationResponse;
 
@@ -19,4 +21,8 @@ public interface InfinaService {
 	List<FundPortfolioAllocationResponse> getFundPortfolioAllocation(String fundCode,
 																	 String period,
 																	 Long disclosureId);
+
+	FundDailyReturnResponse getFundDailyReturn(String fundCode, String dates);
+
+
 }

@@ -3,9 +3,11 @@ package com.akademi.finsight.integration.infina.service.impl;
 import com.akademi.finsight.integration.infina.client.InfinaServicesClient;
 import com.akademi.finsight.integration.infina.client.dto.benchmark.BenchmarkInfoData;
 import com.akademi.finsight.integration.infina.client.dto.base.InfinaResponse;
+import com.akademi.finsight.integration.infina.client.dto.fund.FundDailyReturnData;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundInfoData;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundPortfolioAllocationData;
 import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
+import com.akademi.finsight.integration.infina.dto.response.fund.FundDailyReturnResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundPortfolioAllocationResponse;
 import com.akademi.finsight.integration.infina.exception.InfinaErrorType;
@@ -65,6 +67,7 @@ public class InfinaServiceImpl implements InfinaService {
 		return infinaMapper.toFundPortfolioAllocationResponseList(data.allocations());
 	}
 
+	//TODO: Consider refactoring this method
 	private <T> T callInfina(Supplier<InfinaResponse<T>> call, String fundCode) {
 		InfinaResponse<T> response;
 		try {
@@ -94,4 +97,15 @@ public class InfinaServiceImpl implements InfinaService {
 
 		return response.result().data();
 	}
+
+
+	@Override
+	public FundDailyReturnResponse getFundDailyReturn(String fundCode, String dates) {
+		FundDailyReturnData data = callInfina(
+				() -> infinaServicesClient.getFundDailyReturn(fundCode, dates),
+				fundCode);
+
+		return infinaMapper.toFundDailyReturnResponse(data.fundDailyReturns().getFirst());
+	}
+
 }

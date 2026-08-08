@@ -2,6 +2,8 @@ package com.akademi.finsight.integration.infina.client;
 
 import com.akademi.finsight.integration.infina.client.dto.benchmark.BenchmarkInfoData;
 import com.akademi.finsight.integration.infina.client.dto.base.InfinaResponse;
+import com.akademi.finsight.integration.infina.client.dto.fund.CumulativeReturnsData;
+import com.akademi.finsight.integration.infina.client.dto.fund.FundDailyReturnData;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundInfoData;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundPortfolioAllocationData;
 import com.akademi.finsight.integration.infina.constant.InfinaEndpoints;
@@ -29,5 +31,19 @@ public interface InfinaServicesClient {
 			@RequestParam(value = "fund_code") String fundCode,
 			@RequestParam(value = "period", required = false) String period,
 			@RequestParam(value = "disclosure_id", required = false) Long disclosureId
+	);
+
+	@GetExchange(InfinaEndpoints.FUND_DAILY_RETURN)
+	InfinaResponse<FundDailyReturnData> getFundDailyReturn(
+			@RequestParam(value = "fund_code") String fundCode,
+			@RequestParam(value = "dates") String dates
+	);
+
+
+	@GetExchange(InfinaEndpoints.CUMULATIVE_RETURNS)
+	InfinaResponse<CumulativeReturnsData> getCumulativeReturns(
+			@RequestParam(value = "fundCode") String fundCode,
+			@RequestParam(value = "beginDate") String beginDate,
+			@RequestParam(value = "endDate", required = false) String endDate
 	);
 }

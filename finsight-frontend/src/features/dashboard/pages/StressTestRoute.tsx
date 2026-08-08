@@ -4,14 +4,14 @@ import { useDecision } from '../context/decisionStore'
 import { useDashboardOutlet } from '../DashboardShell'
 import StressTestPage from '@/features/stresstest/StressTestPage'
 import { saveDecisionRecord } from '@/features/stresstest/stressTestService'
-import type { PortfolioDataDto, ScenarioKey } from '@/features/stresstest/types'
+import type { PortfolioDataDto } from '@/features/stresstest/types'
 
 export default function StressTestRoute() {
   const navigate = useNavigate()
   const { decision, fundInfo, isPerformanceViewed } = useDecision()
   const { fund } = useDashboardOutlet()
 
-  // SADECE Ekran 04 ziyaret edildiğinde ve simülasyon/fon verileri hazır olduğunda kilidi aç[cite: 1]
+  // SADECE Ekran 04 ziyaret edildiğinde ve simülasyon/fon verileri hazır olduğunda kilidi aç
   const isSimulationReady = Boolean(isPerformanceViewed && fundInfo.status === 'ready')
 
   const effectiveWeights = decision?.weights ?? (fundInfo.status === 'ready' ? fundInfo.refWeights : null)
@@ -23,31 +23,20 @@ export default function StressTestRoute() {
       }
     : null
 
-  const fundId = fund?.code || 'TIE'
+  // Karara iliştirme fon UUID'si ister — fon kodu ("TIE") kabul edilmiyor.
+  async function handleSaveAndNavigate(stressTestResultId: string) {
+    try {
+      await saveDecisionRecord({
+        fundId: fund.id,
+        stressTestResultId,
+      })
 
- 
-  
-
-async function handleSaveAndNavigate(scenarioKey: ScenarioKey, llmComment?: string) {
-  if (!portfolio) return
-
-  try {
-    await saveDecisionRecord({
-      fundId: fundId,
-      scenarioKey: scenarioKey,
-      portfolioData: {
-        initialValue: portfolio.initialValue,
-        assetWeights: portfolio.assetWeights,
-      },
-      llmComment: llmComment, // 👈 Artık parametreden geliyor!
-    })
-
-    navigate(ROUTES.FUND_DECISION_HISTORY)
-  } catch (error) {
-    console.error("Karar kaydedilirken hata oluştu:", error)
-    throw error
+      navigate(ROUTES.FUND_DECISION_HISTORY)
+    } catch (error) {
+      console.error('Karar kaydedilirken hata oluştu:', error)
+      throw error
+    }
   }
-}
 
   return (
     <StressTestPage

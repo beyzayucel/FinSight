@@ -3,20 +3,15 @@ import { IoLockClosedOutline } from 'react-icons/io5'
 import { ScenarioSelector } from './ScenarioSelector'
 import { ResultsTable } from './ResultsTable'
 import { LLMCommentSection } from './LLMCommentSection'
-import type { PortfolioDataDto, ScenarioKey, StressTestInferenceResponseDto } from './types'
+import { SCENARIO_TITLES, type PortfolioDataDto, type ScenarioKey, type StressTestInferenceResponseDto } from './types'
 import { useDecision } from '@/features/dashboard/context/decisionStore'
 import { runSimulation } from './stressTestApi'
 
 interface StressTestPageProps {
   portfolio: PortfolioDataDto | null
-  // Parametreye llmComment eklendi
-  onSaveAndNavigate: (scenarioKey: ScenarioKey, llmComment?: string) => Promise<void>
+  /** /run sırasında kaydedilen stres testi sonucunun id'si — karara bu id ile iliştirilir. */
+  onSaveAndNavigate: (stressTestResultId: string) => Promise<void>
 }
-const SCENARIO_TITLES: Record<ScenarioKey, string> = {
-  EQUITY_SHOCK: 'Hisse Şoku',
-  INTEREST_RATE_SHOCK: 'Faiz Şoku',
-}
-
 export default function StressTestPage({
   portfolio,
   onSaveAndNavigate,
@@ -38,8 +33,8 @@ export default function StressTestPage({
 
     if (!isSimulationReady || !portfolio) return
 
-    // Backend UUID beklediği için id veya fallback olarak code alıyoruz
-    const fundParam = activeFund?.id || activeFund?.code || 'TIE'
+    // Backend fon kodunu da UUID'yi de çözebiliyor (findFund), burada kod yeterli.
+    const fundParam = activeFund.code
 
     setLoading(true)
     setSaveError(null)
@@ -57,20 +52,19 @@ export default function StressTestPage({
   }
 
   async function handleSaveDecision() {
-  if (isSaving || !result) return
+    if (isSaving || !result) return
 
-  setIsSaving(true)
-  setSaveError(null)
+    setIsSaving(true)
+    setSaveError(null)
 
-  try {
-    // result.llmComment parametre olarak gönderiliyor
-    await onSaveAndNavigate(scenario, result.llmComment)
-  } catch {
-    setSaveError('Kayıt başarısız, lütfen tekrar deneyin.')
-  } finally {
-    setIsSaving(false)
+    try {
+      await onSaveAndNavigate(result.id)
+    } catch {
+      setSaveError('Kayıt başarısız, lütfen tekrar deneyin.')
+    } finally {
+      setIsSaving(false)
+    }
   }
-}
 
   return (
     <div className="space-y-6 max-w-6xl mx-auto font-ibm">

@@ -1,5 +1,6 @@
 package com.akademi.finsight.fund.service.impl;
 
+import com.akademi.finsight.fund.constant.CacheNames;
 import com.akademi.finsight.fund.config.FundProperties;
 import com.akademi.finsight.fund.dto.response.FundDashboardResponse;
 import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
@@ -15,6 +16,7 @@ import com.akademi.finsight.fund.service.FundService;
 import com.akademi.finsight.fund.service.FundStockAllocationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +47,7 @@ public class FundDashboardServiceImpl implements FundDashboardService {
     private final FundProperties fundProperties;
 
     @Override
+    @Cacheable(cacheNames = CacheNames.FUND_DASHBOARD, key = "#fundCode")
     public FundDashboardResponse getDashboard(String fundCode) {
         FundResponse fund = fundService.getByCode(fundCode);
 

@@ -23,14 +23,7 @@ services:
       timeout: 5s
       retries: 10
       start_period: 20s
-  mailpit:
-    image: axllent/mailpit:latest
-    container_name: finsight-mailpit
-    networks:
-      - finsight-net
-    ports:
-      - "1025:1025"
-      - "8025:8025"
+
   mssql-init:
     image: mcr.microsoft.com/mssql/server:2022-latest
     platform: linux/amd64

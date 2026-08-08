@@ -7,7 +7,7 @@ import lombok.Builder;
 
 @Builder
 public record SaveStressTestDecisionRequestDto(
-        @NotNull(message = "Fund ID zorunludur.")
+        @NotNull(message = "{validation.refresh.token.required}")
         String fundId,
 
         @NotNull(message = "Senaryo türü zorunludur.")

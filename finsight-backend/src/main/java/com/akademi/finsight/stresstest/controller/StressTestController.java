@@ -70,6 +70,6 @@ public class StressTestController extends BaseController implements StressTestAp
             @RequestBody SaveStressTestDecisionRequestDto requestDto) {
 
         stressTestSimulationService.saveDecisionRecord(userEmail, requestDto);
-        return ok(null);
+        return ok();
     }
 }

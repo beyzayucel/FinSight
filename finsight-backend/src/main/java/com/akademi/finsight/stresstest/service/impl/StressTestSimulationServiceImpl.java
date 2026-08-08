@@ -66,14 +66,29 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
         ModelInferenceResult simulationResult = runModel(simulationType.name(), simulationPortfolio);
         ModelInferenceResult benchmarkResult = runModel(simulationType.name(), benchmarkPortfolio);
 
-        StressTestResult entity = createStressTestResult(user, fund, simulationType);
-        entity.addDetail(createDetail(PortfolioType.CURRENT_PORTFOLIO, currentPortfolio.initialValue(), currentResult));
-        entity.addDetail(createDetail(PortfolioType.SIMULATION_PORTFOLIO, simulationPortfolio.initialValue(), simulationResult));
-        entity.addDetail(createDetail(PortfolioType.BENCHMARK, benchmarkPortfolio.initialValue(), benchmarkResult));
+        StressTestResult stressTestResult  = createStressTestResult(user, fund, simulationType);
+        StressTestResultDetail currentDetail = createDetail(
+                PortfolioType.CURRENT_PORTFOLIO,
+                currentPortfolio.initialValue(),
+                currentResult
+        );
+        stressTestResult.addDetail(currentDetail);
 
-        StressTestResult saved = stressTestResultRepository.save(entity);
+        StressTestResultDetail simulationDetail = createDetail(
+                PortfolioType.SIMULATION_PORTFOLIO,
+                simulationPortfolio.initialValue(),
+                simulationResult
+        );
+        stressTestResult.addDetail(simulationDetail);
 
-        StressTestInferenceResponseDto response = stressTestResultMapper.toInferenceResponse(saved);
+        StressTestResultDetail benchmarkDetail = createDetail(
+                PortfolioType.BENCHMARK,
+                benchmarkPortfolio.initialValue(),
+                benchmarkResult
+        );
+        stressTestResult.addDetail(benchmarkDetail);
+
+        StressTestInferenceResponseDto response = stressTestResultMapper.toInferenceResponse(stressTestResult);
         String comment = llmCommentGenerator.generateComment(simulationType);
         return response.toBuilder().llmComment(comment).build();
     }
@@ -122,10 +137,10 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
         Fund fund = findFund(requestDto.fundId());
 
         // Var olan DTO'yu kullanarak simülasyon koşturabilir veya var olan sonucu geçmişe kaydedebilirsin:
-        StressTestResult entity = createStressTestResult(user, fund, requestDto.scenarioKey());
+        StressTestResult stressTestResult  = createStressTestResult(user, fund, requestDto.scenarioKey());
 
         // DB'ye kaydetme işlemi:
-        stressTestResultRepository.save(entity);
+        stressTestResultRepository.save(stressTestResult );
         log.info("Stress test decision saved successfully for user: {} and fund: {}", userEmail, fund.getCode());
     }
 

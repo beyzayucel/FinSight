@@ -1,9 +1,7 @@
 import { useEffect } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import PerformanceComparisonPage, { type ReapplyScenario } from './PerformanceComparisonPage'
-import { useDecision } from '../context/decisionStore' // <-- BURASI DÜZELTİLDİ
-import { useNavigate } from 'react-router-dom'
-import PerformanceComparisonPage from './PerformanceComparisonPage'
+import { useDecision } from '../context/decisionStore'
 import { ROUTES } from '@/lib/routes'
 
 /**

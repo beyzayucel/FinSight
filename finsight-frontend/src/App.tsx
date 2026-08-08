@@ -62,6 +62,11 @@ export default function App() {
         <Route path={ROUTES.DASHBOARD} element={<Navigate to={ROUTES.FUND_DASHBOARD} replace />} />
 
         <Route path="*" element={<Navigate to={ROUTES.LOGIN} replace />} />
+
+
+        
+  
+
       </Routes>
     </BrowserRouter>
   )

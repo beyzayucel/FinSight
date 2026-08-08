@@ -25,18 +25,29 @@ export default function StressTestRoute() {
 
   const fundId = fund?.code || 'TIE'
 
-  async function handleSaveAndNavigate(scenarioKey: ScenarioKey) {
-    if (!portfolio) return
+ 
+  
 
+async function handleSaveAndNavigate(scenarioKey: ScenarioKey, llmComment?: string) {
+  if (!portfolio) return
+
+  try {
     await saveDecisionRecord({
-      fundId,
-      scenarioKey,
-      initialValue: portfolio.initialValue,
-      assetWeights: portfolio.assetWeights,
+      fundId: fundId,
+      scenarioKey: scenarioKey,
+      portfolioData: {
+        initialValue: portfolio.initialValue,
+        assetWeights: portfolio.assetWeights,
+      },
+      llmComment: llmComment, // 👈 Artık parametreden geliyor!
     })
 
     navigate(ROUTES.FUND_DECISION_HISTORY)
+  } catch (error) {
+    console.error("Karar kaydedilirken hata oluştu:", error)
+    throw error
   }
+}
 
   return (
     <StressTestPage

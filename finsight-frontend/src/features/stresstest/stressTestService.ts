@@ -1,19 +1,15 @@
 import api from '@/lib/api/client'
-import type { ScenarioKey } from './types'
+import type { ScenarioKey, PortfolioDataDto } from './types'
 
-const SAVE_DECISION_PATH = '/decisions/save'
+const SAVE_DECISION_PATH = '/stress-tests/save'
 
 export interface SaveDecisionPayload {
   fundId: string
   scenarioKey: ScenarioKey
-  initialValue: number
-  assetWeights: Record<string, number>
+  portfolioData: PortfolioDataDto // assetWeights ve initialValue barındırır
   llmComment?: string
 }
 
-/**
- * Karar + simülasyon + stres testi verilerini DB'ye kaydeder. (Doküman Bölüm 12)
- */
 export async function saveDecisionRecord(payload: SaveDecisionPayload): Promise<void> {
-  await api.post(SAVE_DECISION_PATH, payload)
+  await api.post('/stress-tests/save', payload)
 }

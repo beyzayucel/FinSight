@@ -26,3 +26,9 @@ export interface ScenarioOption {
   title: string
   description: string
 }
+
+export interface ApiStandardResponse<T> {
+  data: T
+  message?: string
+  status?: string
+}

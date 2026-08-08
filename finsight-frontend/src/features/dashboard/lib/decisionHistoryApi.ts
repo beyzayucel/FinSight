@@ -1,4 +1,5 @@
 import api from '@/lib/api/client'
+import type { StressTestInferenceResponseDto } from '@/features/stresstest/types'
 import type { AssetCategory } from '../dashboardApi'
 
 export type DecisionRecordWeight = {
@@ -24,6 +25,8 @@ export type DecisionRecord = {
   createdAt: string
   weights: DecisionRecordWeight[]
   metrics: DecisionRecordMetrics
+  /** Stres Testi ekranından iliştirilmişse dolu; hiç iliştirilmemişse null. */
+  stressTest: StressTestInferenceResponseDto | null
 }
 
 // GET /funds/decisions/history — AI + Manuel kararları birleşik, en yeniden en eskiye sıralı döner.

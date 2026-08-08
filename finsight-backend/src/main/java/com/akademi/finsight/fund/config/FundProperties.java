@@ -23,4 +23,11 @@ public class FundProperties {
     public static class Recommendation {
         private long ttlHours;
     }
+
+    private final Sync sync = new Sync();
+    @Getter
+    @Setter
+    public static class Sync {
+        private int dataLagDays;
+    }
 }

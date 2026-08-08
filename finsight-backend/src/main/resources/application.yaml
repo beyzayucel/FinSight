@@ -168,6 +168,7 @@ fund:
   sync:
     cron: ${FUND_SYNC_CRON:0 0 8-17 * * *}
     zone: ${FUND_SYNC_ZONE:Europe/Istanbul}
+    data-lag-days: ${FUND_SYNC_DATA_LAG_DAYS:8}
   recommendation:
      ttl-hours: ${FUND_RECOMMENDATION_TTL_HOURS:4}
 

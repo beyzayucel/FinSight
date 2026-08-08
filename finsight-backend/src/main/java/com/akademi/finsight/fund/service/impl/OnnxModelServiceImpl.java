@@ -20,6 +20,8 @@ public class OnnxModelServiceImpl implements OnnxModelService, AutoCloseable {
     private OrtEnvironment env;
     private OrtSession session;
 
+    //bu class entegrasyon sonrası düzenlenecek
+
     @PostConstruct
     public void init() {
         try {
@@ -78,20 +80,15 @@ public class OnnxModelServiceImpl implements OnnxModelService, AutoCloseable {
             return new float[] { 0.915f, 0.055f, 0.02f, 0.01f };
         }
 
-        // stateInput'un son 4 elemanı: [stock_weight, repo_weight, future_weight, fund_weight]
         float currentStock = stateInput[len - 4];
         float currentRepo = stateInput[len - 3];
         float currentFuture = stateInput[len - 2];
         float currentFund = stateInput[len - 1];
 
-        // Eğer mevcut hisse ağırlığı 0 veya çok düşükse default dağılımı kullan
         if (currentStock <= 0.01f) {
             return new float[] { 0.915f, 0.055f, 0.02f, 0.01f };
         }
 
-        // Akıllı Rebalancing Önerisi:
-        // Hisse senedi tarafındaki volatilite riskini azaltmak için hisseyi yaklaşık %3.5 kademeli azaltıp,
-        // ters-repo ve teminat tarafına pay aktararak portföy riskini optimize eder.
         float reduction = Math.min(0.035f, currentStock * 0.037f);
         float targetStock = Math.max(0.80f, currentStock - reduction);
         float diff = currentStock - targetStock;

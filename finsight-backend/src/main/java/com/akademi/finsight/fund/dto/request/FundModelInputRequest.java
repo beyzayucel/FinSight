@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 
 @Builder
 public record FundModelInputRequest(
-        BigDecimal stockWeight,//dönüyor buda
+        BigDecimal stockWeight,
         BigDecimal repoWeight,
         BigDecimal futureWeight,
         BigDecimal fundWeight,
@@ -19,10 +19,10 @@ public record FundModelInputRequest(
         BigDecimal annualInflation,
         BigDecimal policyRate,
 
-        BigDecimal fundReturn,//bufünün fiyatı-dün fiyat
+        BigDecimal fundReturn,
         BigDecimal portfolioGrowth,
 
-        BigDecimal activeValue,//melisten dönenler
+        BigDecimal activeValue,
         BigDecimal portfolioValue,
         BigDecimal cashValue,
         BigDecimal investorCount

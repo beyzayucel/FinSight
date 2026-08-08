@@ -8,6 +8,8 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 
+import java.math.BigDecimal;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -19,7 +21,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class AiRecommendation extends SoftDeletableEntity {
+public class AiRecommendation extends SoftDeletableEntity implements ScenarioWeightSource {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
@@ -61,5 +63,12 @@ public class AiRecommendation extends SoftDeletableEntity {
     public void addWeight(AiRecommendationWeight weight) {
         weights.put(weight.getCategory(), weight);
         weight.setRecommendation(this);
+    }
+
+    @Override
+    public Map<AssetCategory, BigDecimal> getSimulationWeights() {
+        Map<AssetCategory, BigDecimal> result = new EnumMap<>(AssetCategory.class);
+        weights.forEach((cat, w) -> result.put(cat, w.getRecommendedWeight()));
+        return result;
     }
 }

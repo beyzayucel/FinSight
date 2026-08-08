@@ -15,6 +15,8 @@ import com.akademi.finsight.fund.exception.FundNotFoundException;
 import com.akademi.finsight.fund.exception.FundValidationException;
 import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
 import com.akademi.finsight.fund.mapper.AiRecommendationMapper;
+import com.akademi.finsight.fund.performancecomparison.dto.response.PerformanceComparisonResponse.PortfolioCurve;
+import com.akademi.finsight.fund.performancecomparison.service.PortfolioSimulationCalculationService;
 import com.akademi.finsight.fund.repository.AiRecommendationRepository;
 import com.akademi.finsight.fund.service.AiRecommendationService;
 import com.akademi.finsight.fund.service.FundDistributionService;
@@ -47,6 +49,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
     private final UserService userService;
     private final FundDistributionConverter fundDistributionConverter;
     private final AiRecommendationMapper aiRecommendationMapper;
+    private final PortfolioSimulationCalculationService portfolioSimulationCalculationService;
 
 
     @Override
@@ -170,6 +173,11 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
         recommendation.setStatus(status);
         recommendation.setNote(note);
+
+        if (status == RecommendationStatus.ACCEPTED) {
+            attachSimulationSnapshot(recommendation);
+        }
+
         aiRecommendationRepository.save(recommendation);
     }
 
@@ -194,6 +202,21 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
         return new FundActivePortfolioResponse(fund.id(), fund.code(), fund.name(), fundDate, weightsMap);
     }
 
+
+    //TODO: Consider refactoring this method
+    private void attachSimulationSnapshot(AiRecommendation recommendation) {
+        try {
+            PortfolioCurve simulationCurve = portfolioSimulationCalculationService
+                    .calculateSimulation(recommendation.getFund().getCode(), 30, recommendation.getSimulationWeights());
+            if (simulationCurve != null) {
+                recommendation.getMetrics().setSimulatedPortfolioValue(simulationCurve.metrics().currentValue());
+                recommendation.getMetrics().setAnalysisWindowDays(30);
+            }
+        } catch (Exception e) {
+            log.warn("Simulation snapshot failed for recommendation {}. Reason: {}",
+                    recommendation.getId(), e.getMessage());
+        }
+    }
 
     private void addWeightToEntity(AiRecommendation aiRecommendation, AssetCategory assetCategory, BigDecimal recommended, BigDecimal current) {
         AiRecommendationWeight weight = AiRecommendationWeight.builder()

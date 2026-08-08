@@ -9,6 +9,8 @@ import com.akademi.finsight.fund.entity.*;
 import com.akademi.finsight.fund.exception.FundErrorType;
 import com.akademi.finsight.fund.exception.FundValidationException;
 import com.akademi.finsight.fund.mapper.ManualScenarioMapper;
+import com.akademi.finsight.fund.performancecomparison.dto.response.PerformanceComparisonResponse.PortfolioCurve;
+import com.akademi.finsight.fund.performancecomparison.service.PortfolioSimulationCalculationService;
 import com.akademi.finsight.fund.repository.FundRepository;
 import com.akademi.finsight.fund.repository.ManualScenarioRepository;
 import com.akademi.finsight.fund.service.FundDistributionService;
@@ -38,6 +40,7 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
     private final ManualScenarioMapper manualScenarioMapper;
     private final FundDistributionService fundDistributionService;
     private final FundDistributionConverter fundDistributionConverter;
+    private final PortfolioSimulationCalculationService portfolioSimulationCalculationService;
 
     @Override
     @Transactional
@@ -67,6 +70,8 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
             scenario.addWeight(weight);
         }
 
+        attachSimulationSnapshot(scenario, fund.getCode(), targetWeights);
+
         manualScenarioRepository.save(scenario);
         log.info("Manual scenario applied and saved successfully. Scenario ID: {}", scenario.getId());
     }
@@ -83,6 +88,21 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
         return scenarios.stream()
                         .map(manualScenarioMapper::toResponse)
                         .toList();
+    }
+
+    //TODO: Consider refactoring this method
+    private void attachSimulationSnapshot(ManualScenario scenario, String fundCode,
+                                             Map<AssetCategory, BigDecimal> targetWeights) {
+        try {
+            PortfolioCurve simulationCurve = portfolioSimulationCalculationService
+                    .calculateSimulation(fundCode, 30, targetWeights);
+            if (simulationCurve != null) {
+                scenario.getMetrics().setSimulatedPortfolioValue(simulationCurve.metrics().currentValue());
+                scenario.getMetrics().setAnalysisWindowDays(30);
+            }
+        } catch (Exception e) {
+            log.warn("Simulation snapshot failed for scenario. Reason: {}", e.getMessage());
+        }
     }
 
     private Map<AssetCategory, BigDecimal> fetchCurrentWeightsFromDb(Fund fund) {

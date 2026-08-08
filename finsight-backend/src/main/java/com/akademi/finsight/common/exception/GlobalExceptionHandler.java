@@ -25,6 +25,7 @@ import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.Locale;
 
@@ -90,6 +91,17 @@ public class GlobalExceptionHandler {
 
         return buildResponse(ErrorType.METHOD_NOT_ALLOWED,
                 resolveMessage(ErrorType.METHOD_NOT_ALLOWED, ex.getMethod()), request);
+    }
+
+    // Tanınmayan URL'ler bu handler olmadan generic Exception dalına düşüp 500 dönüyordu —
+    // istemci tarafında "sunucu hatası" gibi görünüyor, oysa adres yok.
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ResponseEntity<ApiStandardResponse<Void>> handleNoResourceFound(
+            NoResourceFoundException ex, HttpServletRequest request) {
+
+        log.debug("No endpoint found: method={}, path={}", request.getMethod(), request.getRequestURI());
+
+        return buildResponse(ErrorType.ENDPOINT_NOT_FOUND, resolveMessage(ErrorType.ENDPOINT_NOT_FOUND), request);
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)

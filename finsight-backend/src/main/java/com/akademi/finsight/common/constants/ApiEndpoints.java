@@ -44,7 +44,6 @@ public final class ApiEndpoints {
         public static final String MANUAL_SCENARIO = "/scenarios/apply";
         public static final String MANUAL_SCENARIO_HISTORY = "/scenarios/history";
         public static final String DECISION_HISTORY = "/decisions/history";
-        public static final String DECISION_METRICS = "/decisions/metrics";
         public static final String DECISION_STRESS_TEST = "/decisions/stress-test";
         public static final String SYNC = "/sync";
         public static final String DASHBOARD = "/{fundCode}/dashboard";
@@ -77,6 +76,8 @@ public final class ApiEndpoints {
         public static final String BASE = API_V1 + "/stress-tests";
         public static final String RUN = "/run";
         public static final String LATEST = "/latest";
+        public static final String PERIOD = "/period";
+        public static final String SAVE = "/save";
     }
 
     @NoArgsConstructor(access = AccessLevel.PRIVATE)

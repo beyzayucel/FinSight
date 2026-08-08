@@ -1,6 +1,5 @@
 package com.akademi.finsight.fund.service.impl;
 
-import com.akademi.finsight.fund.dto.request.AttachMetricsRequest;
 import com.akademi.finsight.fund.dto.request.AttachStressTestRequest;
 import com.akademi.finsight.fund.dto.response.DecisionRecordResponse;
 import com.akademi.finsight.fund.dto.response.ManualScenarioResponse;
@@ -19,7 +18,7 @@ import com.akademi.finsight.fund.service.ManualScenarioService;
 import com.akademi.finsight.stresstest.entity.StressTestResult;
 import com.akademi.finsight.stresstest.exception.StressTestErrorType;
 import com.akademi.finsight.stresstest.exception.StressTestException;
-import com.akademi.finsight.stresstest.mapper.StressTestResultMapper;
+import com.akademi.finsight.stresstest.mapper.StressTestResponseAssembler;
 import com.akademi.finsight.stresstest.repository.StressTestResultRepository;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.service.UserService;
@@ -44,7 +43,7 @@ public class DecisionHistoryServiceImpl implements DecisionHistoryService {
     private final ManualScenarioRepository manualScenarioRepository;
     private final AiRecommendationRepository aiRecommendationRepository;
     private final StressTestResultRepository stressTestResultRepository;
-    private final StressTestResultMapper stressTestResultMapper;
+    private final StressTestResponseAssembler stressTestResponseAssembler;
     private final UserService userService;
 
     @Override
@@ -68,51 +67,22 @@ public class DecisionHistoryServiceImpl implements DecisionHistoryService {
 
     @Override
     @Transactional
-    public void attachMetrics(String email, AttachMetricsRequest request) {
-        log.info("Attaching performance metrics to latest decision. fundId: {}", request.getFundId());
-
-        User user = userService.findByEmail(email);
-        LatestDecision latest = findLatestDecision(user.getId(), request.getFundId());
-
-        PerformanceMetrics metrics = PerformanceMetrics.builder()
-                                                        .totalReturnPct(request.getTotalReturnPct())
-                                                        .benchmarkDiffPct(request.getBenchmarkDiffPct())
-                                                        .maxDrawdownPct(request.getMaxDrawdownPct())
-                                                        .dailyVolatilityPct(request.getDailyVolatilityPct())
-                                                        .analysisWindowDays(request.getAnalysisWindowDays())
-                                                        .build();
-
-        if (latest.manualIsNewer()) {
-            latest.manual().get().setMetrics(metrics);
-            manualScenarioRepository.save(latest.manual().get());
-        } else if (latest.ai().isPresent()) {
-            latest.ai().get().setMetrics(metrics);
-            aiRecommendationRepository.save(latest.ai().get());
-        } else {
-            throw new FundValidationException(FundErrorType.NO_DECISION_TO_ATTACH);
-        }
-
-        log.info("Performance metrics attached successfully.");
-    }
-
-    @Override
-    @Transactional
     public void attachStressTestResult(String email, AttachStressTestRequest request) {
         log.info("Attaching stress test result to latest decision. fundId: {}, stressTestResultId: {}",
-                request.getFundId(), request.getStressTestResultId());
+                request.fundId(), request.stressTestResultId());
 
         User user = userService.findByEmail(email);
 
-        StressTestResult stressTestResult = stressTestResultRepository.findById(request.getStressTestResultId())
+        StressTestResult stressTestResult = stressTestResultRepository.findById(request.stressTestResultId())
                                                                         .orElseThrow(() -> new StressTestException(StressTestErrorType.RESULT_NOT_FOUND));
 
         boolean belongsToUserAndFund = stressTestResult.getUser().getId().equals(user.getId())
-                && stressTestResult.getFund().getId().equals(request.getFundId());
+                && stressTestResult.getFund().getId().equals(request.fundId());
         if (!belongsToUserAndFund) {
             throw new StressTestException(StressTestErrorType.RESULT_ACCESS_DENIED);
         }
 
-        LatestDecision latest = findLatestDecision(user.getId(), request.getFundId());
+        LatestDecision latest = findLatestDecision(user.getId(), request.fundId());
 
         if (latest.manualIsNewer()) {
             latest.manual().get().setStressTestResult(stressTestResult);
@@ -160,7 +130,7 @@ public class DecisionHistoryServiceImpl implements DecisionHistoryService {
                 response.createdAt(),
                 response.weights(),
                 response.metrics(),
-                response.stressTest()
+                stressTestResponseAssembler.withLlmComment(response.stressTest())
         );
     }
 
@@ -181,9 +151,7 @@ public class DecisionHistoryServiceImpl implements DecisionHistoryService {
                 recommendation.getCreatedAt(),
                 weights,
                 toMetricsResponse(recommendation.getMetrics()),
-                recommendation.getStressTestResult() != null
-                        ? stressTestResultMapper.toInferenceResponse(recommendation.getStressTestResult())
-                        : null
+                stressTestResponseAssembler.toResponse(recommendation.getStressTestResult())
         );
     }
 

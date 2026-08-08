@@ -164,6 +164,11 @@ fund:
   recommendation:
      ttl-hours: ${FUND_RECOMMENDATION_TTL_HOURS:4}
 
+market:
+  sync:
+    cron: ${MARKET_SYNC_CRON:0 0 8-17 * * *}
+    zone: ${MARKET_SYNC_ZONE:Europe/Istanbul}
+
 infina:
   api:
     base-url: ${INFINA_API_URL}

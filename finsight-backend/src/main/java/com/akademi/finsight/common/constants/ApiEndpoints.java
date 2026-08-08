@@ -97,8 +97,8 @@ public final class ApiEndpoints {
 
 
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
-    public static final class MacroData {
-        public static final String BASE = API_V1 + "/macro-data";
+    public static final class MarketData {
+        public static final String BASE = API_V1 + "/market-data";
         public static final String SYNC = "/sync";
     }
     private static final String[] PUBLIC_ENDPOINTS = {

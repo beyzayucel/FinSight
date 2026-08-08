@@ -19,8 +19,8 @@ import java.time.LocalDate;
 @AllArgsConstructor
 @Builder
 @Entity
-@Table(name = "macro_data")
-public class MacroData {
+@Table(name = "market_data")
+public class MarketData {
 
     @Id
     @Column(nullable = false)

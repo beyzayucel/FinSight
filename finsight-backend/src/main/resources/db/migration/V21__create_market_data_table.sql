@@ -1,6 +1,6 @@
-IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'macro_data')
+IF NOT EXISTS (SELECT * FROM sys.tables WHERE name = 'market_data')
 BEGIN
-    CREATE TABLE macro_data (
+    CREATE TABLE market_data (
         date DATE PRIMARY KEY,
         usd_return DECIMAL(18, 12) NOT NULL,
         gold_return DECIMAL(18, 12) NOT NULL,

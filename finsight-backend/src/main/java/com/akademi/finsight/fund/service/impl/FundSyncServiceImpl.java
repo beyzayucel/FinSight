@@ -49,9 +49,11 @@ public class FundSyncServiceImpl implements FundSyncService {
         String fundCode = fundProperties.getCode();
 
         String periods = buildRequestedPeriods();
-        log.info("Fund sync started: fundCode={}, periods={}", fundCode, periods);
+        String requestDate = resolveRequestDate();
+        log.info("Fund sync started: fundCode={}, requestDate={}, periods={}",
+                fundCode, requestDate == null ? "LATEST" : requestDate, periods);
 
-        FundInfoResponse fundInfo = infinaService.getFundInfo(fundCode, null, periods);
+        FundInfoResponse fundInfo = infinaService.getFundInfo(fundCode, requestDate, periods);
 
         LocalDate dataDate = required(fundInfo.fundDate(), fundCode, "fundDate");
         BigDecimal totalValue = scaled(required(fundInfo.totalMarketPrice(), fundCode, "totalMarketPrice"),
@@ -72,6 +74,11 @@ public class FundSyncServiceImpl implements FundSyncService {
                 stockBreakdown.allocations());
 
         return fundSyncPersister.persist(snapshot);
+    }
+
+    private String resolveRequestDate() {
+        int dataLagDays = fundProperties.getSync().getDataLagDays();
+        return dataLagDays > 0 ? LocalDate.now().minusDays(dataLagDays).toString() : null;
     }
 
     private String buildRequestedPeriods() {

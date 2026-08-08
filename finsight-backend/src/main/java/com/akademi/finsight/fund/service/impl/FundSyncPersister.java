@@ -1,5 +1,6 @@
 package com.akademi.finsight.fund.service.impl;
 
+import com.akademi.finsight.fund.constant.CacheNames;
 import com.akademi.finsight.fund.dto.response.FundSyncResponse;
 import com.akademi.finsight.fund.dto.sync.FundSyncSnapshot;
 import com.akademi.finsight.fund.entity.Fund;
@@ -14,6 +15,7 @@ import com.akademi.finsight.fund.repository.FundRepository;
 import com.akademi.finsight.fund.repository.FundStockAllocationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -31,6 +33,7 @@ public class FundSyncPersister {
     private final FundDistributionRepository fundDistributionRepository;
     private final FundStockAllocationRepository fundStockAllocationRepository;
 
+    @CacheEvict(cacheNames = CacheNames.FUND_DASHBOARD, key = "#snapshot.fundCode()")
     public FundSyncResponse persist(FundSyncSnapshot snapshot) {
         Fund fund = upsertFund(snapshot);
         upsertPeriodMetrics(fund, snapshot);

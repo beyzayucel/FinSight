@@ -10,5 +10,6 @@ public record FundInfoResponse (
 		LocalDate fundDate,
 		List<FundReturnResponse> periodReturns,
 		BigDecimal totalMarketPrice,
-		List<FundAssetDistributionResponse> assetDistribution
+		List<FundAssetDistributionResponse> assetDistribution,
+		Integer investorCount
 ){}

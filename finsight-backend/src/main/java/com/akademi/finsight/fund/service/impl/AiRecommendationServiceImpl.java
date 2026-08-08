@@ -2,25 +2,29 @@ package com.akademi.finsight.fund.service.impl;
 
 import com.akademi.finsight.common.masking.MaskType;
 import com.akademi.finsight.fund.config.FundProperties;
+import com.akademi.finsight.fund.constant.MacroConstants;
 import com.akademi.finsight.fund.converter.FundDistributionConverter;
 import com.akademi.finsight.fund.dto.MacroDataRow;
 import com.akademi.finsight.fund.dto.request.FundModelInputRequest;
 import com.akademi.finsight.fund.dto.response.AIRecommendationResponse;
-import com.akademi.finsight.fund.dto.response.FundActivePortfolioResponse;
 import com.akademi.finsight.fund.dto.response.FundResponse;
 import com.akademi.finsight.fund.entity.*;
 import com.akademi.finsight.fund.exception.AiRecommendationNotFoundException;
 import com.akademi.finsight.fund.exception.FundErrorType;
-import com.akademi.finsight.fund.exception.FundNotFoundException;
 import com.akademi.finsight.fund.exception.FundValidationException;
 import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
+import com.akademi.finsight.fund.dto.response.FundPeriodMetricResponse;
 import com.akademi.finsight.fund.mapper.AiRecommendationMapper;
 import com.akademi.finsight.fund.performancecomparison.service.PortfolioSimulationCalculationService;
 import com.akademi.finsight.fund.repository.AiRecommendationRepository;
+import com.akademi.finsight.fund.repository.MacroDataRepository;
 import com.akademi.finsight.fund.service.AiRecommendationService;
 import com.akademi.finsight.fund.service.FundDistributionService;
+import com.akademi.finsight.fund.service.FundPeriodMetricService;
 import com.akademi.finsight.fund.service.FundService;
 import com.akademi.finsight.fund.service.OnnxModelService;
+import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
+import com.akademi.finsight.integration.infina.service.InfinaService;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.service.UserService;
 import lombok.RequiredArgsConstructor;
@@ -43,11 +47,14 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
     private final FundProperties fundProperties;
     private final FundService fundService;
     private final FundDistributionService fundDistributionService;
+    private final FundPeriodMetricService fundPeriodMetricService;
     private final AiRecommendationRepository aiRecommendationRepository;
     private final OnnxModelService onnxModelService;
     private final UserService userService;
     private final FundDistributionConverter fundDistributionConverter;
     private final AiRecommendationMapper aiRecommendationMapper;
+    private final MacroDataRepository macroDataRepository;
+    private final InfinaService infinaService;
     private final PortfolioSimulationCalculationService portfolioSimulationCalculationService;
 
 
@@ -59,18 +66,15 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
         User user = userService.findByEmail(email);
         FundResponse fund = fundService.getById(fundId);
 
-        if (!fund.code().equals(fundProperties.getCode())) {
-            throw new FundValidationException(FundErrorType.UNAUTHORIZED_RECOMMENDATION);
-        }
-
         Optional<AiRecommendation> pendingRecommend = aiRecommendationRepository.findLatestByFundAndUserAndStatus(fundId, email, RecommendationStatus.PENDING);
 
         if (pendingRecommend.isPresent()) {
             AiRecommendation recommendation = pendingRecommend.get();
-            Instant threshold = Instant.now().minus(fundProperties.getRecommendation().getTtlHours(), ChronoUnit.HOURS);
+            long ttlHours = fundProperties.getRecommendation().getTtlHours();
+            Instant threshold = Instant.now().minus(ttlHours > 0 ? ttlHours : 24, ChronoUnit.HOURS);
 
             if (recommendation.getCreatedAt().isBefore(threshold)) {
-                log.info("Pending AI recommendation {} is older than {} hours. Soft-deleting it and generating a new one.", recommendation.getId(), fundProperties.getRecommendation().getTtlHours());
+                log.info("Pending AI recommendation {} is older than {} hours. Soft-deleting it and generating a new one.", recommendation.getId(), ttlHours);
                 recommendation.setDeleted(true);
                 aiRecommendationRepository.save(recommendation);
             } else {
@@ -98,7 +102,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
             addWeightToEntity(recommendation, category,
                     BigDecimal.valueOf(recommendedWeights[i] * 100),
-                    BigDecimal.valueOf(getCurrentWeightByCategory(modelInput, category) * 100));
+                    getCurrentWeightByCategory(modelInput, category).multiply(BigDecimal.valueOf(100)));
         }
 
         AiRecommendation saved = aiRecommendationRepository.save(recommendation);
@@ -117,38 +121,111 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
         Map<AssetCategory, BigDecimal> weights = fundDistributionConverter.toWeightsMapFromResponses(distributions);
 
-        MacroDataRow macroRow = MacroDataFromDbMock.fetchRandom();
+        MacroDataRow macroRow = macroDataRepository.findFirstByOrderByDateDesc()
+                .map(macroData -> new MacroDataRow(
+                        macroData.getDate(),
+                        macroData.getUsdReturn(),
+                        macroData.getGoldReturn(),
+                        macroData.getBrentReturn(),
+                        macroData.getUs10yReturn(),
+                        macroData.getCdsSpreadBps(),
+                        macroData.getAnnualInflation(),
+                        macroData.getPolicyRate()
+                ))
+                .orElseGet(() -> {
+                    log.warn("MacroData table is empty, falling back to safe default values.");
+                    return new MacroDataRow(
+                            LocalDate.now(),
+                            BigDecimal.ZERO,
+                            BigDecimal.ZERO,
+                            BigDecimal.ZERO,
+                            BigDecimal.ZERO,
+                            MacroConstants.DEFAULT_CDS,
+                            MacroConstants.DEFAULT_INFLATION,
+                            MacroConstants.DEFAULT_POLICY_RATE
+                    );
+                });
+
+        List<FundPeriodMetricResponse> metrics = fundPeriodMetricService.getLatestByFundCode(fund.code());
+        BigDecimal fundReturn = BigDecimal.ZERO;
+        BigDecimal portfolioGrowth = BigDecimal.ZERO;
+        BigDecimal portfolioValue = BigDecimal.ZERO;
+        BigDecimal activeValue = BigDecimal.ZERO;
+        BigDecimal cashValue = BigDecimal.ZERO;
+        BigDecimal investorCount = BigDecimal.ZERO;
+
+        if (metrics != null && !metrics.isEmpty()) {
+            FundPeriodMetricResponse latestMetric = metrics.getFirst();
+            if (latestMetric.dailyReturn() != null) {
+                fundReturn = latestMetric.dailyReturn();
+            }
+            if (latestMetric.totalValue() != null) {
+                portfolioValue = latestMetric.totalValue();
+                activeValue = latestMetric.totalValue();
+            }
+            if (latestMetric.totalValue() != null && latestMetric.previousTotalValue() != null
+                    && latestMetric.previousTotalValue().compareTo(BigDecimal.ZERO) > 0) {
+                portfolioGrowth = latestMetric.totalValue()
+                        .subtract(latestMetric.previousTotalValue())
+                        .divide(latestMetric.previousTotalValue(), 12, RoundingMode.HALF_UP);
+            }
+        }
+
+        try {
+            FundInfoResponse fundInfo = infinaService.getFundInfo(fund.code(), null, null);
+            if (fundInfo != null) {
+                if (fundInfo.investorCount() != null) {
+                    investorCount = BigDecimal.valueOf(fundInfo.investorCount());
+                }
+                if (fundInfo.totalMarketPrice() != null) {
+                    portfolioValue = fundInfo.totalMarketPrice();
+                    activeValue = fundInfo.totalMarketPrice();
+                }
+            }
+        } catch (Exception e) {
+            log.warn("Could not fetch additional fund info for {}: {}", fund.code(), e.getMessage());
+        }
 
         return FundModelInputRequest.builder()
-                .stockWeight(weights.getOrDefault(AssetCategory.STOCK, BigDecimal.ZERO).floatValue())
-                .repoWeight(weights.getOrDefault(AssetCategory.REPO, BigDecimal.ZERO).floatValue())
-                .futureWeight(weights.getOrDefault(AssetCategory.FUTURE, BigDecimal.ZERO).floatValue())
-                .fundWeight(weights.getOrDefault(AssetCategory.FUND, BigDecimal.ZERO).floatValue())
-                .usdReturn(macroRow.usdReturn().floatValue())
-                .goldReturn(macroRow.goldReturn().floatValue())
-                .brentReturn(macroRow.brentReturn().floatValue())
-                .us10yReturn(macroRow.us10yReturn().floatValue())
-                .cdsSpreadBps(macroRow.cdsSpreadBps().floatValue())
-                .annualInflation(macroRow.annualInflation().floatValue())
-                .policyRate(macroRow.policyRate().floatValue())
+                .stockWeight(weights.getOrDefault(AssetCategory.STOCK, BigDecimal.ZERO))
+                .repoWeight(weights.getOrDefault(AssetCategory.REPO, BigDecimal.ZERO))
+                .futureWeight(weights.getOrDefault(AssetCategory.FUTURE, BigDecimal.ZERO))
+                .fundWeight(weights.getOrDefault(AssetCategory.FUND, BigDecimal.ZERO))
+                .usdReturn(macroRow.usdReturn())
+                .goldReturn(macroRow.goldReturn())
+                .brentReturn(macroRow.brentReturn())
+                .us10yReturn(macroRow.us10yReturn())
+                .cdsSpreadBps(macroRow.cdsSpreadBps())
+                .annualInflation(macroRow.annualInflation())
+                .policyRate(macroRow.policyRate())
+                .fundReturn(fundReturn)
+                .portfolioGrowth(portfolioGrowth)
+                .activeValue(activeValue)
+                .portfolioValue(portfolioValue)
+                .cashValue(cashValue)
+                .investorCount(investorCount)
                 .build();
     }
 
     private float[] predictWeights(FundModelInputRequest input) {
         float[] stateInput = {
-                input.usdReturn(),
-                input.goldReturn(),
-                input.brentReturn(),
-                input.us10yReturn(),
-                input.cdsSpreadBps() / 1000.0f,
-                input.annualInflation() / 100.0f,
-                input.policyRate() / 100.0f,
-                1.0f,
-                1.0f,
-                input.stockWeight(),
-                input.repoWeight(),
-                input.futureWeight(),
-                input.fundWeight()
+                input.usdReturn().floatValue(),
+                input.goldReturn().floatValue(),
+                input.brentReturn().floatValue(),
+                input.us10yReturn().floatValue(),
+                input.cdsSpreadBps().floatValue() / 1000.0f,
+                input.annualInflation().floatValue() / 100.0f,
+                input.policyRate().floatValue() / 100.0f,
+                input.fundReturn() != null ? input.fundReturn().floatValue() : 0.0f,
+                input.portfolioGrowth() != null ? input.portfolioGrowth().floatValue() : 0.0f,
+                input.activeValue() != null ? input.activeValue().floatValue() : 0.0f,
+                input.portfolioValue() != null ? input.portfolioValue().floatValue() : 0.0f,
+                input.cashValue() != null ? input.cashValue().floatValue() : 0.0f,
+                input.investorCount() != null ? input.investorCount().floatValue() : 0.0f,
+                input.stockWeight().floatValue(),
+                input.repoWeight().floatValue(),
+                input.futureWeight().floatValue(),
+                input.fundWeight().floatValue()
         };
 
         return onnxModelService.getAction(stateInput);
@@ -181,29 +258,6 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
         aiRecommendationRepository.save(recommendation);
     }
 
-    @Override
-    @Transactional(readOnly = true)
-    public FundActivePortfolioResponse getActiveFund() {
-        log.info("Fetching active fund...");
-
-        FundResponse fund = fundService.getByCode(fundProperties.getCode());
-
-        if (Objects.isNull(fund)) {
-            log.warn("No active fund found.");
-            throw new FundNotFoundException();
-        }
-
-        List<FundDistributionResponse> distributions = fundDistributionService.getLatestByFundCode(fund.code());
-
-        Map<AssetCategory, BigDecimal> weightsMap = fundDistributionConverter.toPercentageWeightsMap(distributions);
-
-        LocalDate fundDate = distributions.isEmpty() ? LocalDate.now() : distributions.get(0).date();
-
-        return new FundActivePortfolioResponse(fund.id(), fund.code(), fund.name(), fundDate, weightsMap);
-    }
-
-
-
     private void addWeightToEntity(AiRecommendation aiRecommendation, AssetCategory assetCategory, BigDecimal recommended, BigDecimal current) {
         AiRecommendationWeight weight = AiRecommendationWeight.builder()
                 .category(assetCategory)
@@ -213,7 +267,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
         aiRecommendation.addWeight(weight);
     }
 
-    private double getCurrentWeightByCategory(FundModelInputRequest input, AssetCategory category) {
+    private BigDecimal getCurrentWeightByCategory(FundModelInputRequest input, AssetCategory category) {
         return switch (category) {
             case STOCK -> input.stockWeight();
             case REPO -> input.repoWeight();

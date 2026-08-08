@@ -19,12 +19,6 @@ import java.util.UUID;
 @Tag(name = "AI Recommendation", description = "AI portfolio decision recommendation operations")
 public interface AiRecommendationApi {
 
-    @Operation(summary = "Get active fund with weights",
-            description = "Returns the active fund with its asset weights, seeding default ones if DB is empty.")
-    @ApiResponse(responseCode = "200", description = "Active fund retrieved successfully")
-    @GetMapping("/active")
-    ResponseEntity<ApiStandardResponse<FundActivePortfolioResponse>> getActiveFund();
-
     @Operation(summary = "Get pending AI recommendation",
             description = "Returns the latest pending AI recommendation for a fund. If none exists, a new one is generated.")
     @ApiResponse(responseCode = "200", description = "AI Recommendation retrieved successfully")

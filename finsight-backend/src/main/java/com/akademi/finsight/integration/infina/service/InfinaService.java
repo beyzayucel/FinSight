@@ -5,10 +5,20 @@ import com.akademi.finsight.integration.infina.dto.response.fund.CumulativeRetur
 import com.akademi.finsight.integration.infina.dto.response.fund.FundDailyReturnResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundPortfolioAllocationResponse;
+import com.akademi.finsight.integration.infina.dto.response.fx.FxPriceResponse;
+import com.akademi.finsight.integration.infina.dto.response.index.IndexPriceResponse;
+import com.akademi.finsight.integration.infina.dto.response.economic.EconomicPriceResponse;
 
 import java.util.List;
 
 public interface InfinaService {
+
+	List<FxPriceResponse> getFxPrices(String assetCode, String dataDate);
+
+	List<IndexPriceResponse> getIndexPrices(String assetCode, String dataDate);
+
+	List<EconomicPriceResponse> getEconomicPrices(String assetCode, String dataDate);
+
 	List<BenchmarkInfoResponse> getBenchmarkInfo(String fundCode,
 												 String beginPeriod,
 												 String endPeriod,

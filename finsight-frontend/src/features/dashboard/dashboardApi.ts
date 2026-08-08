@@ -82,13 +82,59 @@ function setStoredRecommendation(rec: AIRecommendation) {
   localStorage.setItem('finsight_ai_recommendation', JSON.stringify(rec))
 }
 
-export async function getActiveFund(): Promise<Fund> {
+const CATEGORY_MAP: Record<string, AssetCategory> = {
+  'hisse senedi': 'STOCK',
+  'stock': 'STOCK',
+  'ters-repo': 'REPO',
+  'ters repo': 'REPO',
+  'repo': 'REPO',
+  'vadeli işl. nakit teminatı': 'FUTURE',
+  'vadeli işlem nakit teminatı': 'FUTURE',
+  'vadeli işlemler teminat': 'FUTURE',
+  'future': 'FUTURE',
+  'yatırım fonu katılma payı': 'FUND',
+  'yatırım fonları katılma payları': 'FUND',
+  'fund': 'FUND',
+}
+
+export async function getActiveFund(fundCode: string = 'TIE'): Promise<Fund> {
   try {
-    // Try to call backend if any get-fund API exists
-    const response = await api.get(`/funds/active`)
-    return response.data.data
-  } catch {
-    console.warn('getActiveFund API failed or not implemented, falling back to mock data.')
+    const response = await api.get<{ data: Array<{ id: string; fundId: string; category: string; weight: number; date: string }> }>(
+      `/fund-distributions/funds/${fundCode}/latest`
+    )
+    const distributions = response.data?.data
+
+    if (!distributions || distributions.length === 0) {
+      return DEFAULT_FUND
+    }
+
+    const fundId = distributions[0].fundId
+    const date = distributions[0].date
+
+    const weights: Record<AssetCategory, number> = {
+      STOCK: 0,
+      REPO: 0,
+      FUTURE: 0,
+      FUND: 0,
+    }
+
+    for (const item of distributions) {
+      const normalizedCat = item.category?.trim().toLowerCase()
+      const mappedKey = CATEGORY_MAP[normalizedCat]
+      if (mappedKey) {
+        weights[mappedKey] = Number(item.weight) || 0
+      }
+    }
+
+    return {
+      id: fundId || MOCK_FUND_ID,
+      code: fundCode,
+      name: `${fundCode} İş Portföy – BIST 30 Endeksi`,
+      date: date || DEFAULT_FUND.date,
+      weights,
+    }
+  } catch (error) {
+    console.warn('getActiveFund API failed, falling back to default data.', error)
     return DEFAULT_FUND
   }
 }

@@ -6,10 +6,16 @@ import com.akademi.finsight.integration.infina.client.dto.base.InfinaResponse;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundDailyReturnData;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundInfoData;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundPortfolioAllocationData;
+import com.akademi.finsight.integration.infina.client.dto.fx.FxPriceData;
+import com.akademi.finsight.integration.infina.client.dto.index.IndexPriceData;
+import com.akademi.finsight.integration.infina.client.dto.economic.EconomicPriceData;
 import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundDailyReturnResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundPortfolioAllocationResponse;
+import com.akademi.finsight.integration.infina.dto.response.fx.FxPriceResponse;
+import com.akademi.finsight.integration.infina.dto.response.index.IndexPriceResponse;
+import com.akademi.finsight.integration.infina.dto.response.economic.EconomicPriceResponse;
 import com.akademi.finsight.integration.infina.exception.InfinaErrorType;
 import com.akademi.finsight.integration.infina.exception.InfinaIntegrationException;
 import com.akademi.finsight.integration.infina.mapper.InfinaMapper;
@@ -31,6 +37,30 @@ public class InfinaServiceImpl implements InfinaService {
 	private static final int INFINA_SUCCESS_CODE = 200;
 	private final InfinaServicesClient infinaServicesClient;
 	private final InfinaMapper infinaMapper;
+
+	@Override
+	public List<FxPriceResponse> getFxPrices(String assetCode, String dataDate) {
+		FxPriceData data = callInfina(
+				() -> infinaServicesClient.getFxPrices(assetCode, dataDate),
+				assetCode != null ? assetCode : "ALL");
+		return infinaMapper.toFxPriceResponseList(data.fxPrices());
+	}
+
+	@Override
+	public List<IndexPriceResponse> getIndexPrices(String assetCode, String dataDate) {
+		IndexPriceData data = callInfina(
+				() -> infinaServicesClient.getIndexPrices(assetCode, dataDate),
+				assetCode != null ? assetCode : "ALL");
+		return infinaMapper.toIndexPriceResponseList(data.indexPrices());
+	}
+
+	@Override
+	public List<EconomicPriceResponse> getEconomicPrices(String assetCode, String dataDate) {
+		EconomicPriceData data = callInfina(
+				() -> infinaServicesClient.getEconomicPrices(assetCode, dataDate),
+				assetCode != null ? assetCode : "ALL");
+		return infinaMapper.toEconomicPriceResponseList(data.economicPrices());
+	}
 
 	@Override
 	public List<BenchmarkInfoResponse> getBenchmarkInfo(String fundCode,

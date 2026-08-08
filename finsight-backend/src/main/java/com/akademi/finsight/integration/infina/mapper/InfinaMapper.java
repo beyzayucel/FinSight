@@ -6,12 +6,18 @@ import com.akademi.finsight.integration.infina.client.dto.fund.CumulativeReturnE
 import com.akademi.finsight.integration.infina.client.dto.fund.FundDailyReturn;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundInfoData;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundPortfolioAllocation;
+import com.akademi.finsight.integration.infina.client.dto.fx.FxPriceRow;
+import com.akademi.finsight.integration.infina.client.dto.index.IndexPriceRow;
+import com.akademi.finsight.integration.infina.client.dto.economic.EconomicPriceRow;
 import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.CumulativeReturnEntryResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundDailyReturnResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundPortfolioAllocationResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundReturnResponse;
+import com.akademi.finsight.integration.infina.dto.response.fx.FxPriceResponse;
+import com.akademi.finsight.integration.infina.dto.response.index.IndexPriceResponse;
+import com.akademi.finsight.integration.infina.dto.response.economic.EconomicPriceResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.NullValueMappingStrategy;
@@ -25,6 +31,12 @@ import java.util.List;
 		nullValueIterableMappingStrategy = NullValueMappingStrategy.RETURN_DEFAULT)
 public interface InfinaMapper {
 
+	List<FxPriceResponse> toFxPriceResponseList(List<FxPriceRow> rows);
+
+	List<IndexPriceResponse> toIndexPriceResponseList(List<IndexPriceRow> rows);
+
+	List<EconomicPriceResponse> toEconomicPriceResponseList(List<EconomicPriceRow> rows);
+
 	@Mapping(target = "benchmarkYield", source = "bmYield")
 	BenchmarkInfoResponse toBenchmarkInfoResponse(BenchmarkInfo benchmarkInfo);
 
@@ -34,6 +46,7 @@ public interface InfinaMapper {
 	@Mapping(target = "name", source = "fundDetail.description")
 	@Mapping(target = "totalMarketPrice", source = "fundDetail.totalMv")
 	@Mapping(target = "assetDistribution", source = "fundDistribution")
+	@Mapping(target = "investorCount", source = "fundDetail.investorCount")
 	FundInfoResponse toFundInfoResponse(FundInfoData fundInfoData);
 
 	@Mapping(target = "ratio", source = "groupPercentage")

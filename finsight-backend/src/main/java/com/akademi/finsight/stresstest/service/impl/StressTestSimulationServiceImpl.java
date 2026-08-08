@@ -1,20 +1,23 @@
 package com.akademi.finsight.stresstest.service.impl;
 
+import com.akademi.finsight.fund.dto.request.AttachStressTestRequest;
 import com.akademi.finsight.fund.entity.Fund;
 import com.akademi.finsight.fund.exception.FundNotFoundException;
 import com.akademi.finsight.fund.repository.FundRepository;
+import com.akademi.finsight.fund.service.DecisionHistoryService;
 import com.akademi.finsight.stresstest.dto.request.PortfolioDataDto;
 import com.akademi.finsight.stresstest.dto.request.SaveStressTestDecisionRequestDto;
 import com.akademi.finsight.stresstest.dto.response.ModelInferenceResult;
 import com.akademi.finsight.stresstest.dto.response.StressTestInferenceResponseDto;
 import com.akademi.finsight.stresstest.engine.StressTestStrategyFactory;
+import com.akademi.finsight.stresstest.entity.StressTestResult;
+import com.akademi.finsight.stresstest.entity.StressTestResultDetail;
 import com.akademi.finsight.stresstest.enums.ExecutionStrategyType;
 import com.akademi.finsight.stresstest.enums.PortfolioType;
 import com.akademi.finsight.stresstest.enums.SimulationType;
-import com.akademi.finsight.stresstest.entity.StressTestResult;
-import com.akademi.finsight.stresstest.entity.StressTestResultDetail;
-import com.akademi.finsight.stresstest.llm.LLMCommentGenerator;
-import com.akademi.finsight.stresstest.mapper.StressTestResultMapper;
+import com.akademi.finsight.stresstest.exception.StressTestErrorType;
+import com.akademi.finsight.stresstest.exception.StressTestException;
+import com.akademi.finsight.stresstest.mapper.StressTestResponseAssembler;
 import com.akademi.finsight.stresstest.repository.StressTestResultRepository;
 import com.akademi.finsight.stresstest.service.StressTestSimulationService;
 import com.akademi.finsight.user.entity.User;
@@ -27,10 +30,13 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.*;
+import java.time.ZoneOffset;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -40,9 +46,9 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
     private final UserRepository userRepository;
     private final FundRepository fundRepository;
     private final StressTestStrategyFactory strategyFactory;
-    private final LLMCommentGenerator llmCommentGenerator;
     private final StressTestResultRepository stressTestResultRepository;
-    private final StressTestResultMapper stressTestResultMapper;
+    private final StressTestResponseAssembler stressTestResponseAssembler;
+    private final DecisionHistoryService decisionHistoryService;
 
     @Transactional
     @Override
@@ -66,47 +72,42 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
         ModelInferenceResult simulationResult = runModel(simulationType.name(), simulationPortfolio);
         ModelInferenceResult benchmarkResult = runModel(simulationType.name(), benchmarkPortfolio);
 
-        StressTestResult stressTestResult  = createStressTestResult(user, fund, simulationType);
-        StressTestResultDetail currentDetail = createDetail(
+        StressTestResult stressTestResult = createStressTestResult(user, fund, simulationType);
+        stressTestResult.addDetail(createDetail(
                 PortfolioType.CURRENT_PORTFOLIO,
                 currentPortfolio.initialValue(),
                 currentResult
-        );
-        stressTestResult.addDetail(currentDetail);
-
-        StressTestResultDetail simulationDetail = createDetail(
+        ));
+        stressTestResult.addDetail(createDetail(
                 PortfolioType.SIMULATION_PORTFOLIO,
                 simulationPortfolio.initialValue(),
                 simulationResult
-        );
-        stressTestResult.addDetail(simulationDetail);
-
-        StressTestResultDetail benchmarkDetail = createDetail(
+        ));
+        stressTestResult.addDetail(createDetail(
                 PortfolioType.BENCHMARK,
                 benchmarkPortfolio.initialValue(),
                 benchmarkResult
-        );
-        stressTestResult.addDetail(benchmarkDetail);
+        ));
 
-        StressTestInferenceResponseDto response = stressTestResultMapper.toInferenceResponse(stressTestResult);
-        String comment = llmCommentGenerator.generateComment(simulationType);
-        return response.toBuilder().llmComment(comment).build();
+        // Sonuç burada kalıcı hale gelir: hem /latest ve /period uçları bunu okur, hem de
+        // "Karar Geçmişine Kaydet" akışı dönen id ile bu satırı karara iliştirir.
+        StressTestResult saved = stressTestResultRepository.save(stressTestResult);
+        log.info("Stress test simulation persisted. resultId: {}, fundCode: {}, simulationType: {}",
+                saved.getId(), fund.getCode(), simulationType);
+
+        return stressTestResponseAssembler.toResponse(saved);
     }
 
     @Transactional(readOnly = true)
     @Override
     public Optional<StressTestInferenceResponseDto> getLatestSimulationResult(String userEmail, String fundId) {
         User user = findUser(userEmail);
+        Fund fund = findFund(fundId);
 
         return stressTestResultRepository
-                .findFirstByUserIdAndFundIdOrderByCreatedAtDesc(user.getId().toString(), fundId)
-                .map(result -> {
-                    StressTestInferenceResponseDto response = stressTestResultMapper.toInferenceResponse(result);
-                    String comment = llmCommentGenerator.generateComment(result.getSimulationType());
-                    return response.toBuilder().llmComment(comment).build();
-                });
+                .findFirstByUserIdAndFundIdOrderByCreatedAtDesc(user.getId(), fund.getId())
+                .map(stressTestResponseAssembler::toResponse);
     }
-
 
     @Transactional(readOnly = true)
     @Override
@@ -114,45 +115,58 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
             String userEmail, String fundId, String lookbackDays) {
 
         User user = findUser(userEmail);
+        Fund fund = findFund(fundId);
 
-        // "90d", "3M" gibi periyot string'ini güne çeviren küçük bir helper
-        int daysAgo = parsePeriodToDays(lookbackDays); // Örn: "3M" veya "90" -> 90 gün
-
-        LocalDateTime targetDateTime = LocalDate.now().minusDays(daysAgo).atTime(LocalTime.MAX);
+        int daysAgo = parsePeriodToDays(lookbackDays);
+        Instant upperBound = LocalDate.now()
+                                      .minusDays(daysAgo)
+                                      .atTime(LocalTime.MAX)
+                                      .toInstant(ZoneOffset.UTC);
 
         return stressTestResultRepository
                 .findFirstByUserIdAndFundIdAndCreatedAtLessThanEqualOrderByCreatedAtDesc(
-                        user.getId(), fundId, targetDateTime)
-                .map(result -> {
-                    StressTestInferenceResponseDto response = stressTestResultMapper.toInferenceResponse(result);
-                    String comment = llmCommentGenerator.generateComment(result.getSimulationType());
-                    return response.toBuilder().llmComment(comment).build();
-                });
+                        user.getId(), fund.getId(), upperBound)
+                .map(stressTestResponseAssembler::toResponse);
     }
 
+    /**
+     * "Karar Geçmişine Kaydet" — sonucu yeniden hesaplamaz, /run sırasında kaydedilmiş satırı
+     * o fondaki en güncel karara iliştirir. FK'yı yazan tek yer DecisionHistoryService'tir;
+     * sahiplik kontrolü ve "iliştirilecek karar yok" durumu da orada ele alınır.
+     */
     @Transactional
     @Override
     public void saveDecisionRecord(String userEmail, SaveStressTestDecisionRequestDto requestDto) {
-        User user = findUser(userEmail);
-        Fund fund = findFund(requestDto.fundId());
-
-        // Var olan DTO'yu kullanarak simülasyon koşturabilir veya var olan sonucu geçmişe kaydedebilirsin:
-        StressTestResult stressTestResult  = createStressTestResult(user, fund, requestDto.scenarioKey());
-
-        // DB'ye kaydetme işlemi:
-        stressTestResultRepository.save(stressTestResult );
-        log.info("Stress test decision saved successfully for user: {} and fund: {}", userEmail, fund.getCode());
+        decisionHistoryService.attachStressTestResult(
+                userEmail,
+                new AttachStressTestRequest(requestDto.fundId(), requestDto.stressTestResultId())
+        );
     }
 
     private int parsePeriodToDays(String period) {
-        if (period == null) return 0;
+        if (period == null || period.isBlank()) {
+            throw new StressTestException(StressTestErrorType.INVALID_ANALYSIS_PERIOD);
+        }
         return switch (period.toUpperCase()) {
             case "1M", "30D" -> 30;
             case "3M", "90D" -> 90;
             case "6M", "180D" -> 180;
             case "1Y", "365D" -> 365;
-            default -> Integer.parseInt(period); // Sayı olarak geçildiyse
+            default -> parseDayCount(period);
         };
+    }
+
+    private int parseDayCount(String period) {
+        try {
+            int days = Integer.parseInt(period.trim());
+            if (days < 0) {
+                throw new StressTestException(StressTestErrorType.INVALID_ANALYSIS_PERIOD);
+            }
+            return days;
+        } catch (NumberFormatException e) {
+            log.warn("Invalid analysis period requested: {}", period);
+            throw new StressTestException(StressTestErrorType.INVALID_ANALYSIS_PERIOD);
+        }
     }
 
     private void validatePortfolio(PortfolioDataDto portfolio) {
@@ -167,11 +181,6 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
     private User findUser(String email) {
         return userRepository.findByEmail(email)
                 .orElseThrow(() -> new UserException(UserErrorType.USER_NOT_FOUND));
-    }
-
-    private Fund findFund(UUID fundId) {
-        return fundRepository.findById(fundId)
-                .orElseThrow(FundNotFoundException::new);
     }
 
     private ModelInferenceResult runModel(String scenarioKey, PortfolioDataDto portfolio) {
@@ -226,9 +235,8 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
                 .build();
     }
 
-    // findFund metodunda koda göre fon bulma:
+    // Fon kodu ("TIE") ya da UUID ile arama — Stres Testi ekranı ikisini de gönderebiliyor.
     private Fund findFund(String fundIdOrCode) {
-        // Eğer fon kodu ("TIE") geliyorsa koda göre, UUID geliyorsa id'ye göre ara:
         return fundRepository.findByCode(fundIdOrCode)
                 .orElseGet(() -> {
                     try {

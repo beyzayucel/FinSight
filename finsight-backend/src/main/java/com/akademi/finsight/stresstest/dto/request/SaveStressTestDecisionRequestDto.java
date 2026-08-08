@@ -1,20 +1,17 @@
 package com.akademi.finsight.stresstest.dto.request;
 
-import com.akademi.finsight.stresstest.enums.SimulationType;
 import jakarta.validation.constraints.NotNull;
-import lombok.Builder;
 
+import java.util.UUID;
 
-@Builder
+// Stres Testi ekranındaki "Karar Geçmişine Kaydet" — /run ile hesaplanıp kaydedilmiş bir
+// stres testi sonucunu, o fondaki en güncel karara (manuel senaryo ya da AI kararı) iliştirir.
+// Sayılar zaten /run sırasında kaydedildiği için burada yeniden portföy verisi taşınmaz.
 public record SaveStressTestDecisionRequestDto(
-        @NotNull(message = "{validation.refresh.token.required}")
-        String fundId,
 
-        @NotNull(message = "Senaryo türü zorunludur.")
-        SimulationType scenarioKey,
+        @NotNull(message = "{error.validation.stresstest.fund_id.not_null}")
+        UUID fundId,
 
-        @NotNull(message = "Portföy verisi zorunludur.")
-        PortfolioDataDto portfolioData,
-
-        String llmComment
+        @NotNull(message = "{error.validation.stresstest.result_id.not_null}")
+        UUID stressTestResultId
 ) {}

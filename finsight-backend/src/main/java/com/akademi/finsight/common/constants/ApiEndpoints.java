@@ -112,7 +112,8 @@ public final class ApiEndpoints {
             Auth.BASE + Auth.RESET_PASSWORD,
             News.BASE,
             "/swagger-ui/**",
-            "/v3/api-docs/**"
+            "/v3/api-docs/**",
+            "/actuator/**"
     };
 
     public static String[] getPublicEndpoints() {

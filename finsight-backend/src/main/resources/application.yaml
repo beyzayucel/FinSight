@@ -155,6 +155,9 @@ admin:
 fund:
   code: ${FUND_CODE:TIE}
   periods: ${FUND_PERIODS:P10D,P20D,P30D,P90D}
+  sync:
+    cron: ${FUND_SYNC_CRON:0 0 8-17 * * *}
+    zone: ${FUND_SYNC_ZONE:Europe/Istanbul}
   recommendation:
      ttl-hours: ${FUND_RECOMMENDATION_TTL_HOURS:4}
 

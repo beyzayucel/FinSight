@@ -21,7 +21,7 @@ import java.util.Map;
 @AllArgsConstructor
 @SuperBuilder
 @SQLDelete(sql = "UPDATE manual_scenario SET deleted = 1, deleted_at = SYSDATETIMEOFFSET() WHERE id = ?")
-public class ManualScenario extends SoftDeletableEntity implements ScenarioWeightSource {
+public class ManualScenario extends SoftDeletableEntity implements ScenarioWeightSource, MetricsHolder {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

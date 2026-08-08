@@ -105,7 +105,10 @@ public class InfinaServiceImpl implements InfinaService {
 				() -> infinaServicesClient.getFundDailyReturn(fundCode, dates),
 				fundCode);
 
-		return infinaMapper.toFundDailyReturnResponse(data.fundDailyReturns().getFirst());
+		return data.fundDailyReturns().stream()
+				.findFirst()
+				.map(infinaMapper::toFundDailyReturnResponse)
+				.orElseThrow(() -> new InfinaIntegrationException(InfinaErrorType.INFINA_ERROR_RESPONSE));
 	}
 
 }

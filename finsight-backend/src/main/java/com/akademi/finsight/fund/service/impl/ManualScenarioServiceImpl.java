@@ -9,7 +9,6 @@ import com.akademi.finsight.fund.entity.*;
 import com.akademi.finsight.fund.exception.FundErrorType;
 import com.akademi.finsight.fund.exception.FundValidationException;
 import com.akademi.finsight.fund.mapper.ManualScenarioMapper;
-import com.akademi.finsight.fund.performancecomparison.dto.response.PerformanceComparisonResponse.PortfolioCurve;
 import com.akademi.finsight.fund.performancecomparison.service.PortfolioSimulationCalculationService;
 import com.akademi.finsight.fund.repository.FundRepository;
 import com.akademi.finsight.fund.repository.ManualScenarioRepository;
@@ -70,7 +69,7 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
             scenario.addWeight(weight);
         }
 
-        attachSimulationSnapshot(scenario, fund.getCode(), targetWeights);
+        portfolioSimulationCalculationService.attachSnapshot(scenario, fund.getCode(), 30, targetWeights);
 
         manualScenarioRepository.save(scenario);
         log.info("Manual scenario applied and saved successfully. Scenario ID: {}", scenario.getId());
@@ -88,24 +87,6 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
         return scenarios.stream()
                         .map(manualScenarioMapper::toResponse)
                         .toList();
-    }
-
-    //TODO: Consider refactoring this method
-    private void attachSimulationSnapshot(ManualScenario scenario, String fundCode,
-                                             Map<AssetCategory, BigDecimal> targetWeights) {
-        try {
-            PortfolioCurve simulationCurve = portfolioSimulationCalculationService
-                    .calculateSimulation(fundCode, 30, targetWeights);
-            if (simulationCurve != null) {
-                scenario.getMetrics().setSimulatedPortfolioValue(simulationCurve.metrics().currentValue());
-                scenario.getMetrics().setTotalReturnPct(simulationCurve.metrics().totalReturnPct());
-                scenario.getMetrics().setMaxDrawdownPct(simulationCurve.metrics().maxDrawdownPct());
-                scenario.getMetrics().setDailyVolatilityPct(simulationCurve.metrics().dailyVolatilityPct());
-                scenario.getMetrics().setAnalysisWindowDays(30);
-            }
-        } catch (Exception e) {
-            log.warn("Simulation snapshot failed for scenario. Reason: {}", e.getMessage());
-        }
     }
 
     private Map<AssetCategory, BigDecimal> fetchCurrentWeightsFromDb(Fund fund) {

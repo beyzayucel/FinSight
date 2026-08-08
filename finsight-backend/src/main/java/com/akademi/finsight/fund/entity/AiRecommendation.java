@@ -21,7 +21,7 @@ import java.util.Map;
 @NoArgsConstructor
 @AllArgsConstructor
 @SuperBuilder
-public class AiRecommendation extends SoftDeletableEntity implements ScenarioWeightSource {
+public class AiRecommendation extends SoftDeletableEntity implements ScenarioWeightSource, MetricsHolder {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)

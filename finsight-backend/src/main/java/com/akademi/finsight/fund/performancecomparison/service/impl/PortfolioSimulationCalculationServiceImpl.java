@@ -4,6 +4,8 @@ import com.akademi.finsight.fund.converter.AssetCategoryConverter;
 import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
 import com.akademi.finsight.fund.dto.response.FundPeriodMetricResponse;
 import com.akademi.finsight.fund.entity.AssetCategory;
+import com.akademi.finsight.fund.entity.MetricsHolder;
+import com.akademi.finsight.fund.entity.PerformanceMetrics;
 import com.akademi.finsight.fund.performancecomparison.dto.response.PerformanceComparisonResponse.CurvePoint;
 import com.akademi.finsight.fund.performancecomparison.dto.response.PerformanceComparisonResponse.PortfolioCurve;
 import com.akademi.finsight.fund.performancecomparison.dto.response.PerformanceComparisonResponse.PortfolioMetrics;
@@ -69,6 +71,26 @@ public class PortfolioSimulationCalculationServiceImpl implements PortfolioSimul
         String dates = startDate.format(DATE_FORMAT) + "," + dataDate.format(DATE_FORMAT);
         FundDailyReturnResponse response = infinaService.getFundDailyReturn(fundCode, dates);
         return response.dailyYields();
+    }
+
+    @Override
+    public void attachSnapshot(MetricsHolder holder, String fundCode, int analysisWindow,
+                               Map<AssetCategory, BigDecimal> weights) {
+        try {
+            PortfolioCurve simulationCurve = calculateSimulation(fundCode, analysisWindow, weights);
+            if (simulationCurve != null) {
+                if (holder.getMetrics() == null) {
+                    holder.setMetrics(new PerformanceMetrics());
+                }
+                holder.getMetrics().setSimulatedPortfolioValue(simulationCurve.metrics().currentValue());
+                holder.getMetrics().setTotalReturnPct(simulationCurve.metrics().totalReturnPct());
+                holder.getMetrics().setMaxDrawdownPct(simulationCurve.metrics().maxDrawdownPct());
+                holder.getMetrics().setDailyVolatilityPct(simulationCurve.metrics().dailyVolatilityPct());
+                holder.getMetrics().setAnalysisWindowDays(analysisWindow);
+            }
+        } catch (Exception e) {
+            log.warn("Simulation snapshot failed. Reason: {}", e.getMessage());
+        }
     }
 
     private Optional<BigDecimal> resolveCurrentStockWeight(String fundCode) {

@@ -47,7 +47,7 @@ public class ScenarioResolver {
                 .findLatestByFundAndUserAndStatus(fundId, email, RecommendationStatus.ACCEPTED);
 
         Instant manualAt = manualOpt.map(ManualScenario::getCreatedAt).orElse(Instant.MIN);
-        Instant aiAt = aiOpt.map(AiRecommendation::getCreatedAt).orElse(Instant.MIN);
+        Instant aiAt = aiOpt.map(AiRecommendation::getUpdatedAt).orElse(Instant.MIN);
 
         if (manualAt.isAfter(aiAt) && manualOpt.isPresent()) {
             return Optional.of(new ResolvedScenario(

@@ -98,6 +98,9 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
                     .calculateSimulation(fundCode, 30, targetWeights);
             if (simulationCurve != null) {
                 scenario.getMetrics().setSimulatedPortfolioValue(simulationCurve.metrics().currentValue());
+                scenario.getMetrics().setTotalReturnPct(simulationCurve.metrics().totalReturnPct());
+                scenario.getMetrics().setMaxDrawdownPct(simulationCurve.metrics().maxDrawdownPct());
+                scenario.getMetrics().setDailyVolatilityPct(simulationCurve.metrics().dailyVolatilityPct());
                 scenario.getMetrics().setAnalysisWindowDays(30);
             }
         } catch (Exception e) {

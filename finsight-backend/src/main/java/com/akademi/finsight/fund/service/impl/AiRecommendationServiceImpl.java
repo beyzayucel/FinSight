@@ -210,6 +210,9 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
                     .calculateSimulation(recommendation.getFund().getCode(), 30, recommendation.getSimulationWeights());
             if (simulationCurve != null) {
                 recommendation.getMetrics().setSimulatedPortfolioValue(simulationCurve.metrics().currentValue());
+                recommendation.getMetrics().setTotalReturnPct(simulationCurve.metrics().totalReturnPct());
+                recommendation.getMetrics().setMaxDrawdownPct(simulationCurve.metrics().maxDrawdownPct());
+                recommendation.getMetrics().setDailyVolatilityPct(simulationCurve.metrics().dailyVolatilityPct());
                 recommendation.getMetrics().setAnalysisWindowDays(30);
             }
         } catch (Exception e) {

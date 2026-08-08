@@ -51,9 +51,9 @@ export default function App() {
           </Route>
         </Route>
 
-        {/* Admin — token + ROLE_ADMIN yoksa redirect. Varsayılan sekme: Panel (bkz. Ekran 07 Bölüm 9). */}
+        {/* Admin — token + ROLE_ADMIN yoksa redirect. Varsayılan sekme: Kullanıcı Yönetimi. */}
         <Route element={<AdminRoute />}>
-          <Route path={ROUTES.ADMIN_DASHBOARD} element={<Navigate to={ROUTES.ADMIN_PANEL} replace />} />
+          <Route path={ROUTES.ADMIN_DASHBOARD} element={<Navigate to={ROUTES.ADMIN_USERS} replace />} />
           <Route path={ROUTES.ADMIN_PANEL} element={<AdminPanelPage />} />
           <Route path={ROUTES.ADMIN_USERS} element={<AdminDashboardPage />} />
         </Route>

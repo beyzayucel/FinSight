@@ -1,25 +1,23 @@
 interface LLMCommentSectionProps {
-  comment: string;
+  comment: string
 }
 
-/** Renders the model's scenario commentary. The final paragraph (disclaimer)
- * is styled as muted footnote text, matching the reference design. */
 export function LLMCommentSection({ comment }: LLMCommentSectionProps) {
-  const paragraphs = comment.split("\n").filter(Boolean);
+  const paragraphs = comment.split('\n').filter(Boolean)
 
   return (
-    <div>
-      <h3 className="text-base font-semibold text-neutral-900">LLM Yorumu</h3>
-      <div className="mt-2 space-y-3 text-sm leading-relaxed">
+    <div className="space-y-2">
+      <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">LLM Yorumu</h3>
+      <div className="space-y-2 text-xs leading-relaxed">
         {paragraphs.map((paragraph, index) => {
-          const isLast = index === paragraphs.length - 1;
+          const isLast = index === paragraphs.length - 1
           return (
-            <p key={index} className={isLast ? "text-neutral-400" : "text-neutral-700"}>
+            <p key={index} className={isLast ? 'text-slate-400 italic text-[11px]' : 'text-slate-700'}>
               {paragraph}
             </p>
-          );
+          )
         })}
       </div>
     </div>
-  );
+  )
 }

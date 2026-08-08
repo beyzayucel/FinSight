@@ -24,7 +24,6 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.UUID;
 
 @RequestMapping(ApiEndpoints.StressTest.BASE)
 @Tag(name = "Stress Test", description = "Fund stress test simulation operations and latest result querying.")
@@ -41,7 +40,7 @@ public interface StressTestApi {
             @ApiResponse(responseCode = "500", description = "Model execution failed.",
                     content = @Content(schema = @Schema(implementation = ApiStandardResponse.class)))
     })
-    @PostMapping("/run")
+    @PostMapping(ApiEndpoints.StressTest.RUN)
     ResponseEntity<ApiStandardResponse<StressTestInferenceResponseDto>> runSimulation(
             @AuthenticationPrincipal String userEmail,
             @RequestParam("fundId") String fundId,
@@ -75,7 +74,7 @@ public interface StressTestApi {
             @ApiResponse(responseCode = "404", description = "User or Fund not found.",
                     content = @Content(schema = @Schema(implementation = ApiStandardResponse.class)))
     })
-    @GetMapping("/period")
+    @GetMapping(ApiEndpoints.StressTest.PERIOD)
     ResponseEntity<ApiStandardResponse<StressTestInferenceResponseDto>> getSimulationResultByPeriod(
             @Parameter(hidden = true) @AuthenticationPrincipal String email,
             @Parameter(description = "Fund UUID", example = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", required = true)
@@ -84,13 +83,22 @@ public interface StressTestApi {
             @RequestParam(value = "daysAgo", defaultValue = "30") String daysAgo
     );
 
-    @Operation(summary = "Save stress test decision record to history")
-    @PostMapping("/save")
+    @Operation(
+            summary = "Attach a stress test result to the latest decision",
+            description = "\"Karar Geçmişine Kaydet\" — links an already-persisted stress test result (the id " +
+                          "returned by /run) to whichever decision (AI or Manual) is currently the most recent " +
+                          "for this fund. Does not re-run the simulation."
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Stress test result attached to the latest decision."),
+            @ApiResponse(responseCode = "403", description = "Stress test result does not belong to this user/fund.",
+                    content = @Content(schema = @Schema(implementation = ApiStandardResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Stress test result not found, or no decision exists to attach it to.",
+                    content = @Content(schema = @Schema(implementation = ApiStandardResponse.class)))
+    })
+    @PostMapping(ApiEndpoints.StressTest.SAVE)
     ResponseEntity<ApiStandardResponse<Void>> saveDecisionRecord(
             @AuthenticationPrincipal String userEmail,
             @Valid @RequestBody SaveStressTestDecisionRequestDto requestDto
     );
-
-
-
 }

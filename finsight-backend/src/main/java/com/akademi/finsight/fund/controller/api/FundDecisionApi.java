@@ -2,7 +2,6 @@ package com.akademi.finsight.fund.controller.api;
 
 import com.akademi.finsight.common.constants.ApiEndpoints;
 import com.akademi.finsight.common.response.ApiStandardResponse;
-import com.akademi.finsight.fund.dto.request.AttachMetricsRequest;
 import com.akademi.finsight.fund.dto.request.AttachStressTestRequest;
 import com.akademi.finsight.fund.dto.response.DecisionRecordResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -29,20 +28,6 @@ public interface FundDecisionApi {
     ResponseEntity<ApiStandardResponse<List<DecisionRecordResponse>>> getDecisionHistory(
             @AuthenticationPrincipal String email,
             @RequestParam UUID fundId
-    );
-
-    @Operation(
-            summary = "Attach performance metrics to the latest decision",
-            description = "Called right after Performance Comparison computes the simulation result — attaches " +
-                          "it to whichever decision (AI Recommendation or Manual Scenario) is currently the most " +
-                          "recent for this fund, without touching either decision's own apply/submit flow."
-    )
-    @ApiResponse(responseCode = "200", description = "Metrics attached successfully")
-    @ApiResponse(responseCode = "404", description = "No decision exists to attach these metrics to")
-    @PatchMapping(ApiEndpoints.Funds.DECISION_METRICS)
-    ResponseEntity<ApiStandardResponse<Void>> attachMetrics(
-            @AuthenticationPrincipal String email,
-            @Valid @RequestBody AttachMetricsRequest request
     );
 
     @Operation(

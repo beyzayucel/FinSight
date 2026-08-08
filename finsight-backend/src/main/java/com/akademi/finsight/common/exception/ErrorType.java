@@ -20,6 +20,7 @@ public enum ErrorType implements BaseErrorType {
     MISSING_PARAMETER("error.missing.parameter", HttpStatus.BAD_REQUEST),
     PARAMETER_TYPE_MISMATCH("error.parameter.type.mismatch", HttpStatus.BAD_REQUEST),
     INVALID_INPUT("error.invalid.input", HttpStatus.BAD_REQUEST),
+    ENDPOINT_NOT_FOUND("error.endpoint.not.found", HttpStatus.NOT_FOUND),
 
     // Data integrity
     DATA_CONFLICT("error.data.conflict", HttpStatus.CONFLICT),

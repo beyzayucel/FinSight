@@ -3,7 +3,6 @@ package com.akademi.finsight.fund.controller;
 import com.akademi.finsight.common.controller.BaseController;
 import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.fund.controller.api.FundDecisionApi;
-import com.akademi.finsight.fund.dto.request.AttachMetricsRequest;
 import com.akademi.finsight.fund.dto.request.AttachStressTestRequest;
 import com.akademi.finsight.fund.dto.response.DecisionRecordResponse;
 import com.akademi.finsight.fund.service.DecisionHistoryService;
@@ -23,12 +22,6 @@ public class FundDecisionController extends BaseController implements FundDecisi
     @Override
     public ResponseEntity<ApiStandardResponse<List<DecisionRecordResponse>>> getDecisionHistory(String email, UUID fundId) {
         return ok(decisionHistoryService.getHistory(email, fundId));
-    }
-
-    @Override
-    public ResponseEntity<ApiStandardResponse<Void>> attachMetrics(String email, AttachMetricsRequest request) {
-        decisionHistoryService.attachMetrics(email, request);
-        return ok();
     }
 
     @Override

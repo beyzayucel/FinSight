@@ -1,16 +1,33 @@
 import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { IoChevronDownOutline, IoChevronUpOutline, IoTimeOutline } from 'react-icons/io5'
-import { getTranslations } from '@/i18n/translations'
+import { IoChevronDownOutline, IoChevronUpOutline, IoPulseOutline, IoTimeOutline } from 'react-icons/io5'
 import { getLang } from '@/lib/authStore'
 import { ROUTES } from '@/lib/routes'
 import { AssetCategoryLabels } from '../dashboardApi'
 import type { AssetCategory } from '../dashboardApi'
 import { useDashboardOutlet } from '../DashboardShell'
 import { getDecisionHistory, type DecisionRecord } from '../lib/decisionHistoryApi'
-import { formatDate, formatSignedPercent, formatUnsignedPercent } from '../lib/formatters'
+import { formatCurrency, formatDate, formatSignedPercent, formatUnsignedPercent } from '../lib/formatters'
+import { SCENARIO_TITLES, type PortfolioResultDto } from '@/features/stresstest/types'
 
 const ASSET_CATEGORIES: AssetCategory[] = ['STOCK', 'REPO', 'FUTURE', 'FUND']
+
+/**
+ * Karar anında iliştirilmiş stres testi sonucunu, Stres Testi ekranındaki (Ekran 05) tabloyla
+ * aynı sırada ve aynı adlarla listeler. Eski/eksik kayıtlarda portföylerden bazıları boş
+ * gelebildiği için satırlar süzülerek kuruluyor.
+ */
+function stressTestRows(
+  stressTest: NonNullable<DecisionRecord['stressTest']>
+): { label: string; result: PortfolioResultDto }[] {
+  return (
+    [
+      { label: 'Mevcut Portföy', result: stressTest.currentPortfolioResult },
+      { label: 'Simülasyon Portföyü', result: stressTest.simulationPortfolioResult },
+      { label: 'Benchmark', result: stressTest.benchmarkPortfolioResult },
+    ] as { label: string; result: PortfolioResultDto | null }[]
+  ).filter((row): row is { label: string; result: PortfolioResultDto } => row.result != null)
+}
 
 function formatPct(value: number): string {
   return `%${value.toFixed(2).replace('.', ',')}`
@@ -32,7 +49,6 @@ function statusLabel(record: DecisionRecord): { text: string; sourceTag: string 
 
 
 export default function DecisionHistoryPage() {
-  const t = getTranslations()
   const lang = getLang() === 'en' ? 'en' : 'tr'
   const navigate = useNavigate()
   const { fund } = useDashboardOutlet()
@@ -127,6 +143,15 @@ export default function DecisionHistoryPage() {
                     <div>
                       <p className="text-xs font-bold text-slate-800">
                         {label.text} <span className="ml-1 font-semibold text-slate-400">· {label.sourceTag}</span>
+                        {record.stressTest && (
+                          <span
+                            className="ml-2 inline-flex items-center gap-1 align-middle rounded-md bg-[#c89834]/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#c89834]"
+                            title="Bu karara bir stres testi sonucu iliştirilmiş"
+                          >
+                            <IoPulseOutline size={9} />
+                            Stres Testi
+                          </span>
+                        )}
                       </p>
                       {m ? (
                         <p className="text-[11px] text-slate-500 font-medium mt-0.5">
@@ -235,6 +260,56 @@ export default function DecisionHistoryPage() {
                           <span className="text-slate-500">
                             Oynaklık: <span className="text-slate-700">{formatUnsignedPercent(m.dailyVolatilityPct)}</span>
                           </span>
+                        )}
+                      </div>
+                    )}
+
+                    {record.stressTest && (
+                      <div className="rounded-xl border border-slate-100 overflow-hidden">
+                        <div className="bg-slate-50 border-b border-slate-100 px-4 py-2.5 flex items-center gap-2">
+                          <IoPulseOutline className="text-[#c89834]" size={13} />
+                          <span className="text-[9.5px] font-bold tracking-wider text-slate-400 uppercase">
+                            Stres Testi · {SCENARIO_TITLES[record.stressTest.scenarioKey] ?? record.stressTest.scenarioKey}
+                          </span>
+                        </div>
+
+                        <div className="overflow-x-auto">
+                          <table className="w-full min-w-[440px] border-collapse text-left text-xs">
+                            <thead>
+                              <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px]">
+                                <th className="px-4 py-2.5 font-bold">PORTFÖY</th>
+                                <th className="px-4 py-2.5 text-right font-bold">ŞOK ÖNCESİ</th>
+                                <th className="px-4 py-2.5 text-right font-bold">BEKLENEN ETKİ</th>
+                                <th className="px-4 py-2.5 text-right font-bold">ŞOK SONRASI</th>
+                              </tr>
+                            </thead>
+                            <tbody className="divide-y divide-slate-100">
+                              {stressTestRows(record.stressTest).map(({ label, result }) => (
+                                <tr key={label}>
+                                  <td className="px-4 py-2 font-semibold text-slate-700 whitespace-nowrap">{label}</td>
+                                  <td className="px-4 py-2 text-right text-slate-500 whitespace-nowrap">
+                                    {formatCurrency(result.initialValue)}
+                                  </td>
+                                  <td
+                                    className={`px-4 py-2 text-right font-semibold whitespace-nowrap ${
+                                      result.expectedImpactRate >= 0 ? 'text-[#3a7d74]' : 'text-[#ab6262]'
+                                    }`}
+                                  >
+                                    {formatSignedPercent(result.expectedImpactRate * 100)}
+                                  </td>
+                                  <td className="px-4 py-2 text-right font-semibold text-slate-700 whitespace-nowrap">
+                                    {formatCurrency(result.postShockValue)}
+                                  </td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {record.stressTest.llmComment && (
+                          <p className="border-t border-slate-100 px-4 py-3 text-[11px] italic leading-relaxed text-slate-500">
+                            {record.stressTest.llmComment}
+                          </p>
                         )}
                       </div>
                     )}

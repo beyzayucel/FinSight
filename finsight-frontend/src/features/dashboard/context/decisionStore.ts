@@ -19,8 +19,6 @@ export type ActiveFund = {
 }
 
 // Gerçek Infina FundInfo API'sinden gelen mevcut portföy ağırlığı + güncel AUM.
-// V5: API'den alınamazsa sessizce sabit bir değerle devam edilmemeli — bu yüzden
-// 'loading'/'error' durumları ayrı tutuluyor, 'ready' olmadan gerçek veri yok sayılıyor.
 export type FundInfoState =
   | { status: 'loading' }
   | { status: 'error'; message: string }
@@ -32,6 +30,11 @@ export type DecisionContextValue = {
   analysisWindow: SimulationWindow
   setAnalysisWindow: (window: SimulationWindow) => void
   decision: Decision | null
+  
+  // Ekran 04 takibi için eklenen alanlar
+  isPerformanceViewed: boolean
+  markPerformanceViewed: () => void
+
   acceptAiRecommendation: () => void
   /** Backend'de POST /funds/scenarios/apply ile kalıcı kaydeder; K1-K3 ihlalinde reject olur. */
   applyManualScenario: (weights: Weights, note?: string) => Promise<void>

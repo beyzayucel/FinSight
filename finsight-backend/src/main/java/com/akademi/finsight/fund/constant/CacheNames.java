@@ -7,4 +7,5 @@ import lombok.NoArgsConstructor;
 public final class CacheNames {
 
     public static final String FUND_DASHBOARD = "fund_dashboard";
+    public static final String PERFORMANCE_COMPARISON = "performance_comparison";
 }

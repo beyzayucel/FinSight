@@ -16,8 +16,9 @@ public class PerformanceComparisonController extends BaseController implements P
     private final PerformanceComparisonService performanceComparisonService;
 
     @Override
-    public ResponseEntity<ApiStandardResponse<PerformanceComparisonResponse>> compare(String fundCode,
+    public ResponseEntity<ApiStandardResponse<PerformanceComparisonResponse>> compare(String email,
+                                                                                       String fundCode,
                                                                                        int analysisWindow) {
-        return ok(performanceComparisonService.compare(fundCode, analysisWindow));
+        return ok(performanceComparisonService.compare(email, fundCode, analysisWindow));
     }
 }

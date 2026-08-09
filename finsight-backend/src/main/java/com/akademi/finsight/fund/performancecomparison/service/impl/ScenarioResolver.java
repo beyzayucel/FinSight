@@ -8,7 +8,6 @@ import com.akademi.finsight.fund.performancecomparison.dto.response.ScenarioSour
 import com.akademi.finsight.fund.repository.AiRecommendationRepository;
 import com.akademi.finsight.fund.repository.FundRepository;
 import com.akademi.finsight.fund.repository.ManualScenarioRepository;
-import com.akademi.finsight.security.util.SecurityUtils;
 import com.akademi.finsight.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
@@ -30,12 +29,11 @@ public class ScenarioResolver {
 
     public record ResolvedScenario(Map<AssetCategory, BigDecimal> weights, ScenarioSource source) {}
 
-    public Optional<ResolvedScenario> resolve(String fundCode) {
+    public Optional<ResolvedScenario> resolve(String email, String fundCode) {
         UUID fundId = fundRepository.findByCode(fundCode)
                 .orElseThrow(() -> new IllegalArgumentException("Fund not found: " + fundCode))
                 .getId();
 
-        String email = SecurityUtils.getCurrentUserEmail();
         UUID userId = userRepository.findByEmail(email)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + email))
                 .getId();

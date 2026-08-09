@@ -4,5 +4,5 @@ import com.akademi.finsight.fund.performancecomparison.dto.response.PerformanceC
 
 public interface PerformanceComparisonService {
 
-    PerformanceComparisonResponse compare(String fundCode, int analysisWindow);
+    PerformanceComparisonResponse compare(String email, String fundCode, int analysisWindow);
 }

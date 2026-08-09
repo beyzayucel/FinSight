@@ -30,4 +30,18 @@ public class FundProperties {
     public static class Sync {
         private int dataLagDays;
     }
+
+    private final Cache cache = new Cache();
+    @Getter
+    @Setter
+    public static class Cache {
+        private final PerformanceComparison performanceComparison = new PerformanceComparison();
+
+        @Getter
+        @Setter
+        public static class PerformanceComparison {
+            private int maxSize;
+            private int expireHours;
+        }
+    }
 }

@@ -2,6 +2,7 @@ package com.akademi.finsight.fund.service.impl;
 
 import com.akademi.finsight.common.masking.MaskType;
 import com.akademi.finsight.fund.config.FundProperties;
+import com.akademi.finsight.fund.constant.CacheNames;
 import com.akademi.finsight.fund.constant.MarketConstants;
 import com.akademi.finsight.fund.converter.FundDistributionConverter;
 import com.akademi.finsight.fund.dto.MarketDataRow;
@@ -27,6 +28,7 @@ import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -215,6 +217,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheManager = "caffeineCacheManager", cacheNames = CacheNames.PERFORMANCE_COMPARISON, allEntries = true)
     public void submitRecommendationDecision(UUID recommendationId, String email, RecommendationStatus status, String note) {
         log.info("Submitting decision for AI recommendation ID: {}, status: {}, user: {}", recommendationId, status, MaskType.EMAIL.mask(email));
 

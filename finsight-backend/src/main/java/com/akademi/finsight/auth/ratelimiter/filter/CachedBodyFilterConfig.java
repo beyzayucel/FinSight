@@ -16,7 +16,11 @@ public class CachedBodyFilterConfig {
 
         bean.setFilter(new CachedBodyFilter());
 
-        bean.addUrlPatterns(ApiEndpoints.Auth.BASE + ApiEndpoints.Auth.LOGIN);
+        // Rate limit interceptor'lari istek govdesini okuyor; govde once burada cache'lenmeli
+        bean.addUrlPatterns(
+                ApiEndpoints.Auth.BASE + ApiEndpoints.Auth.LOGIN,
+                ApiEndpoints.Auth.BASE + ApiEndpoints.Auth.FORGOT_PASSWORD
+        );
 
         bean.setOrder(Ordered.HIGHEST_PRECEDENCE);
 

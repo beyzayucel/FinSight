@@ -4,6 +4,7 @@ package com.akademi.finsight.security.web;
 import com.akademi.finsight.security.jwt.exception.JwtErrorType;
 import com.akademi.finsight.security.jwt.exception.JwtTokenException;
 import com.akademi.finsight.security.jwt.service.JwtService;
+import com.akademi.finsight.security.jwt.service.TokenInvalidationService;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -24,6 +25,7 @@ import java.io.IOException;
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtService jwtService;
+    private final TokenInvalidationService tokenInvalidationService;
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
@@ -35,6 +37,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             try {
                 if (jwtService.isTokenValid(token)) {
                     String username = jwtService.getUsernameFromToken(token);
+
+                    // Sifre degistiyse bu token'in suresi dolmamis olsa da artik gecerli degil
+                    if (tokenInvalidationService.isInvalidated(username, jwtService.getIssuedAtFromToken(token))) {
+                        log.info("JWT rejected: event=TOKEN_INVALIDATED_BY_PASSWORD_CHANGE");
+                        filterChain.doFilter(request, response);
+                        return;
+                    }
+
                     var authorities = jwtService.getRolesFromToken(token).stream()
                             .map(SimpleGrantedAuthority::new)
                             .toList();

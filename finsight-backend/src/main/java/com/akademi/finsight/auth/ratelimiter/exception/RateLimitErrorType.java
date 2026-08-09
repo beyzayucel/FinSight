@@ -14,6 +14,11 @@ public enum RateLimitErrorType implements BaseErrorType {
             HttpStatus.TOO_MANY_REQUESTS
     ),
 
+    PASSWORD_RESET_RATE_LIMIT_EXCEEDED(
+            "error.rate.limit.password.reset.exceeded",
+            HttpStatus.TOO_MANY_REQUESTS
+    ),
+
     REQUEST_NOT_WRAPPED(
             "error.rate.limit.request.not.wrapped",
             HttpStatus.BAD_REQUEST

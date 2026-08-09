@@ -17,6 +17,7 @@ import org.springframework.util.StringUtils;
 
 import javax.crypto.SecretKey;
 import java.util.Collections;
+import java.time.Instant;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -64,6 +65,10 @@ public class JwtService {
 
     public String getUsernameFromToken(String token) {
         return extractClaim(token, Claims::getSubject);
+    }
+
+    public Instant getIssuedAtFromToken(String token) {
+        return extractClaim(token, Claims::getIssuedAt).toInstant();
     }
 
     public List<String> getRolesFromToken(String token) {

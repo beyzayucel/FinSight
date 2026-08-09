@@ -11,6 +11,7 @@ import com.akademi.finsight.auth.dto.password.ForgotPasswordRequest;
 import com.akademi.finsight.auth.dto.password.ResetPasswordRequest;
 import com.akademi.finsight.auth.exception.AuthErrorType;
 import com.akademi.finsight.auth.exception.AuthException;
+import com.akademi.finsight.auth.passwordhistory.service.PasswordHistoryService;
 import com.akademi.finsight.auth.passwordreset.service.PasswordResetTokenService;
 import com.akademi.finsight.auth.ratelimiter.config.LoginRateLimitProperties;
 import com.akademi.finsight.auth.ratelimiter.service.LoginRateLimitService;
@@ -27,6 +28,7 @@ import com.akademi.finsight.notification.service.NotificationService;
 import com.akademi.finsight.auth.otp.service.OtpService;
 import com.akademi.finsight.common.masking.MaskType;
 import com.akademi.finsight.security.jwt.service.JwtService;
+import com.akademi.finsight.security.jwt.service.TokenInvalidationService;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.exception.UserException;
 import com.akademi.finsight.user.service.UserService;
@@ -53,6 +55,7 @@ public class AuthServiceImpl implements AuthService {
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
+    private final TokenInvalidationService tokenInvalidationService;
     private final UserDetailsService userDetailsService;
     private final RefreshTokenService refreshTokenService;
     private final LoginRateLimitService loginRateLimitService;
@@ -61,6 +64,7 @@ public class AuthServiceImpl implements AuthService {
     private final NotificationService notificationService;
     private final LoginRateLimitProperties loginRateLimitProperties;
     private final PasswordResetTokenService passwordResetTokenService;
+    private final PasswordHistoryService passwordHistoryService;
     private final AuditLogService auditLogService;
     private final AppMetrics appMetrics;
 
@@ -146,6 +150,22 @@ public class AuthServiceImpl implements AuthService {
         }
     }
 
+    /** Sifre degisiminden kullanici haberdar edilmezse ele gecirilen hesap fark edilmeden kalir. */
+    private void sendPasswordChangedNotification(User user) {
+        try {
+            notificationService.notify(new NotificationCommand(
+                    NotificationType.PASSWORD_CHANGED_EMAIL,
+                    user.getEmail(),
+                    Map.of("firstName", user.getFirstName()),
+                    LocaleContextHolder.getLocale().getLanguage()
+            ));
+
+            log.info("Password changed notification sent: email={}", MaskType.EMAIL.mask(user.getEmail()));
+        } catch (Exception exception) {
+            log.warn("Failed to send password changed notification: email={}", MaskType.EMAIL.mask(user.getEmail()), exception);
+        }
+    }
+
     private LoginResult.Authenticated authenticateAndGenerateTokens(User user) {
         UserDetails userDetails = userDetailsService.loadUserByUsername(user.getEmail());
         String accessToken = jwtService.generateAccessToken(userDetails, user.isFirstLogin());
@@ -191,9 +211,15 @@ public class AuthServiceImpl implements AuthService {
             throw new AuthException(AuthErrorType.SAME_PASSWORD);
         }
 
-        userService.updatePassword(user, passwordEncoder.encode(request.newPassword()), user.isFirstLogin());
+        passwordHistoryService.assertNotRecentlyUsed(user, request.newPassword());
+
+        String encodedPassword = passwordEncoder.encode(request.newPassword());
+        userService.updatePassword(user, encodedPassword, user.isFirstLogin());
+        passwordHistoryService.record(user, encodedPassword);
         refreshTokenService.revokeAllByUser(user);
+        tokenInvalidationService.invalidateTokensIssuedBefore(user.getEmail());
         auditLogService.createAuditLogForSelf(AuditActionType.PASSWORD_CHANGED, user);
+        sendPasswordChangedNotification(user);
 
         log.info("Password changed: event=PASSWORD_CHANGED, email={}", MaskType.EMAIL.mask(user.getEmail()));
     }
@@ -260,9 +286,21 @@ public class AuthServiceImpl implements AuthService {
     @Transactional
     public void resetPassword(ResetPasswordRequest request) {
         User user = passwordResetTokenService.consumeToken(request.token());
-        userService.updatePassword(user, passwordEncoder.encode(request.newPassword()), true);
+
+        if (passwordEncoder.matches(request.newPassword(), user.getPassword())) {
+            log.info("Password reset rejected: event=SAME_PASSWORD, email={}", MaskType.EMAIL.mask(user.getEmail()));
+            throw new AuthException(AuthErrorType.SAME_PASSWORD);
+        }
+
+        passwordHistoryService.assertNotRecentlyUsed(user, request.newPassword());
+
+        String encodedPassword = passwordEncoder.encode(request.newPassword());
+        userService.updatePassword(user, encodedPassword, true);
+        passwordHistoryService.record(user, encodedPassword);
         refreshTokenService.revokeAllByUser(user);
+        tokenInvalidationService.invalidateTokensIssuedBefore(user.getEmail());
         auditLogService.createAuditLogForSelf(AuditActionType.PASSWORD_RESET_COMPLETED, user);
+        sendPasswordChangedNotification(user);
 
         log.info("Password reset completed: event=PASSWORD_RESET_COMPLETED, email={}", MaskType.EMAIL.mask(user.getEmail()));
     }

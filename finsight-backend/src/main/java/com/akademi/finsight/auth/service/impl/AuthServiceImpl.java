@@ -11,6 +11,8 @@ import com.akademi.finsight.auth.dto.password.ForgotPasswordRequest;
 import com.akademi.finsight.auth.dto.password.ResetPasswordRequest;
 import com.akademi.finsight.auth.exception.AuthErrorType;
 import com.akademi.finsight.auth.exception.AuthException;
+import com.akademi.finsight.auth.exception.LoginLimitException;
+import com.akademi.finsight.auth.otp.exception.OtpLimitException;
 import com.akademi.finsight.auth.passwordhistory.service.PasswordHistoryService;
 import com.akademi.finsight.auth.passwordreset.service.PasswordResetTokenService;
 import com.akademi.finsight.auth.ratelimiter.config.LoginRateLimitProperties;
@@ -22,7 +24,6 @@ import com.akademi.finsight.auth.refreshtoken.service.RefreshTokenService;
 import com.akademi.finsight.auth.service.AuthService;
 import com.akademi.finsight.auth.verificationtoken.service.VerificationTokenService;
 import com.akademi.finsight.monitoring.AppMetrics;
-import com.akademi.finsight.notification.model.NotificationCommand;
 import com.akademi.finsight.notification.model.NotificationType;
 import com.akademi.finsight.notification.service.NotificationService;
 import com.akademi.finsight.auth.otp.service.OtpService;
@@ -42,7 +43,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.context.i18n.LocaleContextHolder;
 import java.util.Map;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -69,7 +69,7 @@ public class AuthServiceImpl implements AuthService {
     private final AppMetrics appMetrics;
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = LoginLimitException.class)
     public LoginResult login(LoginRequest request) {
         User user = authenticateUser(request);
         loginRateLimitService.resetAttempts(request.identifier());
@@ -92,7 +92,7 @@ public class AuthServiceImpl implements AuthService {
 
         appMetrics.incrementOtpSend();
 
-        otpService.generateOtp(user.getEmail(), user.getFirstName(), LocaleContextHolder.getLocale());
+        otpService.generateOtp(user.getEmail(), user.getFirstName());
         log.info("OTP sent for 2FA: event=OTP_REQUIRED, email={}", MaskType.EMAIL.mask(user.getEmail()));
 
         return new LoginResult.OtpRequired("OTP code sent to your email address.");
@@ -110,6 +110,7 @@ public class AuthServiceImpl implements AuthService {
                 appMetrics.incrementAccountLocked();
 
                 sendAccountLockedNotification(request.identifier());
+                throw new LoginLimitException();
             }
             throw exception;
         }
@@ -128,21 +129,16 @@ public class AuthServiceImpl implements AuthService {
         try {
             User user = userService.findByIdentifier(identifier);
             long blockMinutes = loginRateLimitProperties.getBlockDuration().toMinutes();
+            String resetUrl = passwordResetTokenService.createResetUrl(user);
 
             Map<String, String> params = Map.of(
                     "firstName", user.getFirstName(),
                     "maxAttempts", String.valueOf(loginRateLimitProperties.getMaxAttempts()),
-                    "blockMinutes", String.valueOf(blockMinutes)
+                    "blockMinutes", String.valueOf(blockMinutes),
+                    "resetUrl", resetUrl
             );
 
-            String language = LocaleContextHolder.getLocale().getLanguage();
-
-            notificationService.notify(new NotificationCommand(
-                    NotificationType.ACCOUNT_LOCKED_EMAIL,
-                    user.getEmail(),
-                    params,
-                    language
-            ));
+            notificationService.notify(NotificationType.ACCOUNT_LOCKED_EMAIL, user.getEmail(), params);
 
             log.info("Account locked notification sent: email={}", MaskType.EMAIL.mask(user.getEmail()));
         } catch (Exception e) {
@@ -153,12 +149,13 @@ public class AuthServiceImpl implements AuthService {
     /** Sifre degisiminden kullanici haberdar edilmezse ele gecirilen hesap fark edilmeden kalir. */
     private void sendPasswordChangedNotification(User user) {
         try {
-            notificationService.notify(new NotificationCommand(
+            String resetUrl = passwordResetTokenService.createResetUrl(user);
+
+            notificationService.notify(
                     NotificationType.PASSWORD_CHANGED_EMAIL,
                     user.getEmail(),
-                    Map.of("firstName", user.getFirstName()),
-                    LocaleContextHolder.getLocale().getLanguage()
-            ));
+                    Map.of("firstName", user.getFirstName(), "resetUrl", resetUrl)
+            );
 
             log.info("Password changed notification sent: email={}", MaskType.EMAIL.mask(user.getEmail()));
         } catch (Exception exception) {
@@ -231,7 +228,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
-    @Transactional
+    @Transactional(noRollbackFor = OtpLimitException.class)
     public LoginResult.Authenticated otpLogin(OtpLoginRequest request) {
         User user = userService.findByIdentifier(request.identifier());
 
@@ -262,7 +259,7 @@ public class AuthServiceImpl implements AuthService {
         }
 
         appMetrics.incrementOtpSend();
-        otpService.generateOtp(user.getEmail(), user.getFirstName(), LocaleContextHolder.getLocale());
+        otpService.generateOtp(user.getEmail(), user.getFirstName());
         log.info("OTP resent: event=OTP_RESENT, email={}", MaskType.EMAIL.mask(user.getEmail()));
     }
 

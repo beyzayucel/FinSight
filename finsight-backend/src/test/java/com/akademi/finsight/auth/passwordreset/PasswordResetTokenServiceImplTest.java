@@ -1,14 +1,14 @@
 package com.akademi.finsight.auth.passwordreset;
 
 import com.akademi.finsight.auth.passwordreset.config.PasswordResetProperties;
-import com.akademi.finsight.auth.passwordreset.dto.PasswordResetEmailRequest;
 import com.akademi.finsight.auth.passwordreset.entity.PasswordResetToken;
 import com.akademi.finsight.auth.passwordreset.exception.PasswordResetErrorType;
 import com.akademi.finsight.auth.passwordreset.exception.PasswordResetException;
 import com.akademi.finsight.auth.passwordreset.repository.PasswordResetTokenRepository;
 import com.akademi.finsight.auth.passwordreset.service.impl.PasswordResetTokenServiceImpl;
 import com.akademi.finsight.auth.ratelimiter.util.IdentifierHasher;
-import com.akademi.finsight.notification.service.EmailService;
+import com.akademi.finsight.notification.model.NotificationType;
+import com.akademi.finsight.notification.service.NotificationService;
 import com.akademi.finsight.user.entity.User;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -46,7 +47,7 @@ class PasswordResetTokenServiceImplTest {
     private PasswordResetTokenRepository repository;
 
     @Mock
-    private EmailService emailService;
+    private NotificationService notificationService;
 
     @Mock
     private PasswordResetProperties properties;
@@ -84,8 +85,10 @@ class PasswordResetTokenServiceImplTest {
 
             passwordResetTokenService.createAndSendResetToken(createUser());
 
-            assertEquals(TOKEN_HASH, captureSavedToken().getToken());
-            assertNotEquals(captureRawToken(), captureSavedToken().getToken());
+            String storedHash = captureSavedToken().getToken();
+            String rawToken = captureNotificationParams().get("resetUrl").substring(RESET_URL_PREFIX.length());
+            assertEquals(TOKEN_HASH, storedHash);
+            assertNotEquals(rawToken, storedHash);
         }
 
         @Test
@@ -103,21 +106,24 @@ class PasswordResetTokenServiceImplTest {
 
         @Test
         @DisplayName("should send reset mail with url built from configured prefix and raw token")
+        @SuppressWarnings("unchecked")
         void shouldSendMailWithResetUrl() {
             stubTokenCreation();
             User user = createUser();
 
             passwordResetTokenService.createAndSendResetToken(user);
 
-            PasswordResetEmailRequest request = captureEmailRequest();
-            assertEquals(user.getFirstName(), request.firstName());
-            assertEquals(user.getEmail(), request.email());
-            assertTrue(request.resetUrl().startsWith(RESET_URL_PREFIX));
-            assertDoesNotThrow(() -> UUID.fromString(captureRawToken()));
+            Map<String, String> params = captureNotificationParams();
+            assertEquals(user.getFirstName(), params.get("firstName"));
+            assertTrue(params.get("resetUrl").startsWith(RESET_URL_PREFIX));
+            String rawToken = params.get("resetUrl").substring(RESET_URL_PREFIX.length());
+            assertDoesNotThrow(() -> UUID.fromString(rawToken));
+            verify(notificationService).notify(eq(NotificationType.PASSWORD_RESET_EMAIL), eq(user.getEmail()), any(Map.class));
         }
 
         /** Ayni token iki kez uretilirse eski link yeniden kullanilabilir hale gelir. */
         @Test
+        @SuppressWarnings("unchecked")
         @DisplayName("should generate a different token on every call")
         void shouldGenerateDifferentTokenPerCall() {
             stubTokenCreation();
@@ -126,9 +132,9 @@ class PasswordResetTokenServiceImplTest {
             passwordResetTokenService.createAndSendResetToken(user);
             passwordResetTokenService.createAndSendResetToken(user);
 
-            ArgumentCaptor<PasswordResetEmailRequest> captor = ArgumentCaptor.forClass(PasswordResetEmailRequest.class);
-            verify(emailService, times(2)).sendPasswordResetEmail(captor.capture(), any());
-            assertNotEquals(captor.getAllValues().get(0).resetUrl(), captor.getAllValues().get(1).resetUrl());
+            ArgumentCaptor<Map<String, String>> captor = ArgumentCaptor.forClass(Map.class);
+            verify(notificationService, times(2)).notify(eq(NotificationType.PASSWORD_RESET_EMAIL), eq(user.getEmail()), captor.capture());
+            assertNotEquals(captor.getAllValues().get(0).get("resetUrl"), captor.getAllValues().get(1).get("resetUrl"));
         }
     }
 
@@ -216,14 +222,11 @@ class PasswordResetTokenServiceImplTest {
         return captor.getValue();
     }
 
-    private PasswordResetEmailRequest captureEmailRequest() {
-        ArgumentCaptor<PasswordResetEmailRequest> captor = ArgumentCaptor.forClass(PasswordResetEmailRequest.class);
-        verify(emailService, atLeastOnce()).sendPasswordResetEmail(captor.capture(), any());
+    @SuppressWarnings("unchecked")
+    private Map<String, String> captureNotificationParams() {
+        ArgumentCaptor<Map<String, String>> captor = ArgumentCaptor.forClass(Map.class);
+        verify(notificationService, atLeastOnce()).notify(eq(NotificationType.PASSWORD_RESET_EMAIL), anyString(), captor.capture());
         return captor.getValue();
-    }
-
-    private String captureRawToken() {
-        return captureEmailRequest().resetUrl().substring(RESET_URL_PREFIX.length());
     }
 
     private User createUser() {

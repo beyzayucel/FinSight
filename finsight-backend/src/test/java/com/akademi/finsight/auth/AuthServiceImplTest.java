@@ -152,7 +152,7 @@ class AuthServiceImplTest {
 
             assertInstanceOf(LoginResult.OtpRequired.class, result);
 
-            verify(otpService).generateOtp(eq(user.getEmail()), eq(user.getFirstName()), any());
+            verify(otpService).generateOtp(eq(user.getEmail()), eq(user.getFirstName()));
             verify(loginRateLimitService).resetAttempts(request.identifier());
             verifyNoInteractions(jwtService, refreshTokenService);
         }
@@ -284,7 +284,7 @@ class AuthServiceImplTest {
 
             assertDoesNotThrow(() -> authService.resendOtp(request));
 
-            verify(otpService).generateOtp(eq(user.getEmail()), eq(user.getFirstName()), any());
+            verify(otpService).generateOtp(eq(user.getEmail()), eq(user.getFirstName()));
         }
 
         @Test
@@ -299,7 +299,7 @@ class AuthServiceImplTest {
             AuthException exception = assertThrows(AuthException.class, () -> authService.resendOtp(request));
             assertEquals(AuthErrorType.OTP_NOT_ELIGIBLE, exception.getErrorType());
 
-            verify(otpService, never()).generateOtp(any(), any(), any());
+            verify(otpService, never()).generateOtp(any(), any());
         }
     }
 

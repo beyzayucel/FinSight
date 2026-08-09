@@ -13,7 +13,8 @@ public enum OtpErrorType implements BaseErrorType {
     OTP_EXPIRED_OR_INVALID("error.otp.expired.or.invalid", HttpStatus.UNAUTHORIZED),
     OTP_INCORRECT("error.otp.incorrect", HttpStatus.UNAUTHORIZED),
     OTP_COOLDOWN_ACTIVE("error.otp.cooldown.active", HttpStatus.TOO_MANY_REQUESTS),
-    OTP_MAX_ATTEMPTS_EXCEEDED("error.otp.max.attempts.exceeded", HttpStatus.TOO_MANY_REQUESTS);
+    OTP_MAX_ATTEMPTS_EXCEEDED("error.otp.max.attempts.exceeded", HttpStatus.TOO_MANY_REQUESTS),
+    OTP_ABUSE_LOCKED("error.otp.abuse.locked", HttpStatus.TOO_MANY_REQUESTS);
 
     private final String messageKey;
     private final HttpStatus httpStatus;

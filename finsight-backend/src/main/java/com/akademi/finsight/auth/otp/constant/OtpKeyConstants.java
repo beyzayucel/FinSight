@@ -6,4 +6,5 @@ public class OtpKeyConstants {
     public static final String CODE_SUFFIX = "code:%s";
     public static final String COOLDOWN_SUFFIX = "cooldown:%s";
     public static final String ATTEMPTS_SUFFIX = "attempts:%s";
+    public static final String ABUSE_SUFFIX = "abuse:%s";
 }

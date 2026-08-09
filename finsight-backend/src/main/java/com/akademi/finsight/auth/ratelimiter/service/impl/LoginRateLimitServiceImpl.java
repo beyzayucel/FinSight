@@ -60,6 +60,13 @@ public class LoginRateLimitServiceImpl implements LoginRateLimitService {
         }
     }
 
+    @Override
+    public void clearAllRestrictions(String identifier) {
+        String hashedIdentifier = identifierHasher.hash(identifier);
+        resetAttemptsByHash(hashedIdentifier);
+        blocklistService.unblockUser(hashedIdentifier);
+    }
+
     private boolean handleMaxAttempts(String hashedIdentifier, Long attempts){
         if(attempts >= loginRateLimitProperties.getMaxAttempts()){
             log.warn("User exceeded maximum login attempts ({}). Blocking user: {}", attempts, hashedIdentifier);

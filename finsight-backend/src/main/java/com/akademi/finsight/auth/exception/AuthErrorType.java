@@ -14,7 +14,8 @@ public enum AuthErrorType implements BaseErrorType {
     SAME_PASSWORD("error.same.password", HttpStatus.BAD_REQUEST),
     PASSWORD_RECENTLY_USED("error.password.recently.used", HttpStatus.BAD_REQUEST),
     OTP_NOT_ELIGIBLE("error.otp.not.eligible", HttpStatus.FORBIDDEN),
-    EMAIL_NOT_VERIFIED("error.email.not.verified", HttpStatus.FORBIDDEN);
+    EMAIL_NOT_VERIFIED("error.email.not.verified", HttpStatus.FORBIDDEN),
+    ACCOUNT_LOCKED("error.account.locked", HttpStatus.TOO_MANY_REQUESTS);
 
     private final String messageKey;
     private final HttpStatus httpStatus;

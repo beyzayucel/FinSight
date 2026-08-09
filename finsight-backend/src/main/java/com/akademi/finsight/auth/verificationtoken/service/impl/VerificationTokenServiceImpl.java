@@ -2,23 +2,23 @@ package com.akademi.finsight.auth.verificationtoken.service.impl;
 
 import com.akademi.finsight.auth.verificationtoken.exception.VerificationTokenErrorType;
 import com.akademi.finsight.auth.verificationtoken.exception.VerificationTokenException;
-import com.akademi.finsight.auth.verificationtoken.dto.VerificationTokenRequest;
 import com.akademi.finsight.auth.verificationtoken.entity.VerificationToken;
 import com.akademi.finsight.auth.verificationtoken.repository.VerificationTokenRepository;
 import com.akademi.finsight.auth.verificationtoken.service.VerificationTokenService;
 import com.akademi.finsight.common.masking.MaskType;
-import com.akademi.finsight.notification.service.EmailService;
+import com.akademi.finsight.notification.model.NotificationType;
+import com.akademi.finsight.notification.service.NotificationService;
 import com.akademi.finsight.user.entity.User;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.Map;
 import java.util.UUID;
 
 @Slf4j
@@ -29,7 +29,7 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
 
     private final PasswordEncoder passwordEncoder;
     private final VerificationTokenRepository repository;
-    private final EmailService emailService;
+    private final NotificationService notificationService;
 
     @Value("${app.verification.url}")
     private String verificationBaseUrl;
@@ -65,9 +65,14 @@ public class VerificationTokenServiceImpl implements VerificationTokenService {
         repository.save(verificationToken);
 
         String verificationUrl = verificationBaseUrl + token;
-        VerificationTokenRequest tokenRequest = new VerificationTokenRequest(user.getUsername(), user.getEmail(), temporaryPassword, verificationUrl);
 
-        emailService.sendVerificationEmail(tokenRequest, LocaleContextHolder.getLocale());
+        notificationService.notify(
+                NotificationType.VERIFICATION_EMAIL,
+                user.getEmail(),
+                Map.of("username", user.getUsername(),
+                       "temporaryPassword", temporaryPassword,
+                       "verificationUrl", verificationUrl)
+        );
     }
 
     @Override

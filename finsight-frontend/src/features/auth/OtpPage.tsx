@@ -25,6 +25,7 @@ export default function OtpPage() {
   const [error, setError] = useState('')
   const [cooldown, setCooldown] = useState(COOLDOWN_SECONDS)
   const [loading, setLoading] = useState(false)
+  const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null)
 
   useEffect(() => {
     if (shouldRedirect) clearOtpSession()
@@ -66,6 +67,9 @@ export default function OtpPage() {
         navigate(ROUTES.LOGIN, { state: { error: apiErr.message }, replace: true })
       } else {
         setError(apiErr.message || t.otpFallbackError)
+        if (apiErr.remainingAttempts != null) {
+          setRemainingAttempts(apiErr.remainingAttempts)
+        }
       }
     } finally {
       setLoading(false)
@@ -106,6 +110,14 @@ export default function OtpPage() {
 
           {error && (
             <p className="text-sm text-red-500">{error}</p>
+          )}
+
+          {remainingAttempts != null && (
+            <p className="text-sm text-amber-600">
+              {t.otpRemainingAttempts
+                .replace('{remaining}', String(remainingAttempts))
+                .replace('{max}', '5')}
+            </p>
           )}
 
           <Button type="submit" disabled={loading || code.length !== 6}>

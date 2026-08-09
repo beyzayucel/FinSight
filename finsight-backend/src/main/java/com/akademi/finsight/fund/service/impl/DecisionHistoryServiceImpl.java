@@ -139,6 +139,7 @@ public class DecisionHistoryServiceImpl implements DecisionHistoryService {
     private DecisionRecordResponse fromAiRecommendation(AiRecommendation recommendation) {
         // K4: reddedilen kararda ağırlık gösterilmez, üretildiği anda kaydedilmiş olsa da.
         List<ManualScenarioWeightResponse> weights = recommendation.getStatus() == RecommendationStatus.ACCEPTED
+                && recommendation.getWeights() != null
                 ? recommendation.getWeights().values().stream()
                                 .map(w -> new ManualScenarioWeightResponse(w.getCategory(), w.getRecommendedWeight(), w.getCurrentWeight()))
                                 .toList()
@@ -146,6 +147,7 @@ public class DecisionHistoryServiceImpl implements DecisionHistoryService {
 
         List<ManualScenarioStockWeightResponse> stockWeights =
                 recommendation.getStatus() == RecommendationStatus.ACCEPTED
+                        && recommendation.getStockWeights() != null
                         ? recommendation.getStockWeights().values().stream()
                                 .map(w -> new ManualScenarioStockWeightResponse(
                                         w.getAssetCode(), w.getRecommendedWeight(), w.getCurrentWeight()))

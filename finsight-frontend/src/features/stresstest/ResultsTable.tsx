@@ -2,7 +2,7 @@ import type { PortfolioResultDto } from './types'
 
 interface ResultsRow {
   label: string
-  result: PortfolioResultDto
+  result?: PortfolioResultDto | null
 }
 
 interface ResultsTableProps {
@@ -25,6 +25,8 @@ function formatPercent(rate: number): string {
 }
 
 export function ResultsTable({ rows }: ResultsTableProps) {
+  console.log('ResultsTable Gelen Rows:', rows)
+  
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[560px] text-left text-xs">
@@ -37,24 +39,28 @@ export function ResultsTable({ rows }: ResultsTableProps) {
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100 font-medium">
-          {rows.map(({ label, result }) => (
-            <tr key={label} className="hover:bg-slate-50/50 transition-colors">
-              <td className="py-3.5 pr-4 font-bold text-slate-900">{label}</td>
-              <td className="py-3.5 pr-4 text-slate-700">
-                {currencyFormatter.format(result.initialValue)}
-              </td>
-              <td
-                className={`py-3.5 pr-4 font-bold ${
-                  result.expectedImpactRate < 0 ? 'text-rose-600' : 'text-emerald-600'
-                }`}
-              >
-                {formatPercent(result.expectedImpactRate)}
-              </td>
-              <td className="py-3.5 text-slate-900 font-semibold">
-                {currencyFormatter.format(Math.max(0, result.postShockValue))}
-              </td>
-            </tr>
-          ))}
+          {rows.map(({ label, result }) => {
+            if (!result) return null
+
+            return (
+              <tr key={label} className="hover:bg-slate-50/50 transition-colors">
+                <td className="py-3.5 pr-4 font-bold text-slate-900">{label}</td>
+                <td className="py-3.5 pr-4 text-slate-700">
+                  {currencyFormatter.format(result.initialValue ?? 0)}
+                </td>
+                <td
+                  className={`py-3.5 pr-4 font-bold ${
+                    (result.expectedImpactRate ?? 0) < 0 ? 'text-rose-600' : 'text-emerald-600'
+                  }`}
+                >
+                  {formatPercent(result.expectedImpactRate ?? 0)}
+                </td>
+                <td className="py-3.5 text-slate-900 font-semibold">
+                  {currencyFormatter.format(Math.max(0, result.postShockValue ?? 0))}
+                </td>
+              </tr>
+            )
+          })}
         </tbody>
       </table>
     </div>

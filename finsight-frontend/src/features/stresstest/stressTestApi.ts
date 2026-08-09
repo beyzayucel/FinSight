@@ -43,7 +43,8 @@ function toRiskBuckets(assetWeights: Record<string, number>): Record<string, num
 export async function runSimulation(
   fundId: string,
   simulationType: ScenarioKey,
-  portfolioData: PortfolioDataDto
+  portfolioData: PortfolioDataDto,
+  analysisWindow?: number
 ): Promise<StressTestInferenceResponseDto | null> {
   const response = await axiosInstance.post<ApiStandardResponse<StressTestInferenceResponseDto>>(
     `${BASE_PATH}/run`,
@@ -51,9 +52,49 @@ export async function runSimulation(
     {
       params: {
         fundId,
-        simulationType
+        simulationType,
+        ...(analysisWindow ? { analysisWindow } : {})
       }
     }
   )
   return response.data?.data ?? null
+}
+
+/**
+ * Seçilen analiz dönemine (örn. 20 gün önce) ait geçmiş stres testi sonucunu getirir
+ * (GET /stress-tests/period?fundId=...&daysAgo=20)
+ */
+export async function getSimulationResultByPeriod(
+  fundId: string,
+  daysAgo: number
+): Promise<StressTestInferenceResponseDto | null> {
+  try {
+    const response = await axiosInstance.get(`${BASE_PATH}/period`, {
+      params: { fundId, daysAgo: daysAgo.toString() },
+    })
+
+    console.log('RAW response.data:', response.data)          // ← ekle
+    console.log('RAW response.status:', response.status)       // ← ekle
+
+    const resData = response.data as any
+    const payload = resData?.data ?? resData
+
+    console.log('Çözümlenen payload:', payload)                 // ← ekle
+    console.log('payload keys:', payload ? Object.keys(payload) : null) // ← ekle
+
+    return payload as StressTestInferenceResponseDto
+  } catch (error) {
+    console.warn('Geçmiş stres testi çekilemedi:', error)
+    return null
+  }
+}
+
+export async function saveStressTestDecision(
+  fundId: string,
+  stressTestResultId: string
+): Promise<void> {
+  await axiosInstance.post(`${BASE_PATH}/save`, {
+    fundId,
+    stressTestResultId,
+  })
 }

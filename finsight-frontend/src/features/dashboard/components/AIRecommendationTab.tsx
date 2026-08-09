@@ -162,15 +162,10 @@ export default function AIRecommendationTab({
         {/* HISSE SENEDİ ALT KIRILIMI (ACCORDION EXPANDED) */}
         {stockBreakdownOpen && stockWeights.length > 0 && (
           <div className="bg-[#fffdf9] border border-[#f5d9a8]/70 rounded-xl p-4 space-y-3 animate-fade-in shadow-xs">
-            {/* Bilgi Kutusu Banner */}
-            <div className="bg-[#fff8ee] border border-[#f5d9a8] rounded-xl p-3 text-[11px] text-[#9c5a14] font-medium leading-relaxed">
-              AI modeli tarafından optimize edilmiş hisse dağılım önerileri listelenmektedir. Hisse alt kırılım toplamı %100 üzerinden dengelenmiştir.
-            </div>
-
             {/* Filtreleme ve Başlık Barı */}
             <div className="flex items-center justify-between pt-1">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Hisse Senedi Alt Kırılımı ({stockWeights.length} Varlık)
+                Hisse Senedi Alt Kırılımı
               </span>
               <button
                 type="button"

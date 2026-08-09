@@ -18,13 +18,11 @@ const MENU_ROUTES: Record<MenuIndex, string> = {
 
 export type DashboardOutletContext = {
   fund: Fund
-  /** Senaryo uygulandıktan sonra fon verisini tazelemek için. */
   reloadFund: () => void
-  /** Sidebar'daki Analiz Dönemi seçimi: '10' | '20' | '30' | '90' */
   analysisPeriod: string
+  reportAssetClassCount: (count: number) => void
 }
 
-/** Alt sayfaların kabuktaki ortak veriye erişmesi için kısayol. */
 export function useDashboardOutlet(): DashboardOutletContext {
   return useOutletContext<DashboardOutletContext>()
 }
@@ -36,10 +34,6 @@ function resolveActiveMenu(pathname: string): MenuIndex {
   return entry ? (Number(entry[0]) as MenuIndex) : 1
 }
 
-/**
- * Fon panelinin kabuğu: sidebar + fon verisinin tek seferlik yüklenmesi.
- * Ekranlar artık state ile değil, nested route ile değişiyor.
- */
 export default function DashboardShell() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -49,6 +43,7 @@ export default function DashboardShell() {
   const [error, setError] = useState<string | null>(null)
 
   const [period, setPeriod] = useState<string>('30')
+  const [assetClassCount, setAssetClassCount] = useState<number>()
 
   const loadData = useCallback(async () => {
     try {
@@ -69,10 +64,6 @@ export default function DashboardShell() {
   }, [loadData])
 
   const activeMenu = resolveActiveMenu(location.pathname)
-
-  const assetClassCount = fund
-    ? Object.values(fund.weights).filter((weight) => weight > 0).length
-    : undefined
 
   function renderMainContent() {
     if (loading) {
@@ -101,7 +92,14 @@ export default function DashboardShell() {
 
     return (
       <Outlet
-        context={{ fund, reloadFund: loadData, analysisPeriod: period } satisfies DashboardOutletContext}
+        context={
+          {
+            fund,
+            reloadFund: loadData,
+            analysisPeriod: period,
+            reportAssetClassCount: setAssetClassCount,
+          } satisfies DashboardOutletContext
+        }
       />
     )
   }

@@ -127,7 +127,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
       }
 
       await applyManualScenario(payload)
-      setSuccessMsg('Dağılım simülasyonu başarıyla uygulandı!')
+      setSuccessMsg('✓ Manuel dağılım simülasyona uygulandı. Bu dağılım artık ayrı bir Simülasyon Portföyü olarak kaydedildi — mevcut portföyünüz gerçek emirle değişmedi.')
       onScenarioApplied()
     } catch (err: any) {
       setErrors([err?.message || 'Simülasyon kaydedilirken bir hata oluştu.'])
@@ -167,10 +167,12 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
                 const diff = target - current
                 const label = AssetCategoryLabels[cat]?.tr || cat
 
-                const hasDevError = Math.abs(diff) > 10.00 || (cat === 'STOCK' && target < 80.00)
+                const isFloorBreach = cat === 'STOCK' && target < 80.00
+                const isDevError = Math.abs(diff) > 10.00
+                const hasError = isFloorBreach || isDevError
 
                 return (
-                  <tr key={cat} className="hover:bg-slate-50/20 transition-colors">
+                  <tr key={cat} className={`transition-colors ${isFloorBreach ? 'bg-rose-50/50' : 'hover:bg-slate-50/20'}`}>
                     <td className="px-4 py-2 font-semibold text-slate-700">{label}</td>
                     <td className="px-4 py-2 text-right font-semibold text-slate-500">
                       {current.toFixed(2).replace('.', ',')}%
@@ -179,8 +181,10 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
                       <div className="inline-flex items-center justify-center">
                         <div
                           className={`relative flex items-center bg-white border ${
-                            hasDevError
-                              ? 'border-rose-400 focus-within:ring-rose-200'
+                            isFloorBreach
+                              ? 'border-[#d9383a] ring-1 ring-[#d9383a]/30'
+                              : isDevError
+                              ? 'border-amber-400 focus-within:ring-amber-200'
                               : 'border-slate-200 focus-within:border-[#c89834] focus-within:ring-[#c89834]/20'
                           } rounded-lg px-2.5 py-1 focus-within:ring-2 focus-within:ring-opacity-50 transition-all w-32`}
                         >
@@ -259,26 +263,50 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
           </table>
         </div>
 
-        {/* Validasyon Hata Mesajları */}
+        {/* Validasyon Hata Mesajları / Uyarı Banner'ları (Bölüm 5.8) */}
         {errors.length > 0 && (
-          <div className="p-3.5 bg-rose-50 border border-rose-100 rounded-xl space-y-1 animate-fade-in">
-            <div className="flex items-center space-x-1.5 text-rose-800 font-bold text-[10px] tracking-wide uppercase">
-              <IoAlertCircleOutline size={16} />
-              <span>Kural İhlali Tespit Edildi</span>
-            </div>
-            <ul className="list-disc list-inside text-[11px] text-rose-700 space-y-0.5 font-medium pl-0.5">
-              {errors.map((err, idx) => (
-                <li key={idx}>{err}</li>
-              ))}
-            </ul>
-          </div>
-        )}
+          <div className="space-y-2.5 animate-fade-in">
+            {errors.map((err, idx) => {
+              const isStockFloor = err.includes('Hisse senedi yoğun fon') || err.includes('%80')
+              const isDeviation = err.includes('sapması') || err.includes('±10')
 
-        {/* Başarı Mesajı */}
-        {successMsg && (
-          <div className="p-3.5 bg-emerald-50 border border-emerald-100 rounded-xl flex items-center space-x-2 text-emerald-800 font-bold text-xs">
-            <IoCheckmarkCircleOutline size={18} className="text-emerald-500" />
-            <span>{successMsg}</span>
+              if (isStockFloor) {
+                // 🚫 Sabit Alt Sınır Uyarısı: Koyu/dolu kırmızı, daha vurgulu
+                return (
+                  <div
+                    key={idx}
+                    className="p-3.5 rounded-xl bg-[#d9383a] text-white shadow-sm flex items-start space-x-2.5 text-xs font-medium"
+                  >
+                    <span className="text-base leading-none flex-shrink-0">🚫</span>
+                    <span className="leading-relaxed">{err}</span>
+                  </div>
+                )
+              }
+
+              if (isDeviation) {
+                // ⚠️ Sapma Uyarısı: Açık turuncu/kırmızı, hafif uyarı stili
+                return (
+                  <div
+                    key={idx}
+                    className="p-3.5 rounded-xl bg-[#fff8ee] border border-[#f5d9a8] text-[#9c5a14] flex items-start space-x-2.5 text-xs font-semibold"
+                  >
+                    <span className="text-sm leading-none flex-shrink-0 mt-0.5">⚠️</span>
+                    <span className="leading-relaxed">{err}</span>
+                  </div>
+                )
+              }
+
+              // Toplam Ağırlık Uyarısı: Açık kırmızı/pembe hafif uyarı stili
+              return (
+                <div
+                  key={idx}
+                  className="p-3.5 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 flex items-start space-x-2.5 text-xs font-semibold"
+                >
+                  <span className="text-sm leading-none flex-shrink-0 mt-0.5">⚠️</span>
+                  <span className="leading-relaxed">{err}</span>
+                </div>
+              )
+            })}
           </div>
         )}
 
@@ -304,7 +332,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
             onClick={handleSubmit}
             className="px-5 py-2.5 rounded-xl bg-[#c89834] text-white font-extrabold text-xs tracking-wider uppercase hover:bg-[#b08226] shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all select-none cursor-pointer"
           >
-            {submitting ? 'Kaydediliyor...' : 'Dağılımı Simülasyonu Uygula'}
+            {submitting ? 'Kaydediliyor...' : 'Dağılımı Simülasyona Uygula'}
           </button>
           <button
             type="button"
@@ -314,6 +342,13 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
             Mevcut Portföye Sıfırla
           </button>
         </div>
+
+        {/* Başarı Mesajı (Bölüm 5.11) */}
+        {successMsg && (
+          <div className="flex items-center space-x-1.5 text-xs font-semibold py-1 text-[#2d7a4d] animate-fade-in leading-relaxed">
+            <span>{successMsg}</span>
+          </div>
+        )}
       </div>
     </div>
   )

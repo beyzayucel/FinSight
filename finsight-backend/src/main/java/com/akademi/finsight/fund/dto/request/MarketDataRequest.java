@@ -1,9 +1,9 @@
-package com.akademi.finsight.fund.dto;
+package com.akademi.finsight.fund.dto.request;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
 
-public record MarketDataRow(
+public record MarketDataRequest(
         LocalDate date,
         BigDecimal usdReturn,
         BigDecimal goldReturn,

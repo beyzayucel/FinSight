@@ -12,5 +12,6 @@ public final class InfinaEndpoints {
 	public static final String FX_PRICE = "/DovizFiyat";
 	public static final String INDEX_PRICE = "/EndeksFiyat";
 	public static final String ECONOMIC_PRICE = "/EkonomikFiyat";
+	public static final String FUND_PRICE = "/FonFiyat";
 	public static final String FUND_DAILY_RETURN = "/FonGunlukGetiri";
 }

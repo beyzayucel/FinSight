@@ -21,7 +21,7 @@ public class FundProperties {
     @Getter
     @Setter
     public static class Recommendation {
-        private long ttlHours;
+        private long ttlHours = 4;
     }
 
     private final Sync sync = new Sync();

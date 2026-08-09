@@ -2,19 +2,12 @@ package com.akademi.finsight.integration.infina.mapper;
 
 import com.akademi.finsight.common.mapper.BaseMapperConfig;
 import com.akademi.finsight.integration.infina.client.dto.benchmark.BenchmarkInfo;
-import com.akademi.finsight.integration.infina.client.dto.fund.CumulativeReturnEntry;
-import com.akademi.finsight.integration.infina.client.dto.fund.FundDailyReturn;
-import com.akademi.finsight.integration.infina.client.dto.fund.FundInfoData;
-import com.akademi.finsight.integration.infina.client.dto.fund.FundPortfolioAllocation;
+import com.akademi.finsight.integration.infina.client.dto.fund.*;
 import com.akademi.finsight.integration.infina.client.dto.fx.FxPriceRow;
 import com.akademi.finsight.integration.infina.client.dto.index.IndexPriceRow;
 import com.akademi.finsight.integration.infina.client.dto.economic.EconomicPriceRow;
 import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
-import com.akademi.finsight.integration.infina.dto.response.fund.CumulativeReturnEntryResponse;
-import com.akademi.finsight.integration.infina.dto.response.fund.FundDailyReturnResponse;
-import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
-import com.akademi.finsight.integration.infina.dto.response.fund.FundPortfolioAllocationResponse;
-import com.akademi.finsight.integration.infina.dto.response.fund.FundReturnResponse;
+import com.akademi.finsight.integration.infina.dto.response.fund.*;
 import com.akademi.finsight.integration.infina.dto.response.fx.FxPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.index.IndexPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.economic.EconomicPriceResponse;
@@ -58,6 +51,8 @@ public interface InfinaMapper {
 	FundDailyReturnResponse toFundDailyReturnResponse(FundDailyReturn fundDailyReturn);
 
 	CumulativeReturnEntryResponse toCumulativeReturnEntryResponse(CumulativeReturnEntry entry);
+
+	List<FundPriceResponse> toFundPriceResponseList(List<FundPriceRow> rows);
 
 	List<CumulativeReturnEntryResponse> toCumulativeReturnEntryResponseList(List<CumulativeReturnEntry> entries);
 

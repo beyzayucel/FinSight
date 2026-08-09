@@ -1,0 +1,20 @@
+CREATE TABLE fund_price_data (
+    id                 UNIQUEIDENTIFIER  NOT NULL DEFAULT NEWID(),
+    fund_id            UNIQUEIDENTIFIER  NOT NULL,
+    data_date          DATE              NOT NULL,
+    price              DECIMAL(18, 6)    NOT NULL,
+    active_value       DECIMAL(19, 4)    NULL,
+    portfolio_value    DECIMAL(19, 4)    NULL,
+    cash_value         DECIMAL(19, 4)    NULL,
+    investor_count     DECIMAL(19, 4)    NULL,
+    fetched_at         DATETIMEOFFSET(7) NOT NULL DEFAULT SYSDATETIMEOFFSET(),
+    deleted            BIT               NOT NULL DEFAULT 0,
+    deleted_at         DATETIMEOFFSET(7) NULL,
+    created_at         DATETIMEOFFSET(7) NOT NULL DEFAULT SYSDATETIMEOFFSET(),
+    updated_at         DATETIMEOFFSET(7) NOT NULL DEFAULT SYSDATETIMEOFFSET(),
+    created_by         NVARCHAR(255)     DEFAULT N'SYSTEM',
+    updated_by         NVARCHAR(255)     DEFAULT N'SYSTEM',
+    CONSTRAINT pk_fund_price_data PRIMARY KEY (id),
+    CONSTRAINT fk_fund_price_data_fund FOREIGN KEY (fund_id) REFERENCES funds (id),
+    CONSTRAINT uk_fund_price_data_fund_date UNIQUE (fund_id, data_date)
+);

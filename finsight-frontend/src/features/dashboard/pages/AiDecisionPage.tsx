@@ -36,14 +36,17 @@ export default function AiDecisionPage() {
 
   // Manuel senaryo uygulanınca veriyi tazele ve sonucu görmesi için
   // kullanıcıyı Performans Karşılaştırması'na geçir.
+  const [manualApplied, setManualApplied] = useState<boolean>(false)
+
   function handleScenarioApplied() {
+    setManualApplied(true)
     reloadFund()
-    navigate(ROUTES.FUND_PERFORMANCE)
   }
 
-  function handleDecisionSubmitted() {
+  function handleDecisionSubmitted(status: 'ACCEPTED' | 'REJECTED') {
+    setManualApplied(false)
+    setRecommendation((prev) => (prev ? { ...prev, status } : null))
     reloadFund()
-    loadRecommendation()
   }
 
   return (
@@ -60,17 +63,21 @@ export default function AiDecisionPage() {
           </p>
         </div>
         <div className="flex-shrink-0">
-          {recommendation?.status === 'ACCEPTED' ? (
-            <span className="inline-flex items-center px-3.5 py-1.5 rounded-full border border-emerald-250 bg-emerald-50 text-[9.5px] font-extrabold tracking-wider text-emerald-700 uppercase select-none shadow-sm">
-              KABUL EDİLDİ
+          {manualApplied ? (
+            <span className="inline-flex items-center px-3.5 py-1.5 rounded-full border border-[#c89834]/50 bg-[#c89834]/10 text-[9.5px] font-extrabold tracking-wider text-[#c89834] uppercase select-none shadow-sm">
+              Manuel Senaryo Uygulandı
+            </span>
+          ) : recommendation?.status === 'ACCEPTED' ? (
+            <span className="inline-flex items-center px-3.5 py-1.5 rounded-full border border-[#c89834]/50 bg-[#c89834]/10 text-[9.5px] font-extrabold tracking-wider text-[#c89834] uppercase select-none shadow-sm">
+              AI Önerisi Kabul Edildi
             </span>
           ) : recommendation?.status === 'REJECTED' ? (
-            <span className="inline-flex items-center px-3.5 py-1.5 rounded-full border border-rose-250 bg-rose-50 text-[9.5px] font-extrabold tracking-wider text-rose-700 uppercase select-none shadow-sm">
-              REDDEDİLDİ
+            <span className="inline-flex items-center px-3.5 py-1.5 rounded-full border border-slate-200 bg-slate-100 text-[9.5px] font-extrabold tracking-wider text-slate-500 uppercase select-none shadow-sm">
+              Reddedildi
             </span>
           ) : (
-            <span className="inline-flex items-center px-3.5 py-1.5 rounded-full border border-slate-250 bg-slate-100 text-[9.5px] font-extrabold tracking-wider text-slate-600 uppercase select-none shadow-sm">
-              KARAR VERİLMEDİ
+            <span className="inline-flex items-center px-3.5 py-1.5 rounded-full border border-slate-200 bg-slate-100 text-[9.5px] font-extrabold tracking-wider text-slate-500 uppercase select-none shadow-sm">
+              Karar Verilmedi
             </span>
           )}
         </div>

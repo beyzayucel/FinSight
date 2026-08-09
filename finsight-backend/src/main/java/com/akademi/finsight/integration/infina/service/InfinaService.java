@@ -1,10 +1,7 @@
 package com.akademi.finsight.integration.infina.service;
 
 import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
-import com.akademi.finsight.integration.infina.dto.response.fund.CumulativeReturnEntryResponse;
-import com.akademi.finsight.integration.infina.dto.response.fund.FundDailyReturnResponse;
-import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
-import com.akademi.finsight.integration.infina.dto.response.fund.FundPortfolioAllocationResponse;
+import com.akademi.finsight.integration.infina.dto.response.fund.*;
 import com.akademi.finsight.integration.infina.dto.response.fx.FxPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.index.IndexPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.economic.EconomicPriceResponse;
@@ -34,5 +31,5 @@ public interface InfinaService {
 
 	FundDailyReturnResponse getFundDailyReturn(String fundCode, String dates);
 
-
+	List<FundPriceResponse> getFundPrices(String fundCode, String dataDate);
 }

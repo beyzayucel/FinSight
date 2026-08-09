@@ -56,9 +56,9 @@ export default function DashboardShell() {
 
   const [assetClassCount, setAssetClassCount] = useState<number>()
 
-  const loadData = useCallback(async () => {
+  const loadData = useCallback(async (isInitial = false) => {
     try {
-      setLoading(true)
+      if (isInitial || !fund) setLoading(true)
       setError(null)
 
       const activeFund = await getActiveFund()
@@ -68,11 +68,11 @@ export default function DashboardShell() {
     } finally {
       setLoading(false)
     }
-  }, [])
+  }, [fund])
 
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    loadData(true)
+  }, [])
 
   const activeMenu = resolveActiveMenu(location.pathname)
 

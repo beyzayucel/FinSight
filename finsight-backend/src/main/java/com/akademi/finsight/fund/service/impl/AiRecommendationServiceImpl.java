@@ -210,9 +210,9 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
     }
 
     private MarketDataRequest getLatestMarketData() {
-        return marketDataRepository.findFirstByOrderByDateDesc()
+        return marketDataRepository.findFirstByOrderByDataDateDesc()
                 .map(data -> new MarketDataRequest(
-                        data.getDate(),
+                        data.getDataDate(),
                         data.getUsdReturn(),
                         data.getGoldReturn(),
                         data.getBrentReturn(),

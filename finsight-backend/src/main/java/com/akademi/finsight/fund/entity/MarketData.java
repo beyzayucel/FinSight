@@ -1,14 +1,16 @@
 package com.akademi.finsight.fund.entity;
 
+import com.akademi.finsight.common.entity.SoftDeletableEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -17,14 +19,16 @@ import java.time.LocalDate;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
+@SuperBuilder
 @Entity
-@Table(name = "market_data")
-public class MarketData {
+@Table(name = "market_data", uniqueConstraints = {
+        @UniqueConstraint(name = "uk_market_data_data_date", columnNames = {"data_date"})
+})
+@SQLDelete(sql = "UPDATE market_data SET deleted = 1, deleted_at = SYSDATETIMEOFFSET() WHERE id = ?")
+public class MarketData extends SoftDeletableEntity {
 
-    @Id
-    @Column(nullable = false)
-    private LocalDate date;
+    @Column(name = "data_date", nullable = false)
+    private LocalDate dataDate;
 
     @Column(name = "usd_return", nullable = false, precision = 18, scale = 12)
     private BigDecimal usdReturn;

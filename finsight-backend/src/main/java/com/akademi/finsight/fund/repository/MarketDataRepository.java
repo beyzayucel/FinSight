@@ -6,9 +6,12 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface MarketDataRepository extends JpaRepository<MarketData, LocalDate> {
+public interface MarketDataRepository extends JpaRepository<MarketData, UUID> {
 
-    Optional<MarketData> findFirstByOrderByDateDesc();
+    Optional<MarketData> findFirstByOrderByDataDateDesc();
+
+    Optional<MarketData> findByDataDate(LocalDate dataDate);
 }

@@ -25,10 +25,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.Instant;
 import java.time.LocalDate;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 import java.util.function.Function;
 
 import static com.akademi.finsight.fund.constant.MarketConstants.*;
@@ -63,38 +60,21 @@ public class ModelDataSyncServiceImpl implements ModelDataSyncService {
     private MarketData syncMarketData(LocalDate effectiveDate) {
         log.info("Starting market data sync for date={}", effectiveDate);
 
-        MarketData marketData = MarketData.builder()
-                .date(effectiveDate)
-                .usdReturn(calculateFxReturn(USD_TRY_CODE, effectiveDate))
-                .goldReturn(calculateIndexReturn(GOLD_CODE, effectiveDate))
-                .brentReturn(calculateIndexReturn(BRENT_CODE, effectiveDate))
-                .us10yReturn(calculateIndexReturn(BOND_10Y_CODE, effectiveDate))
-                .cdsSpreadBps(DEFAULT_CDS)
-                .annualInflation(fetchEconomicPrice(INFLATION_CODE, effectiveDate))
-                .policyRate(fetchEconomicPrice(POLICY_RATE_CODE, effectiveDate))
-                .build();
+        MarketData marketData = marketDataRepository.findByDataDate(effectiveDate)
+                .orElseGet(() -> MarketData.builder().dataDate(effectiveDate).build());
+
+        marketData.setDataDate(effectiveDate);
+        marketData.setUsdReturn(calculateFxReturn(USD_TRY_CODE, effectiveDate));
+        marketData.setGoldReturn(calculateIndexReturn(GOLD_CODE, effectiveDate));
+        marketData.setBrentReturn(calculateIndexReturn(BRENT_CODE, effectiveDate));
+        marketData.setUs10yReturn(calculateIndexReturn(BOND_10Y_CODE, effectiveDate));
+        marketData.setCdsSpreadBps(DEFAULT_CDS);
+        marketData.setAnnualInflation(fetchEconomicPrice(INFLATION_CODE, effectiveDate));
+        marketData.setPolicyRate(fetchEconomicPrice(POLICY_RATE_CODE, effectiveDate));
 
         MarketData saved = marketDataRepository.save(marketData);
         log.info("Market data synced successfully for date: {}", effectiveDate);
         return saved;
-    }
-
-    private List<IndexPriceResponse> fetchIndexRatesWithBackwardSearch(String assetCode, LocalDate targetDate) {
-        LocalDate current = targetDate;
-        for (int i = 0; i < MAX_BACKWARD_SEARCH_DAYS; i++) {
-            try {
-                List<IndexPriceResponse> rates = infinaService.getIndexPrices(assetCode, current.toString());
-                if (rates != null && !rates.isEmpty()) {
-                    log.info("Index rates found for asset: {} on date: {}", assetCode, current);
-                    return rates;
-                }
-            } catch (Exception e) {
-                log.debug("No index data for date: {}", current);
-            }
-            current = current.minusDays(1);
-        }
-        log.warn("No index data found in backward search for {}, using latest available", assetCode);
-        return infinaService.getIndexPrices(assetCode, null);
     }
 
     private FundPriceData syncFundPriceData() {
@@ -175,44 +155,46 @@ public class ModelDataSyncServiceImpl implements ModelDataSyncService {
         return dataLagDays > 0 ? LocalDate.now().minusDays(dataLagDays) : LocalDate.now();
     }
 
-    private BigDecimal calculateFxReturn(String assetCode, LocalDate date) {
+    private BigDecimal calculateFxReturn(String assetCode, LocalDate targetDate) {
         try {
-            List<FxPriceResponse> rates = fetchFxPricesWithBackwardSearch(assetCode, date);
-            return calculateDailyReturn(rates, assetCode, FxPriceResponse::dataDate, FxPriceResponse::ask);
+            List<FxPriceResponse> rates = fetchTwoConsecutivePrices(targetDate, dateStr -> infinaService.getFxPrices(assetCode, dateStr));
+            return calculateDailyReturn(rates, targetDate, assetCode, FxPriceResponse::dataDate, FxPriceResponse::ask);
         } catch (Exception e) {
             log.error("Error calculating exchange rate return for asset: {}", assetCode, e);
             return BigDecimal.ZERO;
         }
     }
 
-    private List<FxPriceResponse> fetchFxPricesWithBackwardSearch(String assetCode, LocalDate targetDate) {
-        LocalDate current = targetDate;
-        for (int i = 0; i < MAX_BACKWARD_SEARCH_DAYS; i++) {
-            try {
-                List<FxPriceResponse> rates = infinaService.getFxPrices(assetCode, current.toString());
-                if (rates != null && !rates.isEmpty()) {
-                    return rates;
-                }
-            } catch (Exception e) {
-                log.debug("No FX rates for date: {}", current);
-            }
-            current = current.minusDays(1);
-        }
-        return infinaService.getFxPrices(assetCode, null);
-    }
-
-    private BigDecimal calculateIndexReturn(String assetCode, LocalDate date) {
+    private BigDecimal calculateIndexReturn(String assetCode, LocalDate targetDate) {
         try {
-            List<IndexPriceResponse> rates = fetchIndexRatesWithBackwardSearch(assetCode, date);
-            return calculateDailyReturn(rates, assetCode, IndexPriceResponse::dataDate, IndexPriceResponse::closePrice);
+            List<IndexPriceResponse> rates = fetchTwoConsecutivePrices(targetDate, dateStr -> infinaService.getIndexPrices(assetCode, dateStr));
+            return calculateDailyReturn(rates, targetDate, assetCode, IndexPriceResponse::dataDate, IndexPriceResponse::closePrice);
         } catch (Exception e) {
             log.error("Error calculating index price return for asset: {}", assetCode, e);
             return BigDecimal.ZERO;
         }
     }
 
+    private <T> List<T> fetchTwoConsecutivePrices(LocalDate targetDate, Function<String, List<T>> fetcher) {
+        List<T> found = new ArrayList<>();
+        LocalDate current = targetDate;
+        for (int i = 0; i < MAX_BACKWARD_SEARCH_DAYS && found.size() < 2; i++) {
+            try {
+                List<T> rates = fetcher.apply(current.toString());
+                if (rates != null && !rates.isEmpty()) {
+                    found.addAll(rates);
+                }
+            } catch (Exception e) {
+                log.debug("No price data for date: {}", current);
+            }
+            current = current.minusDays(1);
+        }
+        return found;
+    }
+
     private <T> BigDecimal calculateDailyReturn(
             List<T> items,
+            LocalDate targetDate,
             String assetCode,
             Function<T, LocalDate> dateExtractor,
             Function<T, BigDecimal> priceExtractor) {
@@ -224,39 +206,45 @@ public class ModelDataSyncServiceImpl implements ModelDataSyncService {
 
         List<T> sorted = items.stream()
                 .filter(item -> item != null && dateExtractor.apply(item) != null && priceExtractor.apply(item) != null)
+                .filter(item -> !dateExtractor.apply(item).isAfter(targetDate))
                 .sorted(Comparator.comparing(dateExtractor))
                 .toList();
 
-        if (sorted.isEmpty()) {
+        if (sorted.size() < 2) {
+            log.warn("Insufficient data points (< 2) for {} on or before {}, cannot calculate daily return, defaulting to 0", assetCode, targetDate);
             return BigDecimal.ZERO;
         }
 
-        if (sorted.size() >= 2) {
-            BigDecimal priceToday = priceExtractor.apply(sorted.getLast());
-            BigDecimal pricePrev = priceExtractor.apply(sorted.get(sorted.size() - 2));
+        T todayItem = sorted.getLast();
+        T prevItem = sorted.get(sorted.size() - 2);
 
-            if (pricePrev.compareTo(BigDecimal.ZERO) == 0) {
-                return BigDecimal.ZERO;
-            }
-            return priceToday.subtract(pricePrev).divide(pricePrev, RETURN_SCALE, RoundingMode.HALF_UP);
+        BigDecimal priceToday = priceExtractor.apply(todayItem);
+        BigDecimal pricePrev = priceExtractor.apply(prevItem);
+
+        if (pricePrev == null || pricePrev.compareTo(BigDecimal.ZERO) == 0) {
+            return BigDecimal.ZERO;
         }
 
-        BigDecimal price = priceExtractor.apply(sorted.getFirst());
-        return price != null ? price : BigDecimal.ZERO;
+        BigDecimal dailyReturn = priceToday.subtract(pricePrev).divide(pricePrev, RETURN_SCALE, RoundingMode.HALF_UP);
+        log.info("Calculated daily return for {}: todayDate={}, todayPrice={}, prevDate={}, prevPrice={}, return={}",
+                assetCode, dateExtractor.apply(todayItem), priceToday, dateExtractor.apply(prevItem), pricePrev, dailyReturn);
+
+        return dailyReturn;
     }
 
-    private BigDecimal fetchEconomicPrice(String assetCode, LocalDate date) {
+    private BigDecimal fetchEconomicPrice(String assetCode, LocalDate targetDate) {
         BigDecimal fallback = getDefaultEconomicPrice(assetCode);
         try {
-            List<EconomicPriceResponse> rates = fetchEconomicPricesWithBackwardSearch(assetCode, date);
+            List<EconomicPriceResponse> rates = infinaService.getEconomicPrices(assetCode, null);
             if (rates == null || rates.isEmpty()) {
                 log.warn("No economic data returned for {}, using fallback: {}", assetCode, fallback);
                 return fallback;
             }
 
             return rates.stream()
-                    .filter(rate -> rate != null && rate.price() != null)
-                    .max(Comparator.comparing(EconomicPriceResponse::dataDate, Comparator.nullsFirst(Comparator.naturalOrder())))
+                    .filter(rate -> rate != null && rate.price() != null && rate.dataDate() != null)
+                    .filter(rate -> !rate.dataDate().isAfter(targetDate))
+                    .max(Comparator.comparing(EconomicPriceResponse::dataDate))
                     .map(EconomicPriceResponse::price)
                     .orElse(fallback);
         } catch (Exception e) {
@@ -265,26 +253,10 @@ public class ModelDataSyncServiceImpl implements ModelDataSyncService {
         }
     }
 
-    private List<EconomicPriceResponse> fetchEconomicPricesWithBackwardSearch(String assetCode, LocalDate targetDate) {
-        LocalDate current = targetDate;
-        for (int i = 0; i < MAX_BACKWARD_SEARCH_DAYS; i++) {
-            try {
-                List<EconomicPriceResponse> rates = infinaService.getEconomicPrices(assetCode, current.toString());
-                if (rates != null && !rates.isEmpty()) {
-                    return rates;
-                }
-            } catch (Exception e) {
-                log.debug("No economic rates for date: {}", current);
-            }
-            current = current.minusDays(1);
-        }
-        return infinaService.getEconomicPrices(assetCode, null);
-    }
-
     private BigDecimal getDefaultEconomicPrice(String assetCode) {
         return switch (assetCode) {
-            case INFLATION_CODE -> DEFAULT_INFLATION;
-            case POLICY_RATE_CODE -> DEFAULT_POLICY_RATE;
+            case INFLATION_CODE -> null;
+            case POLICY_RATE_CODE -> null;
             default -> BigDecimal.ZERO;
         };
     }

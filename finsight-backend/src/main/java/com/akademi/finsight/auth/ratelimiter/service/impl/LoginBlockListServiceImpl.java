@@ -35,6 +35,13 @@ public class LoginBlockListServiceImpl implements LoginBlocklistService {
     }
 
     @Override
+    public void unblockUser(String hashedIdentifier) {
+        String blockKey = keyGenerator.createBlockKey(hashedIdentifier);
+        redisTemplate.delete(blockKey);
+        log.info("User unblocked: {}", hashedIdentifier);
+    }
+
+    @Override
     public boolean isBlocked(String hashedIdentifier) {
         String blockKey = keyGenerator.createBlockKey(hashedIdentifier);
         return Boolean.TRUE.equals(redisTemplate.hasKey(blockKey));

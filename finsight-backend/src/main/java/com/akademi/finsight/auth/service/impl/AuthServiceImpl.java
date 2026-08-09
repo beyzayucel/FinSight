@@ -297,6 +297,8 @@ public class AuthServiceImpl implements AuthService {
         refreshTokenService.revokeAllByUser(user);
         tokenInvalidationService.invalidateTokensIssuedBefore(user.getEmail());
         auditLogService.createAuditLogForSelf(AuditActionType.PASSWORD_RESET_COMPLETED, user);
+        loginRateLimitService.clearAllRestrictions(user.getEmail());
+        loginRateLimitService.clearAllRestrictions(user.getUsername());
         sendPasswordChangedNotification(user);
 
         log.info("Password reset completed: event=PASSWORD_RESET_COMPLETED, email={}", MaskType.EMAIL.mask(user.getEmail()));

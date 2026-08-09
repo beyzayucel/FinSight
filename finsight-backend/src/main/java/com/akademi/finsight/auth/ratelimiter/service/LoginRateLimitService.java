@@ -6,4 +6,5 @@ public interface LoginRateLimitService {
     boolean incrementFailedAttempts(String identifier);
     void checkAttemptsOrThrow(String identifier) throws RateLimitException;
     void resetAttempts(String identifier);
+    void clearAllRestrictions(String identifier);
 }

@@ -115,6 +115,7 @@ app:
     password-reset:
       max-requests-per-email: ${PASSWORD_RESET_RATE_LIMIT_MAX_PER_EMAIL}
       duration: ${PASSWORD_RESET_RATE_LIMIT_DURATION}
+      cooldown-duration: ${PASSWORD_RESET_COOLDOWN_DURATION}
 
   otp:
     expire-duration: ${OTP_EXPIRE_DURATION}

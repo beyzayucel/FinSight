@@ -18,4 +18,5 @@ import java.time.Duration;
 public class PasswordResetRateLimitProperties {
     private int maxRequestsPerEmail;
     private Duration duration;
+    private Duration cooldownDuration;
 }

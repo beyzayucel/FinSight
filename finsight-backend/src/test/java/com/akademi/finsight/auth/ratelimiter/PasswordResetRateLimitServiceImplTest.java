@@ -26,7 +26,9 @@ class PasswordResetRateLimitServiceImplTest {
 
     private static final String EMAIL = "mehmet@test.com";
     private static final String EMAIL_KEY = "password-reset:requests:email:hashed-email";
+    private static final String COOLDOWN_KEY = "password-reset:cooldown:email:hashed-email";
     private static final Duration WINDOW = Duration.ofMinutes(15);
+    private static final Duration COOLDOWN = Duration.ofSeconds(60);
     private static final int MAX_PER_EMAIL = 3;
 
     @Mock
@@ -53,8 +55,11 @@ class PasswordResetRateLimitServiceImplTest {
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         lenient().when(identifierHasher.hash(EMAIL)).thenReturn("hashed-email");
         lenient().when(rateLimitKeyGenerator.createPasswordResetEmailKey("hashed-email")).thenReturn(EMAIL_KEY);
+        lenient().when(rateLimitKeyGenerator.createPasswordResetCooldownKey("hashed-email")).thenReturn(COOLDOWN_KEY);
         lenient().when(properties.getMaxRequestsPerEmail()).thenReturn(MAX_PER_EMAIL);
         lenient().when(properties.getDuration()).thenReturn(WINDOW);
+        lenient().when(properties.getCooldownDuration()).thenReturn(COOLDOWN);
+        lenient().when(valueOperations.setIfAbsent(COOLDOWN_KEY, "1", COOLDOWN)).thenReturn(true);
     }
 
     // ──────────────────────────────────────────────────────────────
@@ -93,6 +98,29 @@ class PasswordResetRateLimitServiceImplTest {
                     () -> rateLimitService.checkAndCountOrThrow(EMAIL));
 
             assertEquals(RateLimitErrorType.PASSWORD_RESET_RATE_LIMIT_EXCEEDED, exception.getErrorType());
+            verify(valueOperations, never()).setIfAbsent(anyString(), anyString(), any(Duration.class));
+        }
+
+        @Test
+        @DisplayName("should reject a repeated request while the cooldown is active")
+        void shouldRejectRequestDuringCooldown() {
+            when(valueOperations.increment(EMAIL_KEY)).thenReturn(2L);
+            when(valueOperations.setIfAbsent(COOLDOWN_KEY, "1", COOLDOWN)).thenReturn(false);
+
+            RateLimitException exception = assertThrows(RateLimitException.class,
+                    () -> rateLimitService.checkAndCountOrThrow(EMAIL));
+
+            assertEquals(RateLimitErrorType.PASSWORD_RESET_COOLDOWN_ACTIVE, exception.getErrorType());
+        }
+
+        @Test
+        @DisplayName("should acquire the cooldown atomically after passing the abuse limit")
+        void shouldAcquireCooldownAtomically() {
+            when(valueOperations.increment(EMAIL_KEY)).thenReturn(1L);
+
+            rateLimitService.checkAndCountOrThrow(EMAIL);
+
+            verify(valueOperations).setIfAbsent(COOLDOWN_KEY, "1", COOLDOWN);
         }
 
         /** E-posta Redis'e hash'lenerek yazilmali, acik PII anahtarda durmamali. */

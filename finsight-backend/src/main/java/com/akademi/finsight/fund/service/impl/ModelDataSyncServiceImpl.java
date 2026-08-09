@@ -1,6 +1,8 @@
 package com.akademi.finsight.fund.service.impl;
 
 import com.akademi.finsight.fund.config.FundProperties;
+import com.akademi.finsight.fund.dto.response.FundPriceDataResponse;
+import com.akademi.finsight.fund.dto.response.MarketDataResponse;
 import com.akademi.finsight.fund.dto.response.ModelDataSyncResponse;
 import com.akademi.finsight.fund.entity.Fund;
 import com.akademi.finsight.fund.entity.FundPriceData;
@@ -21,7 +23,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.time.DayOfWeek;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Comparator;
@@ -51,33 +52,30 @@ public class ModelDataSyncServiceImpl implements ModelDataSyncService {
     @Transactional
     public ModelDataSyncResponse sync() {
         log.info("Starting unified model data sync (Market Data + Fund Price Data)");
-        MarketData marketData = syncMarketData();
         FundPriceData fundPriceData = syncFundPriceData();
-        return new ModelDataSyncResponse(marketData, fundPriceData);
+        MarketData marketData = syncMarketData(fundPriceData.getDataDate());
+        return new ModelDataSyncResponse(
+                MarketDataResponse.from(marketData),
+                FundPriceDataResponse.from(fundPriceData)
+        );
     }
 
-    @Override
-    @Transactional
-    public MarketData syncMarketData() {
-        LocalDate targetDate = resolveTargetDate();
-        log.info("Starting market data sync with backward search from targetDate={}", targetDate);
-
-        List<IndexPriceResponse> goldRates = fetchIndexRatesWithBackwardSearch(GOLD_CODE, targetDate);
-        LocalDate actualDate = resolveMarketDate(goldRates).orElse(targetDate);
+    private MarketData syncMarketData(LocalDate effectiveDate) {
+        log.info("Starting market data sync for date={}", effectiveDate);
 
         MarketData marketData = MarketData.builder()
-                .date(actualDate)
-                .usdReturn(calculateFxReturn(USD_TRY_CODE, targetDate))
-                .goldReturn(calculateDailyReturn(goldRates, GOLD_CODE, IndexPriceResponse::dataDate, IndexPriceResponse::closePrice))
-                .brentReturn(calculateIndexReturn(BRENT_CODE, targetDate))
-                .us10yReturn(calculateIndexReturn(BOND_10Y_CODE, targetDate))
+                .date(effectiveDate)
+                .usdReturn(calculateFxReturn(USD_TRY_CODE, effectiveDate))
+                .goldReturn(calculateIndexReturn(GOLD_CODE, effectiveDate))
+                .brentReturn(calculateIndexReturn(BRENT_CODE, effectiveDate))
+                .us10yReturn(calculateIndexReturn(BOND_10Y_CODE, effectiveDate))
                 .cdsSpreadBps(DEFAULT_CDS)
-                .annualInflation(fetchEconomicPrice(INFLATION_CODE, targetDate))
-                .policyRate(fetchEconomicPrice(POLICY_RATE_CODE, targetDate))
+                .annualInflation(fetchEconomicPrice(INFLATION_CODE, effectiveDate))
+                .policyRate(fetchEconomicPrice(POLICY_RATE_CODE, effectiveDate))
                 .build();
 
         MarketData saved = marketDataRepository.save(marketData);
-        log.info("Market data synced successfully for resolved date: {}", actualDate);
+        log.info("Market data synced successfully for date: {}", effectiveDate);
         return saved;
     }
 
@@ -99,30 +97,19 @@ public class ModelDataSyncServiceImpl implements ModelDataSyncService {
         return infinaService.getIndexPrices(assetCode, null);
     }
 
-    private Optional<LocalDate> resolveMarketDate(List<IndexPriceResponse> rates) {
-        if (rates == null) return Optional.empty();
-        return rates.stream()
-                .filter(rate -> rate != null && rate.dataDate() != null)
-                .map(IndexPriceResponse::dataDate)
-                .max(Comparator.naturalOrder());
-    }
-
-    @Override
-    @Transactional
-    public FundPriceData syncFundPriceData() {
+    private FundPriceData syncFundPriceData() {
         String fundCode = fundProperties.getCode();
         LocalDate targetDate = resolveTargetDate();
         log.info("Starting fund price sync with backward search for fundCode={}, targetDate={}", fundCode, targetDate);
 
-        Fund fund = getOrCreateFund(fundCode);
         List<FundPriceResponse> prices = fetchFundPricesWithBackwardSearch(fundCode, targetDate);
 
-        if (prices == null || prices.isEmpty()) {
-            log.warn("No price data returned from FonFiyat for fund: {}", fundCode);
-            return null;
+        if (prices.isEmpty()) {
+            throw new IllegalStateException("Could not fetch fund price data for fundCode: " + fundCode);
         }
 
         FundPriceResponse targetPrice = resolveTargetPrice(prices);
+        Fund fund = getOrCreateFund(fundCode);
         LocalDate dataDate = targetPrice.dataDate() != null ? targetPrice.dataDate() : targetDate;
 
         FundPriceData entity = findOrCreatePriceEntity(fund, dataDate);
@@ -188,9 +175,9 @@ public class ModelDataSyncServiceImpl implements ModelDataSyncService {
         return dataLagDays > 0 ? LocalDate.now().minusDays(dataLagDays) : LocalDate.now();
     }
 
-    private BigDecimal calculateFxReturn(String assetCode, LocalDate targetDate) {
+    private BigDecimal calculateFxReturn(String assetCode, LocalDate date) {
         try {
-            List<FxPriceResponse> rates = fetchFxPricesWithBackwardSearch(assetCode, targetDate);
+            List<FxPriceResponse> rates = fetchFxPricesWithBackwardSearch(assetCode, date);
             return calculateDailyReturn(rates, assetCode, FxPriceResponse::dataDate, FxPriceResponse::ask);
         } catch (Exception e) {
             log.error("Error calculating exchange rate return for asset: {}", assetCode, e);
@@ -214,9 +201,9 @@ public class ModelDataSyncServiceImpl implements ModelDataSyncService {
         return infinaService.getFxPrices(assetCode, null);
     }
 
-    private BigDecimal calculateIndexReturn(String assetCode, LocalDate targetDate) {
+    private BigDecimal calculateIndexReturn(String assetCode, LocalDate date) {
         try {
-            List<IndexPriceResponse> rates = fetchIndexRatesWithBackwardSearch(assetCode, targetDate);
+            List<IndexPriceResponse> rates = fetchIndexRatesWithBackwardSearch(assetCode, date);
             return calculateDailyReturn(rates, assetCode, IndexPriceResponse::dataDate, IndexPriceResponse::closePrice);
         } catch (Exception e) {
             log.error("Error calculating index price return for asset: {}", assetCode, e);
@@ -258,10 +245,10 @@ public class ModelDataSyncServiceImpl implements ModelDataSyncService {
         return price != null ? price : BigDecimal.ZERO;
     }
 
-    private BigDecimal fetchEconomicPrice(String assetCode, LocalDate targetDate) {
+    private BigDecimal fetchEconomicPrice(String assetCode, LocalDate date) {
         BigDecimal fallback = getDefaultEconomicPrice(assetCode);
         try {
-            List<EconomicPriceResponse> rates = fetchEconomicPricesWithBackwardSearch(assetCode, targetDate);
+            List<EconomicPriceResponse> rates = fetchEconomicPricesWithBackwardSearch(assetCode, date);
             if (rates == null || rates.isEmpty()) {
                 log.warn("No economic data returned for {}, using fallback: {}", assetCode, fallback);
                 return fallback;

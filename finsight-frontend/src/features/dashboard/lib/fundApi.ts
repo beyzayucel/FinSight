@@ -76,20 +76,6 @@ export function mapAssetDistributionToWeights(distribution: FundAssetDistributio
 }
 
 // Manuel Senaryo backend'i (feat/portfolio-scenario-management) doğru şekilde /api/v1 önekli
-// kuruldu — bu iki fonksiyon normal `api` client'ını kullanıyor, workaround gerekmiyor.
-
-type FundDistributionResponse = { id: string; fundId: string; category: string; weight: number }
-
-/** Fon kodundan gerçek fon UUID'sini bulur (manuel senaryo kaydı fundId ister). */
-export async function getFundIdByCode(fundCode: string): Promise<string> {
-  const response = await api.get<ApiResponse<FundDistributionResponse[]>>(
-    `/fund-distributions/funds/${fundCode}/latest`
-  )
-  const [first] = response.data.data
-  if (!first) throw new Error(`"${fundCode}" için fon dağılımı bulunamadı`)
-  return first.fundId
-}
-
 // Bizim AssetClass anahtarlarımızı backend'in AssetCategory enum'una eşler.
 const ASSET_CATEGORY_MAP: Record<AssetClass, 'STOCK' | 'REPO' | 'FUTURE' | 'FUND'> = {
   hisseSenedi: 'STOCK',

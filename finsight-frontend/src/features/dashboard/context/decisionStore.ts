@@ -1,5 +1,6 @@
 import { createContext, useContext } from 'react'
 import type { SimulationWindow, Weights } from '@/features/dashboard/lib/simulation'
+import type { Fund } from '@/features/dashboard/dashboardApi'
 
 export type DecisionSource = 'ai' | 'manual'
 export type DecisionStatus = 'accepted' | 'rejected'
@@ -24,9 +25,16 @@ export type FundInfoState =
   | { status: 'error'; message: string }
   | { status: 'ready'; baseValue: number; refWeights: Weights }
 
+export type ActiveFundState =
+  | { status: 'loading' }
+  | { status: 'error'; message: string }
+  | { status: 'ready'; fund: Fund }
+
 export type DecisionContextValue = {
   activeFund: ActiveFund
   fundInfo: FundInfoState
+  fundState: ActiveFundState
+  reloadFund: () => void
   analysisWindow: SimulationWindow
   setAnalysisWindow: (window: SimulationWindow) => void
   decision: Decision | null

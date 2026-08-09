@@ -76,8 +76,8 @@ export default function AdminDashboardPage() {
   const t = getTranslations()
 
   useEffect(() => {
-    document.title = 'Finsight · Management'
-  }, [])
+    document.title = `Finsight · ${t.adminDashboardTitle}`
+  }, [t.adminDashboardTitle])
 
   // ── State ──
   const [stats, setStats] = useState<UserStatsResponse | null>(null)
@@ -338,7 +338,7 @@ export default function AdminDashboardPage() {
       <KpiCards stats={stats} loading={statsLoading} t={t} />
 
       {/* Tablo + Detay paneli */}
-      <div className="grid grid-cols-[1fr_320px] gap-5 items-stretch">
+      <div className="grid grid-cols-1 items-stretch gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <UsersTable
           data={usersData}
           loading={usersLoading}

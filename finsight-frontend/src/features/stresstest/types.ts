@@ -1,9 +1,15 @@
+import { getLang } from '@/lib/authStore'
+
 export type ScenarioKey = 'EQUITY_SHOCK' | 'INTEREST_RATE_SHOCK'
 
 /** Stres Testi ve Karar Geçmişi ekranları aynı senaryo adlarını göstermeli. */
-export const SCENARIO_TITLES: Record<ScenarioKey, string> = {
-  EQUITY_SHOCK: 'Hisse Şoku',
-  INTEREST_RATE_SHOCK: 'Faiz Şoku',
+export const SCENARIO_TITLES: Record<ScenarioKey, { tr: string; en: string }> = {
+  EQUITY_SHOCK: { tr: 'Hisse Şoku', en: 'Equity Shock' },
+  INTEREST_RATE_SHOCK: { tr: 'Faiz Şoku', en: 'Interest Rate Shock' },
+}
+
+export function getScenarioTitle(key: ScenarioKey): string {
+  return SCENARIO_TITLES[key][getLang() === 'en' ? 'en' : 'tr']
 }
 
 export interface PortfolioDataDto {

@@ -1,31 +1,44 @@
-import { Fragment, useMemo } from 'react'
+import { Fragment } from 'react'
 import { Cell, Pie, PieChart, ResponsiveContainer } from 'recharts'
 import type { FundDistributionItem } from '../../lib/fund-dashboard/fundDashboardApi'
 import { categoryColor } from './fundColors'
+import { getTranslations } from '@/i18n/translations'
+import { getAssetCategoryLabel, type AssetCategory } from '../../dashboardApi'
 
 type PortfolioDistributionCardProps = {
   distribution: FundDistributionItem[]
   onOpenStockBreakdown: () => void
 }
 
+function localizeCategory(category: string): string {
+  const value = category.toLocaleLowerCase('tr-TR')
+  const key: AssetCategory | undefined = value.includes('hisse') || value.includes('stock')
+    ? 'STOCK'
+    : value.includes('repo')
+      ? 'REPO'
+      : value.includes('vadel') || value.includes('future') || value.includes('teminat')
+        ? 'FUTURE'
+        : value.includes('fon') || value.includes('fund')
+          ? 'FUND'
+          : undefined
+  return key ? getAssetCategoryLabel(key) : category
+}
+
 export default function PortfolioDistributionCard({
   distribution,
   onOpenStockBreakdown,
 }: PortfolioDistributionCardProps) {
-  const slices = useMemo(
-    () =>
-      distribution
-        .map((item, i) => ({ ...item, color: categoryColor(item.category, i) }))
-        .sort((a, b) => b.weight - a.weight),
-    [distribution]
-  )
+  const t = getTranslations()
+  const slices = distribution
+    .map((item, i) => ({ ...item, color: categoryColor(item.category, i) }))
+    .sort((a, b) => b.weight - a.weight)
 
   return (
     <div className="lg:col-span-5 bg-white rounded-2xl border border-slate-200/80 shadow-sm p-6 flex flex-col">
       <div>
-        <h3 className="text-base font-bold text-slate-800">Portföy Dağılımı</h3>
+        <h3 className="text-base font-bold text-slate-800">{t.portfolioDistribution}</h3>
         <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-          {slices.length} yatırım kategorisi · güncel ağırlıklar
+          {t.investmentCategories(slices.length)}
         </p>
       </div>
 
@@ -60,7 +73,7 @@ export default function PortfolioDistributionCard({
                 className="w-3 h-3 rounded-full"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="font-semibold text-slate-700 leading-snug">{item.category}</span>
+              <span className="font-semibold text-slate-700 leading-snug">{localizeCategory(item.category)}</span>
               <span className="text-right font-bold font-mono tabular-nums text-slate-800">
                 {item.weight.toFixed(2).replace('.', ',')}%
               </span>
@@ -73,7 +86,7 @@ export default function PortfolioDistributionCard({
         onClick={onOpenStockBreakdown}
         className="self-start text-xs font-semibold text-[#c89834] underline underline-offset-4 hover:text-[#a87e2a] transition-colors outline-none select-none"
       >
-        Hisse Senedi alt kırılımını gör →
+        {t.viewStockBreakdown}
       </button>
     </div>
   )

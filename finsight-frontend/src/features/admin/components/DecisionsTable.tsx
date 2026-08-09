@@ -44,7 +44,8 @@ export default function DecisionsTable({ decisions, loading, t }: DecisionsTable
       </div>
       <p className="text-xs text-admin-text-faint font-medium mb-4 max-w-2xl">{t.adminPanelTableDesc}</p>
 
-      <table className="w-full border-collapse">
+      <div className="overflow-x-auto">
+      <table className="min-w-[620px] w-full border-collapse">
         <thead>
           <tr>
             {headers.map((header) => (
@@ -97,6 +98,7 @@ export default function DecisionsTable({ decisions, loading, t }: DecisionsTable
           )}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }

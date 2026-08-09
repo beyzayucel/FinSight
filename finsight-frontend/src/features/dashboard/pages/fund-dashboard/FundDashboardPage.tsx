@@ -13,6 +13,7 @@ import { getLatestDecisionState } from '../../lib/decisionHistoryApi'
 import type { LatestDecisionState } from '../../lib/decisionHistoryApi'
 import { formatBps, nominalDays } from '../../lib/fund-dashboard/fundDashboardFormatters'
 import { formatSignedPercent } from '../../lib/formatters'
+import { getTranslations } from '@/i18n/translations'
 
 type FundDashboardPageProps = {
   fundId: string
@@ -27,6 +28,7 @@ export default function FundDashboardPage({
   onGoToAiDecision,
   onAssetClassCountChange,
 }: FundDashboardPageProps) {
+  const t = getTranslations()
   const [data, setData] = useState<FundDashboard | null>(null)
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
@@ -43,13 +45,13 @@ export default function FundDashboardPage({
     } catch (err: any) {
       setError(
         err?.response?.status === 404
-          ? 'Fon verisi henüz senkronize edilmemiş. Lütfen daha sonra tekrar deneyin.'
-          : err?.message || 'Fon dashboard verisi yüklenirken bir hata oluştu.'
+          ? t.fundNotSynced
+          : err?.message || t.fundDashboardLoadError
       )
     } finally {
       setLoading(false)
     }
-  }, [onAssetClassCountChange])
+  }, [onAssetClassCountChange, t.fundDashboardLoadError, t.fundNotSynced])
 
   useEffect(() => {
     loadData()
@@ -74,7 +76,7 @@ export default function FundDashboardPage({
     return (
       <div className="flex flex-col items-center justify-center min-h-[50vh]">
         <div className="h-10 w-10 border-4 border-[#c89834] border-t-transparent rounded-full animate-spin mb-4" />
-        <span className="text-slate-500 font-medium">Fon verileri yükleniyor...</span>
+        <span className="text-slate-500 font-medium">{t.fundInfoLoadingText}</span>
       </div>
     )
   }
@@ -82,15 +84,15 @@ export default function FundDashboardPage({
   if (error || !data || !period) {
     return (
       <div className="bg-rose-50 border border-rose-100 rounded-2xl p-6 text-center max-w-xl mx-auto mt-12 space-y-4">
-        <h3 className="text-lg font-bold text-rose-800">Fon Verisi Alınamadı</h3>
+        <h3 className="text-lg font-bold text-rose-800">{t.fundInfoErrorTitle}</h3>
         <p className="text-sm text-rose-700">
-          {error || 'Fon dashboard verisi bulunamadı. Lütfen tekrar deneyin.'}
+          {error || t.fundDashboardEmpty}
         </p>
         <button
           onClick={loadData}
           className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold uppercase select-none transition-all shadow-sm"
         >
-          Yeniden Dene
+          {t.retry}
         </button>
       </div>
     )
@@ -104,7 +106,7 @@ export default function FundDashboardPage({
   return (
     <div className="space-y-5 animate-fade-in">
       <h2 className="text-3xl font-bold font-mono text-slate-800 select-none tracking-tight">
-        Fon Dashboard
+        {t.fundDashboardTitle}
       </h2>
 
       {/* ---------- KPI KARTLARI ---------- */}
@@ -117,24 +119,24 @@ export default function FundDashboardPage({
         />
 
         <FundMetricCard
-          label="Günlük Getiri"
+          label={t.fundDailyReturn}
           value={formatSignedPercent(data.dailyReturn)}
           positive={dailyPositive}
-          badge={dailyPositive ? '▲ pozitif' : '▼ negatif'}
+          badge={dailyPositive ? `▲ ${t.fundPositive}` : `▼ ${t.fundNegative}`}
         />
 
         <FundMetricCard
-          label="Birikimli Getiri"
+          label={t.fundCumulativeReturn}
           value={formatSignedPercent(period.cumulativeReturn)}
           positive={cumulativePositive}
-          badge={`${cumulativePositive ? '▲' : '▼'} son ${periodDays} gün`}
+          badge={`${cumulativePositive ? '▲' : '▼'} ${t.fundLastDays(periodDays)}`}
         />
 
         <FundMetricCard
-          label="Benchmark Farkı"
+          label={t.fundBenchmarkDifference}
           value={formatBps(period.benchmarkDiffBps)}
           positive={benchAbove}
-          badge={`${benchAbove ? '▲ benchmark üstü' : '▼ benchmark altı'} · ${formatSignedPercent(
+          badge={`${benchAbove ? `▲ ${t.fundAboveBenchmark}` : `▼ ${t.fundBelowBenchmark}`} · ${formatSignedPercent(
             period.benchmarkDiffBps / 100
           )}`}
         />

@@ -3,7 +3,7 @@ import { IoLockClosedOutline } from 'react-icons/io5'
 import { ScenarioSelector } from './ScenarioSelector'
 import { ResultsTable } from './ResultsTable'
 import { LLMCommentSection } from './LLMCommentSection'
-import { SCENARIO_TITLES, type PortfolioDataDto, type ScenarioKey, type StressTestInferenceResponseDto } from './types'
+import { getScenarioTitle, type PortfolioDataDto, type ScenarioKey, type StressTestInferenceResponseDto } from './types'
 import { useDecision } from '@/features/dashboard/context/decisionStore'
 import { runSimulation, getSimulationResultByPeriod } from './stressTestApi'
 import { formatIsoDate } from '@/features/dashboard/lib/fund-dashboard/fundDashboardFormatters'
@@ -155,7 +155,7 @@ export default function StressTestPage({
               <span className="text-xs text-slate-600 font-semibold tracking-wide">
                 {viewMode === 'HISTORICAL'
                   ? `Seçili döneme (Son ${analysisWindow} Gün) ait analiz verileri yükleniyor...`
-                  : `${SCENARIO_TITLES[scenario]} senaryosu canlı hesaplanıyor...`}
+                  : `${getScenarioTitle(scenario)} senaryosu canlı hesaplanıyor...`}
               </span>
             </div>
           ) : result ? (
@@ -164,7 +164,7 @@ export default function StressTestPage({
                 <div>
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-bold text-slate-900">
-                      Senaryo Sonucu: {SCENARIO_TITLES[scenario]}
+                      Senaryo Sonucu: {getScenarioTitle(scenario)}
                     </h2>
                     {/* Hangi modda olunduğunu gösteren Rozet (Badge) */}
                     <span

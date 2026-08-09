@@ -8,13 +8,13 @@ import { getLang, setLang as setStoreLang, getAccessToken, getPostLoginRoute } f
 
 export default function LoginPage() {
   const token = getAccessToken()
-  if (token) {
-    return <Navigate to={getPostLoginRoute()} replace />
-  }
-
   const stored = getLang()
   const [lang, setLang] = useState<Lang>(stored === 'en' ? 'en' : 'tr')
   const t = translations[lang]
+
+  if (token) {
+    return <Navigate to={getPostLoginRoute()} replace />
+  }
 
   function handleLangChange(newLang: Lang) {
     setLang(newLang)

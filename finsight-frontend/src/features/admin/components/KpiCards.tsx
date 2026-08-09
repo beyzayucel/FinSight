@@ -74,7 +74,7 @@ const cards: CardConfig[] = [
 
 export default function KpiCards({ stats, loading, t }: KpiCardsProps) {
   return (
-    <div className="grid grid-cols-4 gap-4 mb-[22px]">
+    <div className="mb-[22px] grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
       {cards.map((card) => (
         <div
           key={card.key}

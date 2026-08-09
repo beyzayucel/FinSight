@@ -1,4 +1,6 @@
 import type { PortfolioResultDto } from './types'
+import { getTranslations } from '@/i18n/translations'
+import { getLang } from '@/lib/authStore'
 
 interface ResultsRow {
   label: string
@@ -9,14 +11,8 @@ interface ResultsTableProps {
   rows: ResultsRow[]
 }
 
-const currencyFormatter = new Intl.NumberFormat('tr-TR', {
-  style: 'currency',
-  currency: 'TRY',
-  maximumFractionDigits: 0,
-})
-
 function formatPercent(rate: number): string {
-  const percentValue = (rate * 100).toLocaleString('tr-TR', {
+  const percentValue = (rate * 100).toLocaleString(getLang() === 'en' ? 'en-US' : 'tr-TR', {
     minimumFractionDigits: 2,
     maximumFractionDigits: 2,
     signDisplay: 'exceptZero',
@@ -25,17 +21,20 @@ function formatPercent(rate: number): string {
 }
 
 export function ResultsTable({ rows }: ResultsTableProps) {
-  console.log('ResultsTable Gelen Rows:', rows)
+  const t = getTranslations()
+  const currencyFormatter = new Intl.NumberFormat(getLang() === 'en' ? 'en-US' : 'tr-TR', {
+    style: 'currency', currency: 'TRY', maximumFractionDigits: 0,
+  })
   
   return (
     <div className="overflow-x-auto">
       <table className="w-full min-w-[560px] text-left text-xs">
         <thead>
           <tr className="border-b border-slate-200 text-slate-400 font-bold uppercase tracking-wider">
-            <th scope="col" className="pb-3 pr-4 font-semibold">Portföy</th>
-            <th scope="col" className="pb-3 pr-4 font-semibold">Şok Öncesi Değer</th>
-            <th scope="col" className="pb-3 pr-4 font-semibold">Beklenen Etki</th>
-            <th scope="col" className="pb-3 font-semibold">Şok Sonrası Değer</th>
+            <th scope="col" className="pb-3 pr-4 font-semibold">{t.stressPortfolio}</th>
+            <th scope="col" className="pb-3 pr-4 font-semibold">{t.stressBeforeValue}</th>
+            <th scope="col" className="pb-3 pr-4 font-semibold">{t.stressExpectedImpact}</th>
+            <th scope="col" className="pb-3 font-semibold">{t.stressAfterValue}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100 font-medium">

@@ -51,9 +51,9 @@ export default function EditUserModal({ user, onClose, onSubmit, t }: EditUserMo
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4">
       <div className="absolute inset-0 bg-admin-ink/40 backdrop-blur-sm" onClick={onClose} />
-      <div className="relative bg-white rounded-[18px] shadow-2xl border border-admin-line w-full max-w-md mx-4 p-6">
+      <div className="relative max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-[18px] border border-admin-line bg-white p-5 shadow-2xl sm:p-6">
         <h3 className="font-heading text-lg font-bold text-admin-ink mb-1">{t.adminEditUserTitle}</h3>
         <p className="text-xs text-admin-text-mute mb-5">{user.email}</p>
 

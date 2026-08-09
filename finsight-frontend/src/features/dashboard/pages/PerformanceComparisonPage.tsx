@@ -21,7 +21,6 @@ const SERIES = [
 
 
 type Props = {
-  onGoToManualScenario: () => void
   onGoToStressTest: () => void
 }
 
@@ -31,7 +30,7 @@ type FetchState =
   | { status: 'error'; message: string }
   | { status: 'ready'; data: PerformanceComparisonResponse; chartPoints: ChartPoint[] }
 
-export default function PerformanceComparisonPage({ onGoToManualScenario, onGoToStressTest }: Props) {
+export default function PerformanceComparisonPage({ onGoToStressTest }: Props) {
   const t = getTranslations()
   const lang = getLang() === 'en' ? 'en' : 'tr'
   const { activeFund, analysisWindow } = useDecision()
@@ -169,13 +168,13 @@ export default function PerformanceComparisonPage({ onGoToManualScenario, onGoTo
                       const order: Record<string, number> = { mevcut: 0, simulasyon: 1, benchmark: 2 }
                       return order[item.dataKey as string] ?? 3
                     }}
-                    formatter={(value: number, name: string) => {
+                    formatter={(value, name) => {
                       const label = name === 'mevcut' ? t.pcLegendMevcut
                         : name === 'simulasyon' ? t.pcLegendSimulasyon
                         : t.pcLegendBenchmark
-                      return [`${value.toFixed(2)}%`, label]
+                      return [`${Number(value ?? 0).toFixed(2)}%`, label]
                     }}
-                    labelFormatter={(label: string) => label}
+                    labelFormatter={(label) => label}
                   />
                   {SERIES.map((series) => (
                     <Line

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { submitRecommendationDecision, AssetCategoryLabels } from '../dashboardApi'
+import { submitRecommendationDecision, getAssetCategoryLabel } from '../dashboardApi'
 import type { AIRecommendation, AssetCategory } from '../dashboardApi'
 import { IoTrendingDown, IoTrendingUp } from 'react-icons/io5'
 
@@ -78,8 +78,8 @@ export default function AIRecommendationTab({
         </div>
 
         {/* Karşılaştırma Tablosu */}
-        <div className="overflow-hidden border border-slate-100 rounded-xl">
-          <table className="w-full border-collapse text-left text-xs">
+        <div className="overflow-x-auto border border-slate-100 rounded-xl">
+          <table className="min-w-[680px] w-full border-collapse text-left text-xs">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px]">
                 <th className="px-4 py-2.5 font-bold">KATEGORİ</th>
@@ -95,7 +95,7 @@ export default function AIRecommendationTab({
                 const current = weightData?.currentWeight ?? 0
                 const recommended = weightData?.recommendedWeight ?? 0
                 const diff = recommended - current
-                const label = AssetCategoryLabels[cat]?.tr || cat
+                const label = getAssetCategoryLabel(cat)
                 const isStock = cat === 'STOCK'
 
                 return (
@@ -177,8 +177,8 @@ export default function AIRecommendationTab({
             </div>
 
             {/* Alt Kırılım Tablosu */}
-            <div className="overflow-hidden border border-slate-200/80 rounded-xl bg-white shadow-2xs">
-              <table className="w-full border-collapse text-left text-xs">
+            <div className="overflow-x-auto border border-slate-200/80 rounded-xl bg-white shadow-2xs">
+              <table className="min-w-[680px] w-full border-collapse text-left text-xs">
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">
                     <th className="px-4 py-2 font-bold">HİSSE</th>
@@ -396,4 +396,3 @@ export default function AIRecommendationTab({
     </div>
   )
 }
-

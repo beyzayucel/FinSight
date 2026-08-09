@@ -3,12 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { IoChevronDownOutline, IoChevronUpOutline, IoPulseOutline, IoTimeOutline } from 'react-icons/io5'
 import { getLang } from '@/lib/authStore'
 import { ROUTES } from '@/lib/routes'
-import { AssetCategoryLabels } from '../dashboardApi'
+import { getAssetCategoryLabel } from '../dashboardApi'
 import type { AssetCategory } from '../dashboardApi'
 import { useDashboardOutlet } from '../DashboardShell'
 import { getDecisionHistory, type DecisionRecord } from '../lib/decisionHistoryApi'
 import { formatCurrency, formatDate, formatSignedPercent, formatUnsignedPercent } from '../lib/formatters'
-import { SCENARIO_TITLES, type PortfolioResultDto } from '@/features/stresstest/types'
+import { getScenarioTitle, type PortfolioResultDto } from '@/features/stresstest/types'
 
 const ASSET_CATEGORIES: AssetCategory[] = ['STOCK', 'REPO', 'FUTURE', 'FUND']
 
@@ -196,8 +196,8 @@ export default function DecisionHistoryPage() {
                     </div>
 
                     {hasWeights ? (
-                      <div className="overflow-hidden border border-slate-100 rounded-xl">
-                        <table className="w-full border-collapse text-left text-xs">
+                      <div className="overflow-x-auto border border-slate-100 rounded-xl">
+                        <table className="min-w-[580px] w-full border-collapse text-left text-xs">
                           <thead>
                             <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px]">
                               <th className="px-4 py-2.5 font-bold">KATEGORİ</th>
@@ -214,7 +214,7 @@ export default function DecisionHistoryPage() {
                               return (
                                 <tr key={cat}>
                                   <td className="px-4 py-2 font-semibold text-slate-700">
-                                    {AssetCategoryLabels[cat]?.tr || cat}
+                                    {getAssetCategoryLabel(cat)}
                                   </td>
                                   <td className="px-4 py-2 text-right text-slate-500">{formatPct(w.currentWeight)}</td>
                                   <td className="px-4 py-2 text-right font-semibold text-slate-700">
@@ -254,8 +254,8 @@ export default function DecisionHistoryPage() {
                         </button>
 
                         {isStocksOpen && (
-                          <div className="mt-2 overflow-hidden border border-slate-100 rounded-xl animate-fade-in">
-                            <table className="w-full border-collapse text-left text-xs">
+                          <div className="mt-2 overflow-x-auto border border-slate-100 rounded-xl animate-fade-in">
+                            <table className="min-w-[580px] w-full border-collapse text-left text-xs">
                               <thead>
                                 <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px]">
                                   <th className="px-4 py-2.5 font-bold">HİSSE</th>
@@ -331,7 +331,7 @@ export default function DecisionHistoryPage() {
                         <div className="bg-slate-50 border-b border-slate-100 px-4 py-2.5 flex items-center gap-2">
                           <IoPulseOutline className="text-[#c89834]" size={13} />
                           <span className="text-[9.5px] font-bold tracking-wider text-slate-400 uppercase">
-                            Stres Testi · {SCENARIO_TITLES[record.stressTest.scenarioKey] ?? record.stressTest.scenarioKey}
+                            Stres Testi · {getScenarioTitle(record.stressTest.scenarioKey)}
                           </span>
                         </div>
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
-import { AssetCategoryLabels, applyManualScenario } from '../dashboardApi'
+import { getAssetCategoryLabel, applyManualScenario } from '../dashboardApi'
 import type { Fund, AssetCategory } from '../dashboardApi'
 import { getFundDashboard } from '../lib/fund-dashboard/fundDashboardApi'
 
@@ -133,7 +133,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
       const target = getParsedWeightForCat(cat)
       const dev = Math.abs(target - current)
       if (dev > 10.0) {
-        const name = AssetCategoryLabels[cat]?.tr || cat
+        const name = getAssetCategoryLabel(cat)
         newErrors.push(`${name} sapması ±10.00% puanı aşamaz. (Sapma: ${dev.toFixed(2).replace('.', ',')}%)`)
       }
     })
@@ -281,8 +281,8 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
         </div>
 
         {/* Form Tablosu */}
-        <div className="overflow-hidden border border-slate-100 rounded-xl">
-          <table className="w-full border-collapse text-left text-xs">
+        <div className="overflow-x-auto border border-slate-100 rounded-xl">
+          <table className="min-w-[580px] w-full border-collapse text-left text-xs">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px] select-none">
                 <th className="px-4 py-2.5 font-bold">KATEGORİ</th>
@@ -296,7 +296,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
                 const current = fund.weights?.[cat] ?? 0
                 const target = getParsedWeightForCat(cat)
                 const diff = target - current
-                const label = AssetCategoryLabels[cat]?.tr || cat
+                const label = getAssetCategoryLabel(cat)
 
                 const isStock = cat === 'STOCK'
                 const isFloorBreach = isStock && target < 80.0
@@ -436,8 +436,8 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
                 Hisse kırılım verileri yükleniyor...
               </div>
             ) : (
-              <div className="overflow-hidden border border-slate-200/80 rounded-xl bg-white shadow-2xs">
-                <table className="w-full border-collapse text-left text-xs">
+              <div className="overflow-x-auto border border-slate-200/80 rounded-xl bg-white shadow-2xs">
+                <table className="min-w-[580px] w-full border-collapse text-left text-xs">
                   <thead>
                     <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">
                     <th className="px-4 py-2 font-bold">HİSSE</th>

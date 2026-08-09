@@ -84,7 +84,7 @@ export default function UsersTable({
   return (
     <div className="flex flex-col bg-white rounded-[18px] shadow-[0_2px_4px_rgba(18,22,31,0.04),0_12px_26px_-14px_rgba(18,22,31,0.12)] border border-[rgba(231,226,214,0.7)] px-[22px] pt-[22px] pb-2">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="font-heading text-[16.5px] font-bold text-admin-ink">{t.adminUsers}</h2>
           <div className="text-xs text-admin-text-faint font-medium mt-0.5">
@@ -128,8 +128,8 @@ export default function UsersTable({
         </select>
       </div>
 
-      <div className="flex-1">
-      <table className="w-full border-collapse">
+      <div className="flex-1 overflow-x-auto">
+      <table className="min-w-[760px] w-full border-collapse">
         <thead>
           <tr>
             {headers.map((header) => (

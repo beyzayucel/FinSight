@@ -21,6 +21,7 @@ import com.akademi.finsight.stresstest.enums.ExecutionStrategyType;
 import com.akademi.finsight.stresstest.enums.SimulationType;
 import com.akademi.finsight.stresstest.mapper.StressTestResponseAssembler;
 import com.akademi.finsight.stresstest.repository.StressTestResultRepository;
+import com.akademi.finsight.stresstest.service.halper.PortfolioDataBuilder;
 import com.akademi.finsight.stresstest.service.impl.StressTestSimulationServiceImpl;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.repository.UserRepository;
@@ -55,7 +56,7 @@ class StressTestSimulationServiceImplTest {
     @Mock private PortfolioSimulationCalculationService simulationCalculationService;
     @Mock private ScenarioResolver scenarioResolver;
     @Mock private StressTestCalculationEngine strategyEngine;
-
+    @Mock private PortfolioDataBuilder portfolioDataBuilder;
 
     @InjectMocks
     private StressTestSimulationServiceImpl stressTestSimulationService;
@@ -90,8 +91,7 @@ class StressTestSimulationServiceImplTest {
                 AssetCategory.FUND, BigDecimal.valueOf(50)
         );
         ResolvedScenario mockScenario = new ResolvedScenario(mockWeights, ScenarioSource.AI);
-        when(scenarioResolver.resolve(anyString())).thenReturn(Optional.of(mockScenario));
-        when(scenarioResolver.resolve(anyString())).thenReturn(Optional.of(mockScenario));
+        when(scenarioResolver.resolve(anyString(), anyString())).thenReturn(Optional.of(mockScenario));
 
         // FundPeriodMetricService Mock
         // FundPeriodMetricService Mock
@@ -119,6 +119,20 @@ class StressTestSimulationServiceImplTest {
                 List.of(), new PortfolioMetrics(BigDecimal.valueOf(105000), BigDecimal.valueOf(5.0), BigDecimal.ZERO, BigDecimal.ZERO)
         );
         when(simulationCalculationService.calculateSimulation(anyString(), anyInt(), any())).thenReturn(mockCurve);
+
+        // PortfolioDataBuilder Mock
+        PortfolioDataDto simulationPortfolio = PortfolioDataDto.builder()
+                .initialValue(BigDecimal.valueOf(105000))
+                .assetWeights(Map.of("EQUITY", 0.50f, "BOND", 0.50f))
+                .build();
+        PortfolioDataDto benchmarkPortfolio = PortfolioDataDto.builder()
+                .initialValue(BigDecimal.valueOf(102000))
+                .assetWeights(Map.of("EQUITY", 0.50f, "BOND", 0.25f, "FX", 0.15f, "CASH", 0.10f))
+                .build();
+        when(portfolioDataBuilder.buildSimulationPortfolio(anyString(), anyString(), anyInt(), any(BigDecimal.class)))
+                .thenReturn(simulationPortfolio);
+        when(portfolioDataBuilder.buildBenchmarkPortfolio(anyString(), anyInt(), any(BigDecimal.class)))
+                .thenReturn(benchmarkPortfolio);
 
         // Engine Mock
         when(strategyFactory.getEngine(any(ExecutionStrategyType.class))).thenReturn(strategyEngine);

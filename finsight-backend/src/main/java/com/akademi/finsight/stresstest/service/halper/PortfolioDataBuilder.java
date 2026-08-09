@@ -42,9 +42,9 @@ public class PortfolioDataBuilder {
     private final PortfolioSimulationCalculationService simulationCalculationService;
     private final FundPeriodMetricService fundPeriodMetricService;
 
-    public PortfolioDataDto buildSimulationPortfolio(String fundCode, int analysisWindow, BigDecimal initialValue) {
+    public PortfolioDataDto buildSimulationPortfolio(String email, String fundCode, int analysisWindow, BigDecimal initialValue) {
         try {
-            ScenarioResolver.ResolvedScenario scenario = scenarioResolver.resolve(fundCode).orElse(null);
+            ScenarioResolver.ResolvedScenario scenario = scenarioResolver.resolve(email, fundCode).orElse(null);
 
             if (scenario != null && scenario.weights() != null && !scenario.weights().isEmpty()) {
                 PerformanceComparisonResponse.PortfolioCurve simulationCurve = simulationCalculationService

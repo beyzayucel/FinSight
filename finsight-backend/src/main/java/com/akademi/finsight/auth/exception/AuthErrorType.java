@@ -12,6 +12,7 @@ public enum AuthErrorType implements BaseErrorType {
     INVALID_CREDENTIALS("error.invalid.credentials", HttpStatus.UNAUTHORIZED),
     WRONG_CURRENT_PASSWORD("error.wrong.current.password", HttpStatus.BAD_REQUEST),
     SAME_PASSWORD("error.same.password", HttpStatus.BAD_REQUEST),
+    PASSWORD_RECENTLY_USED("error.password.recently.used", HttpStatus.BAD_REQUEST),
     OTP_NOT_ELIGIBLE("error.otp.not.eligible", HttpStatus.FORBIDDEN),
     EMAIL_NOT_VERIFIED("error.email.not.verified", HttpStatus.FORBIDDEN);
 

@@ -16,6 +16,9 @@ public record DecisionRecordResponse(
         String note,
         Instant createdAt,
         List<ManualScenarioWeightResponse> weights,
+        // Karar anındaki hisse ağırlığı snapshot'ı. Manuel ve kabul edilen AI kararları aynı
+        // sözleşmeyi kullanır; reddedilen AI kararlarında ağırlıklar gösterilmez.
+        List<ManualScenarioStockWeightResponse> stockWeights,
         PerformanceMetricsResponse metrics,
         StressTestInferenceResponseDto stressTest
 ) {}

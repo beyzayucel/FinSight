@@ -8,6 +8,14 @@ export type DecisionRecordWeight = {
   currentWeight: number
 }
 
+export type DecisionRecordStockWeight = {
+  /** Hisse kodu (ticker), örn. "ASELS". */
+  assetCode: string
+  targetWeight: number
+  /** Karar anındaki mevcut ağırlık — bugünkü değil, o günkü snapshot. */
+  currentWeight: number
+}
+
 export type DecisionRecordMetrics = {
   totalReturnPct: number | null
   benchmarkDiffPct: number | null
@@ -24,6 +32,8 @@ export type DecisionRecord = {
   note: string | null
   createdAt: string
   weights: DecisionRecordWeight[]
+  /** Yalnızca değiştirilen top-10 hisseler; AI kararlarında şimdilik hep boş. */
+  stockWeights: DecisionRecordStockWeight[]
   metrics: DecisionRecordMetrics
   /** Stres Testi ekranından iliştirilmişse dolu; hiç iliştirilmemişse null. */
   stressTest: StressTestInferenceResponseDto | null

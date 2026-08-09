@@ -3,10 +3,12 @@ package com.akademi.finsight.fund.mapper;
 import com.akademi.finsight.common.mapper.BaseMapperConfig;
 import com.akademi.finsight.fund.dto.request.ManualScenarioRequest;
 import com.akademi.finsight.fund.dto.response.ManualScenarioResponse;
+import com.akademi.finsight.fund.dto.response.ManualScenarioStockWeightResponse;
 import com.akademi.finsight.fund.dto.response.ManualScenarioWeightResponse;
 import com.akademi.finsight.fund.entity.AssetCategory;
 import com.akademi.finsight.fund.entity.Fund;
 import com.akademi.finsight.fund.entity.ManualScenario;
+import com.akademi.finsight.fund.entity.ManualScenarioStockWeight;
 import com.akademi.finsight.fund.entity.ManualScenarioWeight;
 import com.akademi.finsight.stresstest.mapper.StressTestResultMapper;
 import com.akademi.finsight.user.entity.User;
@@ -26,6 +28,7 @@ public interface ManualScenarioMapper {
     @Mapping(target = "createdBy", ignore = true)
     @Mapping(target = "updatedBy", ignore = true)
     @Mapping(target = "weights", ignore = true)
+    @Mapping(target = "stockWeights", ignore = true)
     @Mapping(target = "deleted", ignore = true)
     @Mapping(target = "deletedAt", ignore = true)
     @Mapping(target = "stressTestResult", ignore = true)
@@ -35,13 +38,26 @@ public interface ManualScenarioMapper {
 
     ManualScenarioWeight toWeightEntity(AssetCategory category, BigDecimal targetWeight, BigDecimal currentWeight, ManualScenario scenario);
 
+    ManualScenarioStockWeight toStockWeightEntity(String assetCode, BigDecimal targetWeight, BigDecimal currentWeight, ManualScenario scenario);
+
     @Mapping(target = "fundId", source = "fund.id")
     @Mapping(target = "stressTest", source = "stressTestResult")
     ManualScenarioResponse toResponse(ManualScenario scenario);
 
     default List<ManualScenarioWeightResponse> mapWeights(Map<AssetCategory, ManualScenarioWeight> weights) {
+        if (weights == null) return List.of();
         return weights.values().stream()
                 .map(w -> new ManualScenarioWeightResponse(w.getCategory(), w.getTargetWeight(), w.getCurrentWeight()))
+                .toList();
+    }
+
+    default List<ManualScenarioStockWeightResponse> mapStockWeights(Map<String, ManualScenarioStockWeight> stockWeights) {
+        if (stockWeights == null) return List.of();
+        return stockWeights.values().stream()
+                .map(stockWeight -> new ManualScenarioStockWeightResponse(
+                        stockWeight.getAssetCode(),
+                        stockWeight.getTargetWeight(),
+                        stockWeight.getCurrentWeight()))
                 .toList();
     }
 }

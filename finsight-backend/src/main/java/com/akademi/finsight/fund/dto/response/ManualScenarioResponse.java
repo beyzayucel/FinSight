@@ -12,6 +12,7 @@ public record ManualScenarioResponse(
         String note,
         Instant createdAt,
         List<ManualScenarioWeightResponse> weights,
+        List<ManualScenarioStockWeightResponse> stockWeights,
         PerformanceMetricsResponse metrics,
         StressTestInferenceResponseDto stressTest
 ) {}

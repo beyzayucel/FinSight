@@ -12,15 +12,13 @@ import {
   type PerformanceComparisonResponse,
   type PortfolioMetrics,
 } from '@/features/dashboard/lib/performanceComparisonApi'
-import type { SimulationWindow } from '@/features/dashboard/lib/simulation'
 
 const SERIES = [
-  { key: 'mevcut' as const, color: '#6b7683', dash: '6 3', width: 2 },
-  { key: 'simulasyon' as const, color: '#B9862B', dash: undefined, width: 3 },
-  { key: 'benchmark' as const, color: '#1c2530', dash: '3 3', width: 2 },
+  { key: 'mevcut' as const, color: '#B9862B', dash: undefined, width: 2.5 },
+  { key: 'simulasyon' as const, color: '#172554', dash: '6 3', width: 2.5 },
+  { key: 'benchmark' as const, color: '#1c2530', dash: '4 3', width: 2 },
 ]
 
-const WINDOW_OPTIONS: SimulationWindow[] = [10, 20, 30, 90]
 
 type Props = {
   onGoToManualScenario: () => void
@@ -36,9 +34,19 @@ type FetchState =
 export default function PerformanceComparisonPage({ onGoToManualScenario, onGoToStressTest }: Props) {
   const t = getTranslations()
   const lang = getLang() === 'en' ? 'en' : 'tr'
-  const { activeFund, analysisWindow, setAnalysisWindow } = useDecision()
+  const { activeFund, analysisWindow } = useDecision()
 
   const [state, setState] = useState<FetchState>({ status: 'idle' })
+  const [hiddenSeries, setHiddenSeries] = useState<Set<string>>(new Set())
+
+  const toggleSeries = (key: string) => {
+    setHiddenSeries((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
 
   const fetchData = useCallback(async () => {
     setState({ status: 'loading' })
@@ -77,20 +85,7 @@ export default function PerformanceComparisonPage({ onGoToManualScenario, onGoTo
 
   return (
     <div>
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-3xl font-semibold text-ink">{t.pcTitle}</h1>
-        <select
-          value={analysisWindow}
-          onChange={(e) => setAnalysisWindow(Number(e.target.value) as SimulationWindow)}
-          className="rounded-lg border border-black/10 bg-white px-3 py-2 text-sm font-medium text-ink focus:outline-none focus:ring-2 focus:ring-primary/30"
-        >
-          {WINDOW_OPTIONS.map((days) => (
-            <option key={days} value={days}>
-              {t.navAnalysisWindowOption(days)}
-            </option>
-          ))}
-        </select>
-      </div>
+      <h1 className="text-3xl font-semibold text-ink">{t.pcTitle}</h1>
       <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted">{t.pcDescription}</p>
 
       {state.status === 'loading' || state.status === 'idle' ? (
@@ -124,8 +119,17 @@ export default function PerformanceComparisonPage({ onGoToManualScenario, onGoTo
             <div className="mt-4 flex flex-wrap gap-5">
               {legend.map((item) => {
                 const series = SERIES.find((s) => s.key === item.key)!
+                const isHidden = hiddenSeries.has(item.key)
                 return (
-                  <div key={item.key} className="flex items-center gap-2 text-xs font-medium text-muted">
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => toggleSeries(item.key)}
+                    className={`flex items-center gap-2 text-xs font-medium transition-opacity ${
+                      isHidden ? 'opacity-30' : 'opacity-100'
+                    }`}
+                    style={{ color: series.color }}
+                  >
                     <span
                       className="inline-block h-0 w-5 border-t-2"
                       style={{
@@ -134,7 +138,7 @@ export default function PerformanceComparisonPage({ onGoToManualScenario, onGoTo
                       }}
                     />
                     {item.label}
-                  </div>
+                  </button>
                 )
               })}
             </div>
@@ -161,6 +165,10 @@ export default function PerformanceComparisonPage({ onGoToManualScenario, onGoTo
                   />
                   <Tooltip
                     contentStyle={{ borderRadius: 10, border: '1px solid #e5e7eb', fontSize: 13 }}
+                    itemSorter={(item) => {
+                      const order: Record<string, number> = { mevcut: 0, simulasyon: 1, benchmark: 2 }
+                      return order[item.dataKey as string] ?? 3
+                    }}
                     formatter={(value: number, name: string) => {
                       const label = name === 'mevcut' ? t.pcLegendMevcut
                         : name === 'simulasyon' ? t.pcLegendSimulasyon
@@ -180,6 +188,7 @@ export default function PerformanceComparisonPage({ onGoToManualScenario, onGoTo
                       dot={false}
                       isAnimationActive={false}
                       connectNulls={false}
+                      hide={hiddenSeries.has(series.key)}
                     />
                   ))}
                 </LineChart>

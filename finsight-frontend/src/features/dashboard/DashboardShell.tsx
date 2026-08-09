@@ -4,6 +4,8 @@ import DashboardLayout from './components/DashboardLayout'
 import { getActiveFund } from './dashboardApi'
 import type { Fund } from './dashboardApi'
 import { ROUTES } from '@/lib/routes'
+import { useDecision } from './context/decisionStore'
+import type { SimulationWindow } from './lib/simulation'
 
 type MenuIndex = 1 | 2 | 3 | 4 | 5
 
@@ -18,11 +20,14 @@ const MENU_ROUTES: Record<MenuIndex, string> = {
 
 export type DashboardOutletContext = {
   fund: Fund
+  /** Senaryo uygulandıktan sonra fon verisini tazelemek için. */
   reloadFund: () => void
+  /** Sidebar'daki Analiz Dönemi seçimi: '10' | '20' | '30' | '90' */
   analysisPeriod: string
   reportAssetClassCount: (count: number) => void
 }
 
+/** Alt sayfaların kabuktaki ortak veriye erişmesi için kısayol. */
 export function useDashboardOutlet(): DashboardOutletContext {
   return useOutletContext<DashboardOutletContext>()
 }
@@ -34,6 +39,10 @@ function resolveActiveMenu(pathname: string): MenuIndex {
   return entry ? (Number(entry[0]) as MenuIndex) : 1
 }
 
+/**
+ * Fon panelinin kabuğu: sidebar + fon verisinin tek seferlik yüklenmesi.
+ * Ekranlar artık state ile değil, nested route ile değişiyor.
+ */
 export default function DashboardShell() {
   const navigate = useNavigate()
   const location = useLocation()
@@ -42,7 +51,9 @@ export default function DashboardShell() {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
-  const [period, setPeriod] = useState<string>('30')
+  const { analysisWindow, setAnalysisWindow } = useDecision()
+  const period = String(analysisWindow)
+
   const [assetClassCount, setAssetClassCount] = useState<number>()
 
   const loadData = useCallback(async () => {
@@ -64,6 +75,10 @@ export default function DashboardShell() {
   }, [loadData])
 
   const activeMenu = resolveActiveMenu(location.pathname)
+
+  const assetClassCount = fund
+    ? Object.values(fund.weights).filter((weight) => weight > 0).length
+    : undefined
 
   function renderMainContent() {
     if (loading) {
@@ -113,7 +128,7 @@ export default function DashboardShell() {
       fundName={fund?.name}
       assetClassCount={assetClassCount}
       analysisPeriod={period}
-      onPeriodChange={(newPeriod) => setPeriod(newPeriod)}
+      onPeriodChange={(newPeriod) => setAnalysisWindow(Number(newPeriod) as SimulationWindow)}
     >
       {renderMainContent()}
     </DashboardLayout>

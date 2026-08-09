@@ -3,6 +3,7 @@ package com.akademi.finsight.fund.performancecomparison.dto.response;
 import lombok.Builder;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.util.List;
 
 @Builder
@@ -21,7 +22,7 @@ public record PerformanceComparisonResponse(
     ) {}
 
     public record CurvePoint(
-            int day,
+            LocalDate date,
             BigDecimal value
     ) {}
 

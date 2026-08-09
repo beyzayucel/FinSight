@@ -68,7 +68,7 @@ public class StressTestSimulationServiceImpl implements StressTestSimulationServ
         Fund fund = findFund(fundId);
 
         PortfolioDataDto simulationPortfolio =
-                portfolioDataBuilder.buildSimulationPortfolio(fund.getCode(), analysisWindow, currentPortfolio.initialValue());
+                portfolioDataBuilder.buildSimulationPortfolio(userEmail, fund.getCode(), analysisWindow, currentPortfolio.initialValue());
         PortfolioDataDto benchmarkPortfolio =
                 portfolioDataBuilder.buildBenchmarkPortfolio(fund.getCode(), analysisWindow, currentPortfolio.initialValue());
 

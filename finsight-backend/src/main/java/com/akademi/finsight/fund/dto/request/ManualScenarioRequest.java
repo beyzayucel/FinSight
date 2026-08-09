@@ -21,4 +21,6 @@ public class ManualScenarioRequest {
 
     @NotEmpty
     private Map<AssetCategory, BigDecimal> weights;
+
+    private Map<String, BigDecimal> stockWeights;
 }

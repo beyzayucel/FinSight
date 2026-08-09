@@ -48,9 +48,19 @@ public class ManualScenario extends SoftDeletableEntity implements ScenarioWeigh
     @Builder.Default
     private Map<AssetCategory, ManualScenarioWeight> weights = new HashMap<>();
 
+    @OneToMany(mappedBy = "scenario", cascade = CascadeType.ALL, orphanRemoval = true)
+    @MapKey(name = "assetCode")
+    @Builder.Default
+    private Map<String, ManualScenarioStockWeight> stockWeights = new HashMap<>();
+
     public void addWeight(ManualScenarioWeight weight) {
         weights.put(weight.getCategory(), weight);
         weight.setScenario(this);
+    }
+
+    public void addStockWeight(ManualScenarioStockWeight stockWeight) {
+        stockWeights.put(stockWeight.getAssetCode(), stockWeight);
+        stockWeight.setScenario(this);
     }
 
     @Override

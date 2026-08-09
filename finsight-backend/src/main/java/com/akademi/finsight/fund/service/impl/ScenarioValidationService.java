@@ -16,6 +16,8 @@ public class ScenarioValidationService {
     private static final BigDecimal MAX_TOTAL_WEIGHT = new BigDecimal("100.01");
     private static final BigDecimal MAX_ALLOWED_DEVIATION = new BigDecimal("10.00");
     private static final BigDecimal MIN_STOCK_WEIGHT_PERCENT = new BigDecimal("80.00");
+    private static final BigDecimal MAX_ALLOWED_STOCK_DEVIATION = new BigDecimal("5.00");
+    private static final BigDecimal STOCK_TOTAL_TOLERANCE = new BigDecimal("0.05");
 
     public void validate(Map<AssetCategory, BigDecimal> targetWeights, Map<AssetCategory, BigDecimal> currentWeights) {
         if (Objects.isNull(targetWeights) || targetWeights.isEmpty()) {
@@ -25,6 +27,41 @@ public class ScenarioValidationService {
         validateTotalWeight(targetWeights);
         validateDeviation(targetWeights, currentWeights);
         validateMinimumStockWeight(targetWeights);
+    }
+
+    public void validateStockWeights(Map<String, BigDecimal> targetStockWeights,
+                                     Map<String, BigDecimal> currentStockWeights) {
+        if (Objects.isNull(targetStockWeights) || targetStockWeights.isEmpty()) {
+            return;
+        }
+
+        BigDecimal stockTotal = BigDecimal.ZERO;
+
+        for (Map.Entry<String, BigDecimal> entry : targetStockWeights.entrySet()) {
+            String assetCode = entry.getKey();
+            BigDecimal targetWeight = entry.getValue();
+
+            if (Objects.isNull(targetWeight)) {
+                throw new FundValidationException(FundErrorType.INVALID_INPUT);
+            }
+
+            stockTotal = stockTotal.add(targetWeight);
+
+            BigDecimal currentWeight = currentStockWeights != null
+                    ? currentStockWeights.getOrDefault(assetCode, BigDecimal.ZERO)
+                    : BigDecimal.ZERO;
+
+            BigDecimal deviation = targetWeight.subtract(currentWeight).abs();
+
+            if (deviation.compareTo(MAX_ALLOWED_STOCK_DEVIATION) > 0) {
+                throw new FundValidationException(FundErrorType.INVALID_SCENARIO_STOCK_DEVIATION, assetCode, deviation);
+            }
+        }
+
+        BigDecimal diff = stockTotal.subtract(new BigDecimal("100.00")).abs();
+        if (diff.compareTo(STOCK_TOTAL_TOLERANCE) > 0) {
+            throw new FundValidationException(FundErrorType.INVALID_SCENARIO_STOCK_TOTAL, stockTotal, new BigDecimal("100.00"));
+        }
     }
 
     private void validateTotalWeight(Map<AssetCategory, BigDecimal> weights) {

@@ -12,21 +12,26 @@ import com.akademi.finsight.fund.exception.FundValidationException;
 import com.akademi.finsight.fund.mapper.ManualScenarioMapper;
 import com.akademi.finsight.fund.performancecomparison.service.PortfolioSimulationCalculationService;
 import com.akademi.finsight.fund.repository.FundRepository;
+import com.akademi.finsight.fund.repository.FundStockAllocationRepository;
 import com.akademi.finsight.fund.repository.ManualScenarioRepository;
 import com.akademi.finsight.fund.service.FundDistributionService;
 import com.akademi.finsight.fund.service.ManualScenarioService;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.service.UserService;
 import jakarta.transaction.Transactional;
+import com.akademi.finsight.fund.service.FundStockAllocationService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -42,6 +47,7 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
     private final FundDistributionService fundDistributionService;
     private final FundDistributionConverter fundDistributionConverter;
     private final PortfolioSimulationCalculationService portfolioSimulationCalculationService;
+    private final FundStockAllocationService fundStockAllocationService;
 
     @Override
     @Transactional
@@ -61,6 +67,13 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
         log.debug("Validating weights. Target: {}, Current: {}", targetWeights, currentWeights);
         validationService.validate(targetWeights, currentWeights);
 
+        Map<String, BigDecimal> targetStockWeights = manualScenario.getStockWeights();
+        Map<String, BigDecimal> currentStockWeights = fetchCurrentStockWeightsFromDb(fund);
+
+        if (targetStockWeights != null && !targetStockWeights.isEmpty()) {
+            validationService.validateStockWeights(targetStockWeights, currentStockWeights);
+        }
+
         ManualScenario scenario = manualScenarioMapper.toEntity(manualScenario, user, fund);
 
         for (Map.Entry<AssetCategory, BigDecimal> entry : targetWeights.entrySet()) {
@@ -70,6 +83,17 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
 
             ManualScenarioWeight weight = manualScenarioMapper.toWeightEntity(category, targetWeight, currentWeight, scenario);
             scenario.addWeight(weight);
+        }
+
+        if (targetStockWeights != null && !targetStockWeights.isEmpty()) {
+            for (Map.Entry<String, BigDecimal> entry : targetStockWeights.entrySet()) {
+                String assetCode = entry.getKey();
+                BigDecimal targetWeight = entry.getValue();
+                BigDecimal currentWeight = currentStockWeights.getOrDefault(assetCode, BigDecimal.ZERO);
+
+                ManualScenarioStockWeight stockWeight = manualScenarioMapper.toStockWeightEntity(assetCode, targetWeight, currentWeight, scenario);
+                scenario.addStockWeight(stockWeight);
+            }
         }
 
         portfolioSimulationCalculationService.attachSnapshot(scenario, fund.getCode(), 30, targetWeights);
@@ -101,6 +125,23 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
 
         log.debug("Current weights map generated: {}", currentWeights);
         return currentWeights;
+    }
+
+    private Map<String, BigDecimal> fetchCurrentStockWeightsFromDb(Fund fund) {
+        log.debug("Fetching latest fund stock allocations from service for fund code: {}", fund.getCode());
+        var breakdown = fundStockAllocationService.getBreakdownByFundCode(fund.getCode(), null);
+
+        if (breakdown == null || breakdown.items() == null || breakdown.items().isEmpty()) {
+            return Collections.emptyMap();
+        }
+
+        return breakdown.items().stream()
+                .collect(Collectors.toMap(
+                        item -> item.assetCode(),
+                        item -> item.weight(),
+                        (existing, replacement) -> existing,
+                        HashMap::new
+                ));
     }
 
 }

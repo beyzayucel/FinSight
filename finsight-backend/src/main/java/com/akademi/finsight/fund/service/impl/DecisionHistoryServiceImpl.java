@@ -129,6 +129,7 @@ public class DecisionHistoryServiceImpl implements DecisionHistoryService {
                 response.note(),
                 response.createdAt(),
                 response.weights(),
+                response.stockWeights(),
                 response.metrics(),
                 stressTestResponseAssembler.withLlmComment(response.stressTest())
         );
@@ -150,6 +151,9 @@ public class DecisionHistoryServiceImpl implements DecisionHistoryService {
                 recommendation.getNote(),
                 recommendation.getCreatedAt(),
                 weights,
+                // AI önerisi hisse bazında sinyal üretmiyor; tablo alanı da yok (AiRecommendationWeight
+                // yalnızca kategori tutuyor). Motor bu granülerliğe geçtiğinde burası dolacak.
+                List.of(),
                 toMetricsResponse(recommendation.getMetrics()),
                 stressTestResponseAssembler.toResponse(recommendation.getStressTestResult())
         );

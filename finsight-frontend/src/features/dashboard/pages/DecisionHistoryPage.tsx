@@ -56,6 +56,7 @@ export default function DecisionHistoryPage() {
   const [history, setHistory] = useState<DecisionRecord[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [openId, setOpenId] = useState<string | null>(null)
+  const [openStocksId, setOpenStocksId] = useState<string | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -124,6 +125,11 @@ export default function DecisionHistoryPage() {
             const isOpen = openId === record.id
             const label = statusLabel(record)
             const hasWeights = record.weights.length > 0
+            // Kayıt, kırılımın tamamını (fonun tüm hisseleri) tutuyor; geçmiş ekranında anlamlı olan
+            // yalnızca karar anında değiştirilenler. Değişmeyenleri listelemek 50+ satırlık gürültü olur.
+            const changedStocks = record.stockWeights.filter((s) => s.targetWeight !== s.currentWeight)
+            const hasStockWeights = changedStocks.length > 0
+            const isStocksOpen = openStocksId === record.id
             const canReapply = record.status === 'ACCEPTED' && hasWeights
             const m = record.metrics
 
@@ -230,6 +236,62 @@ export default function DecisionHistoryPage() {
                     ) : (
                       <div className="rounded-xl bg-rose-50 border border-rose-100 px-4 py-3 text-xs font-medium text-rose-700 text-center">
                         Reddedildiği için kayıtlı ağırlık yok
+                      </div>
+                    )}
+
+                    {hasStockWeights && (
+                      <div>
+                        <button
+                          type="button"
+                          onClick={() => setOpenStocksId(isStocksOpen ? null : record.id)}
+                          className="flex items-center gap-1.5 text-[11px] font-bold text-[#c89834] hover:underline cursor-pointer"
+                        >
+                          {isStocksOpen ? <IoChevronUpOutline size={11} /> : <IoChevronDownOutline size={11} />}
+                          Hisse bazında kırılımı gör
+                          <span className="font-semibold text-slate-400">
+                            ({changedStocks.length} hisse değişti)
+                          </span>
+                        </button>
+
+                        {isStocksOpen && (
+                          <div className="mt-2 overflow-hidden border border-slate-100 rounded-xl animate-fade-in">
+                            <table className="w-full border-collapse text-left text-xs">
+                              <thead>
+                                <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px]">
+                                  <th className="px-4 py-2.5 font-bold">HİSSE</th>
+                                  <th className="px-4 py-2.5 text-right font-bold">O ZAMANKİ MEVCUT</th>
+                                  <th className="px-4 py-2.5 text-right font-bold">KARAR VERİLEN</th>
+                                  <th className="px-4 py-2.5 text-right font-bold">DEĞİŞİM</th>
+                                </tr>
+                              </thead>
+                              <tbody className="divide-y divide-slate-100">
+                                {changedStocks.map((s) => {
+                                  const delta = s.targetWeight - s.currentWeight
+                                  return (
+                                    <tr key={s.assetCode}>
+                                      <td className="px-4 py-2 font-semibold text-slate-700">{s.assetCode}</td>
+                                      <td className="px-4 py-2 text-right text-slate-500">{formatPct(s.currentWeight)}</td>
+                                      <td className="px-4 py-2 text-right font-semibold text-slate-700">
+                                        {formatPct(s.targetWeight)}
+                                      </td>
+                                      <td
+                                        className={`px-4 py-2 text-right font-semibold ${
+                                          delta > 0 ? 'text-[#3a7d74]' : delta < 0 ? 'text-[#ab6262]' : 'text-slate-400'
+                                        }`}
+                                      >
+                                        {formatDeltaPts(delta)}
+                                      </td>
+                                    </tr>
+                                  )
+                                })}
+                              </tbody>
+                            </table>
+                            <p className="border-t border-slate-100 px-4 py-2 text-[10px] text-slate-400">
+                              Yalnızca karar anında değiştirilen hisseler listelenir; ağırlıklar hisse senedi kovası
+                              içindeki paylardır.
+                            </p>
+                          </div>
+                        )}
                       </div>
                     )}
 

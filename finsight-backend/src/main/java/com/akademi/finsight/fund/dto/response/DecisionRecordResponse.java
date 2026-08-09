@@ -16,6 +16,10 @@ public record DecisionRecordResponse(
         String note,
         Instant createdAt,
         List<ManualScenarioWeightResponse> weights,
+        // Karar anında girilen top-10 hisse ağırlıkları — yalnızca değiştirilen hisseler kaydedilir,
+        // bu yüzden liste 10'dan kısa olabilir. AI kararlarında şimdilik hep boş: öneri motoru
+        // hisse bazında sinyal üretmiyor (bkz. Ekran 03 analiz dokümanı, Bölüm 7).
+        List<ManualScenarioStockWeightResponse> stockWeights,
         PerformanceMetricsResponse metrics,
         StressTestInferenceResponseDto stressTest
 ) {}

@@ -37,8 +37,8 @@ public class AssetCategoryConverter implements AttributeConverter<AssetCategory,
         return switch (dbData.trim()) {
             case STOCK_DB -> AssetCategory.STOCK;
             case REPO_DB -> AssetCategory.REPO;
-            case FUTURE_DB -> AssetCategory.FUTURE;
-            case FUND_DB -> AssetCategory.FUND;
+            case FUTURE_DB, "Vadeli İşlemler Teminat" -> AssetCategory.FUTURE;
+            case FUND_DB, "Yatırım Fonları Katılma Payları" -> AssetCategory.FUND;
             default -> throw new IllegalArgumentException("Unknown asset category: " + dbData);
         };
     }

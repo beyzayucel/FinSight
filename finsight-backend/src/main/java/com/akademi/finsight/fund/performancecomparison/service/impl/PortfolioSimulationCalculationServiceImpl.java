@@ -4,6 +4,7 @@ import com.akademi.finsight.fund.converter.AssetCategoryConverter;
 import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
 import com.akademi.finsight.fund.dto.response.FundPeriodMetricResponse;
 import com.akademi.finsight.fund.entity.AssetCategory;
+import com.akademi.finsight.fund.entity.FundBenchmarkPoint;
 import com.akademi.finsight.fund.entity.MetricsHolder;
 import com.akademi.finsight.fund.entity.PerformanceMetrics;
 import com.akademi.finsight.fund.performancecomparison.dto.response.PerformanceComparisonResponse.CurvePoint;
@@ -11,6 +12,7 @@ import com.akademi.finsight.fund.performancecomparison.dto.response.PerformanceC
 import com.akademi.finsight.fund.performancecomparison.dto.response.PerformanceComparisonResponse.PortfolioMetrics;
 import com.akademi.finsight.fund.performancecomparison.service.PortfolioSimulationCalculationService;
 import com.akademi.finsight.fund.performancecomparison.util.PortfolioCalculationUtil;
+import com.akademi.finsight.fund.repository.FundBenchmarkPointRepository;
 import com.akademi.finsight.fund.service.FundDistributionService;
 import com.akademi.finsight.fund.service.FundPeriodMetricService;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundDailyReturnResponse;
@@ -21,9 +23,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.math.MathContext;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -38,8 +42,11 @@ public class PortfolioSimulationCalculationServiceImpl implements PortfolioSimul
     private static final String PERIOD_SUFFIX = "D";
     private static final DateTimeFormatter DATE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
+    private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
+
     private final FundPeriodMetricService fundPeriodMetricService;
     private final FundDistributionService fundDistributionService;
+    private final FundBenchmarkPointRepository fundBenchmarkPointRepository;
     private final InfinaService infinaService;
 
     @Override
@@ -60,7 +67,13 @@ public class PortfolioSimulationCalculationServiceImpl implements PortfolioSimul
         List<BigDecimal> simulationDailyYields = PortfolioCalculationUtil
                 .deriveSimulationDailyReturns(fundDailyYields, stockWeightOpt.get(), simulationWeights);
 
-        List<CurvePoint> curve = PortfolioCalculationUtil.buildCumulativeCurve(simulationDailyYields);
+        LocalDate startDate = metric.dataDate().minusDays(analysisWindow);
+        List<LocalDate> dates = fundBenchmarkPointRepository
+                .findWindowByFundCode(fundCode, startDate, metric.dataDate()).stream()
+                .map(FundBenchmarkPoint::getDataDate)
+                .toList();
+
+        List<CurvePoint> curve = buildSimulationCurve(simulationDailyYields, dates);
         PortfolioMetrics metrics = PortfolioCalculationUtil
                 .buildMetricsFromYields(simulationDailyYields, metric.totalValue());
 
@@ -119,6 +132,34 @@ public class PortfolioSimulationCalculationServiceImpl implements PortfolioSimul
         }
 
         return simulationReturnPct.subtract(benchmarkReturnPct).setScale(2, RoundingMode.HALF_UP);
+    }
+
+    private List<CurvePoint> buildSimulationCurve(List<BigDecimal> dailyYields, List<LocalDate> dates) {
+        List<CurvePoint> points = new ArrayList<>(dailyYields.size() + 1);
+
+        int dateOffset = dates.size() - dailyYields.size();
+
+        // Mevcut/benchmark eğrileri rebase ile 0'dan başlıyor — simülasyon da aynı tarihte başlasın.
+        if (dateOffset > 0 && !dates.isEmpty()) {
+            points.add(new CurvePoint(dates.getFirst(), BigDecimal.ZERO));
+        }
+
+        BigDecimal cumulative = BigDecimal.ONE;
+
+        for (int i = 0; i < dailyYields.size(); i++) {
+            cumulative = cumulative.multiply(
+                    BigDecimal.ONE.add(dailyYields.get(i)), MathContext.DECIMAL64);
+            BigDecimal cumulativeReturnPct = cumulative.subtract(BigDecimal.ONE)
+                    .multiply(HUNDRED)
+                    .setScale(6, RoundingMode.HALF_UP);
+
+            int dateIndex = i + dateOffset;
+            LocalDate date = dateIndex >= 0 && dateIndex < dates.size()
+                    ? dates.get(dateIndex)
+                    : dates.getLast();
+            points.add(new CurvePoint(date, cumulativeReturnPct));
+        }
+        return points;
     }
 
     private Optional<BigDecimal> resolveCurrentStockWeight(String fundCode) {

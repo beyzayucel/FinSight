@@ -9,15 +9,10 @@ import com.akademi.finsight.user.dto.request.UpdateUserRequest;
 import com.akademi.finsight.user.dto.response.UserResponse;
 import com.akademi.finsight.user.dto.response.UserStatsResponse;
 import com.akademi.finsight.user.service.UserService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.UUID;
@@ -36,50 +31,45 @@ public class UserController extends BaseController implements UserApi {
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiStandardResponse<Void>> createUser(@Valid @RequestBody CreateUserRequest request) {
+    public ResponseEntity<ApiStandardResponse<Void>> createUser(CreateUserRequest request) {
         userService.createUser(request);
         return created();
     }
 
     @Override
-    public ResponseEntity<ApiStandardResponse<UserResponse>> getCurrentUser(@AuthenticationPrincipal String email) {
+    public ResponseEntity<ApiStandardResponse<UserResponse>> getCurrentUser(String email) {
         return ok(userService.getCurrentUser(email));
     }
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiStandardResponse<UserResponse>> getUserById(@PathVariable UUID id) {
+    public ResponseEntity<ApiStandardResponse<UserResponse>> getUserById(UUID id) {
         return ok(userService.getUserById(id));
     }
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiStandardResponse<UserResponse>> updateUser(@PathVariable UUID id,
-                                                                        @Valid @RequestBody UpdateUserRequest request) {
+    public ResponseEntity<ApiStandardResponse<UserResponse>> updateUser(UUID id, UpdateUserRequest request) {
         return ok(userService.updateUser(id, request));
     }
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiStandardResponse<Void>> changeUserStatus(@PathVariable UUID id,
-                                                                       @RequestParam boolean enabled,
-                                                                       @AuthenticationPrincipal String email) {
+    public ResponseEntity<ApiStandardResponse<Void>> changeUserStatus(UUID id, boolean enabled, String email) {
         userService.changeUserStatus(id, enabled, email);
         return ok();
     }
 
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiStandardResponse<Void>> deleteUser(@PathVariable UUID id,
-                                                                 @AuthenticationPrincipal String email) {
+    public ResponseEntity<ApiStandardResponse<Void>> deleteUser(UUID id, String email) {
         userService.deleteUser(id, email);
         return ok();
     }
 
-
     @Override
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<ApiStandardResponse<Void>> resendVerification(@PathVariable UUID id) {
+    public ResponseEntity<ApiStandardResponse<Void>> resendVerification(UUID id) {
         userService.resendVerification(id);
         return ok();
     }

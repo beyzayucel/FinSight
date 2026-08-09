@@ -1,6 +1,6 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Button, PasswordField } from '@/components/ui'
+import { Button, PasswordField, Toast } from '@/components/ui'
 import { changePassword } from '@/features/auth/authApi'
 import { clearTokens } from '@/lib/authStore'
 import { getTranslations } from '@/i18n/translations'
@@ -31,6 +31,10 @@ export default function ChangePasswordPage() {
   const checks = getPasswordChecks(newPassword)
   const allChecksPassed = Object.values(checks).every(Boolean)
 
+  const handleToastClose = useCallback(() => {
+    navigate(ROUTES.LOGIN, { replace: true, state: { passwordChanged: true } })
+  }, [navigate])
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
@@ -50,7 +54,6 @@ export default function ChangePasswordPage() {
       await changePassword({ currentPassword, newPassword })
       clearTokens()
       setSuccess(true)
-      setTimeout(() => navigate(ROUTES.LOGIN, { replace: true }), 2000)
     } catch (err) {
       const apiErr = getApiError(err)
       setError(apiErr.message || t.cpFallbackError)
@@ -72,7 +75,7 @@ export default function ChangePasswordPage() {
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             placeholder={t.cpCurrentPlaceholder}
-            autoComplete="current-password"
+            autoComplete="off"
             icon={<IoLockClosed />}
           />
 
@@ -124,10 +127,6 @@ export default function ChangePasswordPage() {
             <p className="text-sm text-red-500">{t.cpSamePassword}</p>
           )}
 
-          {success && (
-            <p className="text-sm text-green-600">{t.cpSuccess}</p>
-          )}
-
           {error && (
             <p className="text-sm text-red-500">{error}</p>
           )}
@@ -136,6 +135,10 @@ export default function ChangePasswordPage() {
             {loading ? t.cpChanging : t.cpButton}
           </Button>
         </form>
+
+        {success && (
+          <Toast message={t.cpSuccess} variant="success" duration={2000} onClose={handleToastClose} />
+        )}
       </div>
     </div>
   )

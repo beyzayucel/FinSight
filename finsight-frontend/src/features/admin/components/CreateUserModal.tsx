@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { getApiError } from '@/lib/api/apiError'
 import type { CreateUserRequest } from '../adminApi'
 import type { Translations } from '@/i18n/translations'
+import PhoneInput from './PhoneInput'
 
 type CreateUserModalProps = {
   open: boolean
@@ -11,28 +12,41 @@ type CreateUserModalProps = {
 }
 
 export default function CreateUserModal({ open, onClose, onSubmit, t }: CreateUserModalProps) {
-  const [form, setForm] = useState<CreateUserRequest>({
+  const [form, setForm] = useState({
     email: '',
     firstName: '',
     lastName: '',
-    phoneNumber: '',
   })
+  const [countryCode, setCountryCode] = useState('+90')
+  const [phoneLocal, setPhoneLocal] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
   if (!open) return null
 
-  function handleChange(field: keyof CreateUserRequest, value: string) {
+  function handleChange(field: keyof typeof form, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+
+    if (!form.email.trim() || !form.firstName.trim() || !form.lastName.trim() || !phoneLocal.trim()) {
+      setError(t.adminFieldsRequired)
+      return
+    }
+
     setLoading(true)
     try {
-      await onSubmit(form)
-      setForm({ email: '', firstName: '', lastName: '', phoneNumber: '' })
+      const payload: CreateUserRequest = {
+        ...form,
+        phoneNumber: countryCode + phoneLocal,
+      }
+      await onSubmit(payload)
+      setForm({ email: '', firstName: '', lastName: '' })
+      setCountryCode('+90')
+      setPhoneLocal('')
       onClose()
     } catch (err) {
       setError(getApiError(err).message)
@@ -49,9 +63,15 @@ export default function CreateUserModal({ open, onClose, onSubmit, t }: CreateUs
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <ModalField label={t.adminLabelEmail} value={form.email} onChange={(v) => handleChange('email', v)} placeholder="ornek@infina.com" type="email" />
-          <ModalField label={t.adminLabelFirstName} value={form.firstName} onChange={(v) => handleChange('firstName', v)} placeholder="Ali Rıza" />
+          <ModalField label={t.adminLabelFirstName} value={form.firstName} onChange={(v) => handleChange('firstName', v)} placeholder="Ali Riza" />
           <ModalField label={t.adminLabelLastName} value={form.lastName} onChange={(v) => handleChange('lastName', v)} placeholder="Kaygusuz" />
-          <ModalField label={t.adminLabelPhone} value={form.phoneNumber} onChange={(v) => handleChange('phoneNumber', v)} placeholder="+905551234567" type="tel" />
+          <PhoneInput
+            label={t.adminLabelPhone}
+            countryCode={countryCode}
+            phoneLocal={phoneLocal}
+            onCountryCodeChange={setCountryCode}
+            onPhoneLocalChange={setPhoneLocal}
+          />
 
           {error && (
             <div className="text-sm text-admin-red bg-admin-red-wash px-3 py-2 rounded-lg">{error}</div>
@@ -102,7 +122,6 @@ function ModalField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        required
         className="w-full bg-admin-ivory border border-admin-line rounded-[10px] py-[9px] px-3 text-[13px] font-ibm text-admin-text focus:outline-none focus:border-admin-gold-soft transition"
       />
     </div>

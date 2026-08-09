@@ -25,6 +25,11 @@ export default function ChangePasswordModal({ open, onClose, onSubmit, t }: Chan
     e.preventDefault()
     setError('')
 
+    if (!form.currentPassword || !form.newPassword || !form.confirmPassword) {
+      setError(t.adminFieldsRequired)
+      return
+    }
+
     if (form.newPassword !== form.confirmPassword) {
       setError(t.adminPasswordMismatch)
       return
@@ -130,7 +135,6 @@ function PasswordField({
           value={value}
           onChange={(e) => onChange(e.target.value)}
           placeholder={placeholder}
-          required
           className="w-full bg-admin-ivory border border-admin-line rounded-[10px] py-[9px] px-3 pr-10 text-[13px] font-ibm text-admin-text focus:outline-none focus:border-admin-gold-soft transition"
         />
         <button

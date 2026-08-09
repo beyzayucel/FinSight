@@ -28,6 +28,18 @@ public class PasswordResetRateLimitServiceImpl implements PasswordResetRateLimit
         String hashedEmail = identifierHasher.hash(email);
         countOrThrow(rateLimitKeyGenerator.createPasswordResetEmailKey(hashedEmail),
                 properties.getMaxRequestsPerEmail(), "email", hashedEmail);
+        acquireCooldownOrThrow(hashedEmail);
+    }
+
+    private void acquireCooldownOrThrow(String hashedEmail) {
+        String cooldownKey = rateLimitKeyGenerator.createPasswordResetCooldownKey(hashedEmail);
+        Boolean acquired = redisTemplate.opsForValue()
+                .setIfAbsent(cooldownKey, "1", properties.getCooldownDuration());
+
+        if (!Boolean.TRUE.equals(acquired)) {
+            log.info("Password reset request rejected, cooldown active: key={}", hashedEmail);
+            throw new RateLimitException(RateLimitErrorType.PASSWORD_RESET_COOLDOWN_ACTIVE);
+        }
     }
 
     private void countOrThrow(String key, int maxRequests, String scope, String hashedValue) {

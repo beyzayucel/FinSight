@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button, TextField } from '@/components/ui'
@@ -19,9 +19,13 @@ export default function ForgotPasswordForm({ t }: ForgotPasswordFormProps) {
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
   const [error, setError] = useState('')
+  const submittingRef = useRef(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
+    if (submittingRef.current) return
+
+    submittingRef.current = true
     setError('')
     setLoading(true)
 
@@ -29,6 +33,7 @@ export default function ForgotPasswordForm({ t }: ForgotPasswordFormProps) {
       await forgotPassword({ email })
       setSuccess(true)
     } catch (err) {
+      submittingRef.current = false
       const apiErr = getApiError(err)
       if (apiErr.status === 0) {
         setError(t.forgotPasswordFallbackError)

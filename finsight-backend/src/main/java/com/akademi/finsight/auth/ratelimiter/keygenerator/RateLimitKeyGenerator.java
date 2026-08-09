@@ -20,4 +20,8 @@ public class RateLimitKeyGenerator {
     public String createPasswordResetEmailKey(String hashedEmail) {
         return String.format(PASSWORD_RESET_EMAIL_REQUESTS_KEY, hashedEmail);
     }
+
+    public String createPasswordResetCooldownKey(String hashedEmail) {
+        return String.format(PASSWORD_RESET_EMAIL_COOLDOWN_KEY, hashedEmail);
+    }
 }

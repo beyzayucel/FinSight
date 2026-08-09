@@ -114,8 +114,6 @@ app:
       duration: ${LOGIN_RATE_LIMIT_DURATION}
     password-reset:
       max-requests-per-email: ${PASSWORD_RESET_RATE_LIMIT_MAX_PER_EMAIL}
-      max-requests-per-ip: ${PASSWORD_RESET_RATE_LIMIT_MAX_PER_IP}
-      max-submits-per-ip: ${PASSWORD_RESET_RATE_LIMIT_MAX_SUBMITS_PER_IP}
       duration: ${PASSWORD_RESET_RATE_LIMIT_DURATION}
 
   otp:

@@ -9,6 +9,4 @@ public class RedisKeyConstants {
     public static final String LOGIN_ATTEMPTS_KEY = "login:attempts:%s";
     public static final String LOGIN_BLOCKED_LIST = "login:blocked:list:%s";
     public static final String PASSWORD_RESET_EMAIL_REQUESTS_KEY = "password-reset:requests:email:%s";
-    public static final String PASSWORD_RESET_IP_REQUESTS_KEY = "password-reset:requests:ip:%s";
-    public static final String PASSWORD_RESET_SUBMIT_IP_KEY = "password-reset:submits:ip:%s";
 }

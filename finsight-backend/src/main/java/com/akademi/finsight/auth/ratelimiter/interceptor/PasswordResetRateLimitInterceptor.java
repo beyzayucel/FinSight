@@ -4,7 +4,6 @@ import com.akademi.finsight.auth.ratelimiter.exception.RateLimitErrorType;
 import com.akademi.finsight.auth.ratelimiter.exception.RateLimitException;
 import com.akademi.finsight.auth.ratelimiter.filter.CachedBodyHttpServletRequest;
 import com.akademi.finsight.auth.ratelimiter.service.PasswordResetRateLimitService;
-import com.akademi.finsight.auth.ratelimiter.util.ClientIpResolver;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -23,11 +22,10 @@ public class PasswordResetRateLimitInterceptor implements HandlerInterceptor {
 
     private final PasswordResetRateLimitService passwordResetRateLimitService;
     private final ObjectMapper objectMapper;
-    private final ClientIpResolver clientIpResolver;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) {
-        passwordResetRateLimitService.checkAndCountOrThrow(extractEmail(request), clientIpResolver.resolve(request));
+        passwordResetRateLimitService.checkAndCountOrThrow(extractEmail(request));
         return true;
     }
 

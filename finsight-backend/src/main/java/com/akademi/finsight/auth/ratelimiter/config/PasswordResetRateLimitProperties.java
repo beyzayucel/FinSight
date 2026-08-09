@@ -17,8 +17,5 @@ import java.time.Duration;
 @ConfigurationProperties(prefix = "app.rate-limit.password-reset")
 public class PasswordResetRateLimitProperties {
     private int maxRequestsPerEmail;
-    private int maxRequestsPerIp;
-    /** Token gonderim ucu icin ayri ve daha genis sinir: sifre kurali hatalari da bu sayaci tuketir. */
-    private int maxSubmitsPerIp;
     private Duration duration;
 }

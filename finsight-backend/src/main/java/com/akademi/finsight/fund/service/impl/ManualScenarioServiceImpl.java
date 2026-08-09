@@ -1,6 +1,7 @@
 package com.akademi.finsight.fund.service.impl;
 
 import com.akademi.finsight.common.masking.MaskType;
+import com.akademi.finsight.fund.constant.CacheNames;
 import com.akademi.finsight.fund.converter.FundDistributionConverter;
 import com.akademi.finsight.fund.dto.request.ManualScenarioRequest;
 import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
@@ -19,6 +20,7 @@ import com.akademi.finsight.user.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -43,6 +45,7 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheManager = "caffeineCacheManager", cacheNames = CacheNames.PERFORMANCE_COMPARISON, allEntries = true)
     public void applyManualScenario(String email, ManualScenarioRequest manualScenario) {
         log.info("Starting to apply manual scenario for user email: {}, fundId: {}", MaskType.EMAIL.mask(email), manualScenario.getFundId());
 

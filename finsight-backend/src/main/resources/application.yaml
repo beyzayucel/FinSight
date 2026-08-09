@@ -171,6 +171,10 @@ fund:
     data-lag-days: ${FUND_SYNC_DATA_LAG_DAYS:8}
   recommendation:
      ttl-hours: ${FUND_RECOMMENDATION_TTL_HOURS:4}
+  cache:
+    performance-comparison:
+      max-size: ${PERF_CACHE_MAX_SIZE}
+      expire-hours: ${PERF_CACHE_EXPIRE_HOURS}
 
 market:
   sync:

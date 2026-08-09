@@ -9,6 +9,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +33,7 @@ public interface PerformanceComparisonApi {
     })
     @GetMapping(ApiEndpoints.PerformanceComparison.COMPARE)
     ResponseEntity<ApiStandardResponse<PerformanceComparisonResponse>> compare(
+            @AuthenticationPrincipal String email,
             @Parameter(description = "Fund code", example = "TIE")
             @PathVariable String fundCode,
             @Parameter(description = "Analysis window in days", example = "30")

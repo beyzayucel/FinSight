@@ -12,8 +12,10 @@ import com.akademi.finsight.fund.performancecomparison.util.PortfolioCalculation
 import com.akademi.finsight.fund.repository.FundBenchmarkPointRepository;
 import com.akademi.finsight.fund.service.FundPeriodMetricService;
 import com.akademi.finsight.fund.performancecomparison.service.impl.ScenarioResolver.ResolvedScenario;
+import com.akademi.finsight.fund.constant.CacheNames;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -40,7 +42,8 @@ public class PerformanceComparisonServiceImpl implements PerformanceComparisonSe
     private final ScenarioResolver scenarioResolver;
 
     @Override
-    public PerformanceComparisonResponse compare(String fundCode, int analysisWindow) {
+    @Cacheable(cacheManager = "caffeineCacheManager", cacheNames = CacheNames.PERFORMANCE_COMPARISON)
+    public PerformanceComparisonResponse compare(String email, String fundCode, int analysisWindow) {
         String period = PERIOD_PREFIX + analysisWindow + PERIOD_SUFFIX;
 
         FundPeriodMetricResponse metric = fundPeriodMetricService.getLatestByFundCodeAndPeriod(fundCode, period);
@@ -62,7 +65,7 @@ public class PerformanceComparisonServiceImpl implements PerformanceComparisonSe
         PortfolioCurve currentPortfolio = buildPortfolio(
                 fundCumulativeReturns, dates, metric.totalValue(), metric.cumulativeReturn());
 
-        ResolvedScenario scenario = scenarioResolver.resolve(fundCode).orElse(null);
+        ResolvedScenario scenario = scenarioResolver.resolve(email, fundCode).orElse(null);
         PortfolioCurve simulationPortfolio = scenario != null
                 ? simulationCalculationService.calculateSimulation(fundCode, analysisWindow, scenario.weights())
                 : null;

@@ -1,14 +1,11 @@
 import { useState, useEffect } from 'react'
-import { useNavigate } from 'react-router-dom'
 import ManualScenarioTab from '../components/ManualScenarioTab'
 import AIRecommendationTab from '../components/AIRecommendationTab'
 import { useDashboardOutlet } from '../DashboardShell'
-import { ROUTES } from '@/lib/routes'
 import { getPendingRecommendation } from '../dashboardApi'
 import type { AIRecommendation } from '../dashboardApi'
 
 export default function AiDecisionPage() {
-  const navigate = useNavigate()
   const { fund, reloadFund } = useDashboardOutlet()
 
   const [activeTab, setActiveTab] = useState<'ai' | 'manual'>('ai')

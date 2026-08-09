@@ -4,7 +4,6 @@ import com.akademi.finsight.common.constants.ApiEndpoints;
 import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.fund.dto.request.FundDecisionRequest;
 import com.akademi.finsight.fund.dto.response.AIRecommendationResponse;
-import com.akademi.finsight.fund.dto.response.FundActivePortfolioResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;

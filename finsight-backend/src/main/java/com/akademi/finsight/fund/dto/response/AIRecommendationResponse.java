@@ -4,6 +4,7 @@ import com.akademi.finsight.fund.entity.AssetCategory;
 import com.akademi.finsight.fund.entity.RecommendationStatus;
 
 import lombok.Builder;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -15,5 +16,6 @@ public record AIRecommendationResponse(
         String rationale,
         String expectedRiskChange,
         String note,
-        Map<AssetCategory, AiWeightResponse> weights
+        Map<AssetCategory, AiWeightResponse> weights,
+        List<AIRecommendationStockWeightResponse> stockWeights
 ) {}

@@ -24,6 +24,12 @@ export type Fund = {
   weights: Record<AssetCategory, number>
 }
 
+export type AIRecommendationStockWeight = {
+  assetCode: string
+  recommendedWeight: number
+  currentWeight: number
+}
+
 export type AIRecommendationWeight = {
   recommendedWeight: number
   currentWeight: number
@@ -35,10 +41,10 @@ export type AIRecommendation = {
   status: RecommendationStatus
   rationale: string
   expectedRiskChange: string
+  note?: string
   weights: Record<AssetCategory, AIRecommendationWeight>
+  stockWeights?: AIRecommendationStockWeight[]
 }
-
-import { getFundDashboard } from './lib/fund-dashboard/fundDashboardApi'
 
 const CATEGORY_MAP: Record<string, AssetCategory> = {
   'hisse senedi': 'STOCK',
@@ -138,11 +144,6 @@ export async function applyManualScenario(data: ManualScenarioRequest): Promise<
       appliedAt: new Date().toISOString()
     })
     localStorage.setItem('finsight_applied_scenarios', JSON.stringify(list))
-    
-    // Also save decision status
-    const rec = getStoredRecommendation()
-    rec.status = 'ACCEPTED' // Creating manual scenario counts as active action
-    setStoredRecommendation(rec)
   }
 }
 

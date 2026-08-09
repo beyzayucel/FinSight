@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { AdminDecisionRecord } from '../adminDecisionApi'
 import type { Translations } from '@/i18n/translations'
 
@@ -13,7 +14,7 @@ type CardConfig = {
   iconBg: string
   iconColor: string
   tint: string
-  icon: JSX.Element
+  icon: ReactNode
 }
 
 export default function DecisionKpiCards({ decisions, loading, t }: DecisionKpiCardsProps) {

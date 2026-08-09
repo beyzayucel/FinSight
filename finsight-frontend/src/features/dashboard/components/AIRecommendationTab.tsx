@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { submitRecommendationDecision, AssetCategoryLabels } from '../dashboardApi'
 import type { AIRecommendation, AssetCategory } from '../dashboardApi'
-import { IoTrendingDown } from 'react-icons/io5'
+import { IoTrendingDown, IoTrendingUp } from 'react-icons/io5'
 
 type AIRecommendationTabProps = {
   recommendation: AIRecommendation
@@ -12,13 +12,33 @@ type AIRecommendationTabProps = {
 export default function AIRecommendationTab({
   recommendation,
   onDecisionSubmitted,
-  isLoading = false
+  isLoading = false,
 }: AIRecommendationTabProps) {
   const [submitting, setSubmitting] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [note, setNote] = useState<string>('')
+  const [stockBreakdownOpen, setStockBreakdownOpen] = useState<boolean>(false)
+  const [showOnlyChanged, setShowOnlyChanged] = useState<boolean>(false)
 
   const categories: AssetCategory[] = ['STOCK', 'REPO', 'FUTURE', 'FUND']
+
+  const stockWeights = recommendation?.stockWeights || []
+
+  const displayedStocks = useMemo(() => {
+    if (!showOnlyChanged) return stockWeights
+    return stockWeights.filter((stock) => {
+      const diff = (stock.recommendedWeight ?? 0) - (stock.currentWeight ?? 0)
+      return Math.abs(diff) > 0.001
+    })
+  }, [stockWeights, showOnlyChanged])
+
+  const totalStockCurrent = useMemo(() => {
+    return stockWeights.reduce((sum, s) => sum + (Number(s.currentWeight) || 0), 0)
+  }, [stockWeights])
+
+  const totalStockRecommended = useMemo(() => {
+    return stockWeights.reduce((sum, s) => sum + (Number(s.recommendedWeight) || 0), 0)
+  }, [stockWeights])
 
   async function handleDecision(status: 'ACCEPTED' | 'REJECTED') {
     try {
@@ -71,16 +91,30 @@ export default function AIRecommendationTab({
             </thead>
             <tbody className="divide-y divide-slate-100">
               {categories.map((cat) => {
-                const weightData = recommendation.weights[cat]
+                const weightData = recommendation.weights?.[cat]
                 const current = weightData?.currentWeight ?? 0
                 const recommended = weightData?.recommendedWeight ?? 0
                 const diff = recommended - current
                 const label = AssetCategoryLabels[cat]?.tr || cat
+                const isStock = cat === 'STOCK'
 
                 return (
                   <tr key={cat} className="hover:bg-slate-50/20 transition-colors">
-                    <td className="px-4 py-2 font-semibold text-slate-700">{label}</td>
-                    
+                    <td className="px-4 py-2">
+                      <div className="font-semibold text-slate-700">{label}</div>
+                      {isStock && stockWeights.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setStockBreakdownOpen(!stockBreakdownOpen)}
+                          className="inline-flex items-center text-[11px] font-semibold text-[#c89834] hover:text-[#b08226] transition-colors mt-0.5 outline-none cursor-pointer select-none"
+                        >
+                          <span>
+                            {stockBreakdownOpen ? '▲ Hisse bazında gizle' : '▼ Hisse bazında incele'}
+                          </span>
+                        </button>
+                      )}
+                    </td>
+
                     {/* Mevcut -> Önerilen Karşılaştırma Çubukları */}
                     <td className="px-4 py-1.5">
                       <div className="flex flex-col space-y-1 w-full">
@@ -88,27 +122,27 @@ export default function AIRecommendationTab({
                         <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                           <div
                             className="bg-[#6b7683] h-full rounded-full transition-all duration-500"
-                            style={{ width: `${current}%` }}
+                            style={{ width: `${Math.min(100, Math.max(0, current))}%` }}
                           />
                         </div>
                         {/* Önerilen Bar (Gold) */}
                         <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
                           <div
                             className="bg-[#c89834] h-full rounded-full transition-all duration-500"
-                            style={{ width: `${recommended}%` }}
+                            style={{ width: `${Math.min(100, Math.max(0, recommended))}%` }}
                           />
                         </div>
                       </div>
                     </td>
 
-                    <td className="px-4 py-2 text-right font-semibold text-slate-500">
+                    <td className="px-4 py-2 text-right font-semibold text-slate-500 font-mono">
                       {current.toFixed(2).replace('.', ',')}%
                     </td>
-                    <td className="px-4 py-2 text-right font-semibold text-slate-650">
+                    <td className="px-4 py-2 text-right font-semibold text-slate-700 font-mono">
                       {recommended.toFixed(2).replace('.', ',')}%
                     </td>
                     <td
-                      className={`px-4 py-2 text-right font-semibold text-xs ${
+                      className={`px-4 py-2 text-right font-semibold font-mono text-xs ${
                         diff > 0 ? 'text-[#3a7d74]' : diff < 0 ? 'text-[#ab6262]' : 'text-slate-400'
                       }`}
                     >
@@ -125,6 +159,129 @@ export default function AIRecommendationTab({
           </table>
         </div>
 
+        {/* HISSE SENEDİ ALT KIRILIMI (ACCORDION EXPANDED) */}
+        {stockBreakdownOpen && stockWeights.length > 0 && (
+          <div className="bg-[#fffdf9] border border-[#f5d9a8]/70 rounded-xl p-4 space-y-3 animate-fade-in shadow-xs">
+            {/* Bilgi Kutusu Banner */}
+            <div className="bg-[#fff8ee] border border-[#f5d9a8] rounded-xl p-3 text-[11px] text-[#9c5a14] font-medium leading-relaxed">
+              AI modeli tarafından optimize edilmiş hisse dağılım önerileri listelenmektedir. Hisse alt kırılım toplamı %100 üzerinden dengelenmiştir.
+            </div>
+
+            {/* Filtreleme ve Başlık Barı */}
+            <div className="flex items-center justify-between pt-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
+                Hisse Senedi Alt Kırılımı ({stockWeights.length} Varlık)
+              </span>
+              <button
+                type="button"
+                onClick={() => setShowOnlyChanged(!showOnlyChanged)}
+                className="text-xs font-semibold text-slate-600 hover:text-[#c89834] transition-colors outline-none cursor-pointer flex items-center gap-1 select-none"
+              >
+                <span>{showOnlyChanged ? 'Tüm Hisseleri Göster ▾' : 'Sadece Değişenleri Göster ▴'}</span>
+              </button>
+            </div>
+
+            {/* Alt Kırılım Tablosu */}
+            <div className="overflow-hidden border border-slate-200/80 rounded-xl bg-white shadow-2xs">
+              <table className="w-full border-collapse text-left text-xs">
+                <thead>
+                  <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">
+                    <th className="px-4 py-2 font-bold">HİSSE</th>
+                    <th className="px-4 py-2 font-bold w-[180px]">MEVCUT → ÖNERİLEN</th>
+                    <th className="px-4 py-2 text-right font-bold">MEVCUT</th>
+                    <th className="px-4 py-2 text-right font-bold">ÖNERİLEN</th>
+                    <th className="px-4 py-2 text-right font-bold">DEĞİŞİM</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100">
+                  {displayedStocks.map((stock) => {
+                    const current = Number(stock.currentWeight) || 0
+                    const recommended = Number(stock.recommendedWeight) || 0
+                    const diff = recommended - current
+                    const isReadOnly = stock.assetCode === 'Others' || stock.assetCode === '+ Diğer'
+                    const displayName = isReadOnly ? '+ Diğer' : stock.assetCode
+
+                    return (
+                      <tr key={stock.assetCode} className="hover:bg-slate-50/30 transition-colors">
+                        <td className="px-4 py-2 font-bold font-mono text-slate-700">
+                          {displayName}
+                        </td>
+                        <td className="px-4 py-1.5">
+                          <div className="flex flex-col space-y-1 w-full">
+                            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                              <div
+                                className="bg-[#6b7683] h-full rounded-full transition-all duration-500"
+                                style={{ width: `${Math.min(100, Math.max(0, current * 4))}%` }}
+                              />
+                            </div>
+                            <div className="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                              <div
+                                className="bg-[#c89834] h-full rounded-full transition-all duration-500"
+                                style={{ width: `${Math.min(100, Math.max(0, recommended * 4))}%` }}
+                              />
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-2 text-right font-semibold font-mono text-slate-500">
+                          {current.toFixed(2).replace('.', ',')}%
+                        </td>
+                        <td className="px-4 py-2 text-right font-semibold font-mono text-slate-700">
+                          {recommended.toFixed(2).replace('.', ',')}%
+                        </td>
+                        <td
+                          className={`px-4 py-2 text-right font-semibold font-mono text-xs ${
+                            diff > 0 ? 'text-[#3a7d74]' : diff < 0 ? 'text-[#ab6262]' : 'text-slate-400'
+                          }`}
+                        >
+                          {diff > 0
+                            ? `+${diff.toFixed(2).replace('.', ',')}`
+                            : diff === 0
+                            ? '0,00'
+                            : diff.toFixed(2).replace('.', ',')}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                  {displayedStocks.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="px-4 py-4 text-center text-slate-400 text-xs italic">
+                        Değişiklik önerilen hisse bulunmamaktadır.
+                      </td>
+                    </tr>
+                  )}
+
+                  {/* Toplam Satırı */}
+                  <tr className="bg-slate-50 border-t border-slate-200 font-bold select-none text-slate-800">
+                    <td className="px-4 py-2 font-bold font-mono">Toplam</td>
+                    <td className="px-4 py-2"></td>
+                    <td className="px-4 py-2 text-right font-bold font-mono text-slate-500">
+                      {totalStockCurrent.toFixed(2).replace('.', ',')}%
+                    </td>
+                    <td className="px-4 py-2 text-right font-bold font-mono text-[#c89834]">
+                      {totalStockRecommended.toFixed(2).replace('.', ',')}%
+                    </td>
+                    <td
+                      className={`px-4 py-2 text-right font-bold font-mono text-xs ${
+                        totalStockRecommended - totalStockCurrent > 0.01
+                          ? 'text-[#3a7d74]'
+                          : totalStockRecommended - totalStockCurrent < -0.01
+                          ? 'text-[#ab6262]'
+                          : 'text-slate-400'
+                      }`}
+                    >
+                      {totalStockRecommended - totalStockCurrent > 0.01
+                        ? `+${(totalStockRecommended - totalStockCurrent).toFixed(2).replace('.', ',')}`
+                        : Math.abs(totalStockRecommended - totalStockCurrent) <= 0.01
+                        ? '0,00'
+                        : (totalStockRecommended - totalStockCurrent).toFixed(2).replace('.', ',')}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
         {/* Legend */}
         <div className="flex items-center space-x-6 text-[11px] font-semibold text-slate-500 px-1 select-none">
           <div className="flex items-center space-x-1.5">
@@ -140,21 +297,26 @@ export default function AIRecommendationTab({
 
       {/* 2. AI Gerekçesi Kartı */}
       <div className="bg-[#fcfaf5] rounded-xl border border-[#e2d5b8] p-4 space-y-3">
-
         <div className="space-y-1.5">
           <h4 className="text-xs font-bold text-slate-800">
-            Al Gerekçesi
+            AI Gerekçesi
           </h4>
           <p className="text-xs text-slate-600 leading-relaxed font-semibold">
-            {recommendation.rationale}
+            {recommendation.rationale || 'Mevcut piyasa göstergeleri ve model analizlerine göre, performansı optimize etmek için portföy ağırlıklarınızın ayarlanması önerilmektedir.'}
           </p>
         </div>
 
         {/* Beklenen Risk Değişimi */}
-        <div className="flex items-center space-x-1.5 text-emerald-700 font-bold text-[11px] pt-1.5 border-t border-[#e2d5b8]/50">
-          <IoTrendingDown size={14} />
-          <span>Beklenen Risk Değişimi: Volatilite -0.3 puan (azalış)</span>
-        </div>
+        {recommendation.expectedRiskChange && (
+          <div className="flex items-center space-x-1.5 text-emerald-700 font-bold text-[11px] pt-1.5 border-t border-[#e2d5b8]/50">
+            {recommendation.expectedRiskChange.toLowerCase().includes('art') ? (
+              <IoTrendingUp size={14} className="text-amber-600" />
+            ) : (
+              <IoTrendingDown size={14} className="text-emerald-700" />
+            )}
+            <span>Beklenen Risk Değişimi: {recommendation.expectedRiskChange}</span>
+          </div>
+        )}
       </div>
 
       {/* 3. Senaryo Notu (Karar verilmediyse) */}
@@ -235,8 +397,8 @@ export default function AIRecommendationTab({
             </button>
           </div>
         )}
-
       </div>
     </div>
   )
 }
+

@@ -29,6 +29,23 @@ public class ScenarioResolver {
 
     public record ResolvedScenario(Map<AssetCategory, BigDecimal> weights, ScenarioSource source) {}
 
+    public Optional<ResolvedScenario> resolve(String fundCode) {
+        String email = null;
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated() && auth.getName() != null && !auth.getName().equalsIgnoreCase("anonymousUser")) {
+            email = auth.getName();
+        }
+
+        if (email != null) {
+            try {
+                return resolve(email, fundCode);
+            } catch (Exception ignored) {
+            }
+        }
+
+        return Optional.empty();
+    }
+
     public Optional<ResolvedScenario> resolve(String email, String fundCode) {
         UUID fundId = fundRepository.findByCode(fundCode)
                 .orElseThrow(() -> new IllegalArgumentException("Fund not found: " + fundCode))

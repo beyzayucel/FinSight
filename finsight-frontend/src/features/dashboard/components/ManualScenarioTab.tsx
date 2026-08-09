@@ -104,14 +104,6 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
     setSuccessMsg(null)
   }, [fund?.id])
 
-  // Dynamic sum of current baseline stocks
-  const currentStockSum = useMemo(() => {
-    return stocks.reduce((sum, s) => sum + (stockBaseline[s.assetCode] ?? s.defaultWeight), 0)
-  }, [stocks, stockBaseline])
-
-  // Difference in stock breakdown sum
-  const stockDiff = totalStockBreakdownSum - currentStockSum
-
   const categories: AssetCategory[] = ['STOCK', 'REPO', 'FUTURE', 'FUND']
 
   // Calculate sum of weights

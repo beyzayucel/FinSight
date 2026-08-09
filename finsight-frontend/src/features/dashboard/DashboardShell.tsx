@@ -92,7 +92,7 @@ export default function DashboardShell() {
           <h3 className="text-lg font-bold text-rose-800">Sistem Bağlantı Hatası</h3>
           <p className="text-sm text-rose-700">{error || 'Veriler yüklenemedi. Lütfen tekrar deneyin.'}</p>
           <button
-            onClick={loadData}
+            onClick={() => loadData(true)}
             className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold uppercase select-none transition-all shadow-sm"
           >
             Yeniden Dene

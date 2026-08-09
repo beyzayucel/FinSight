@@ -16,9 +16,14 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
 
+import com.akademi.finsight.fund.dto.response.AIRecommendationStockWeightResponse;
+import com.akademi.finsight.fund.entity.AiRecommendationStockWeight;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -78,6 +83,15 @@ public class AiRecommendationMapper {
                 .build();
     }
 
+    public AiRecommendationStockWeight toStockWeightEntity(String assetCode, BigDecimal recommended, BigDecimal current, AiRecommendation recommendation) {
+        return AiRecommendationStockWeight.builder()
+                .assetCode(assetCode)
+                .recommendedWeight(recommended.setScale(2, RoundingMode.HALF_UP))
+                .currentWeight(current.setScale(2, RoundingMode.HALF_UP))
+                .recommendation(recommendation)
+                .build();
+    }
+
     public AIRecommendationResponse toResponse(AiRecommendation entity) {
         if (entity == null) {
             return null;
@@ -97,6 +111,22 @@ public class AiRecommendationMapper {
             }
         }
 
+        List<AIRecommendationStockWeightResponse> stockWeightsList = new ArrayList<>();
+        if (entity.getStockWeights() != null) {
+            for (AiRecommendationStockWeight sw : entity.getStockWeights().values()) {
+                stockWeightsList.add(new AIRecommendationStockWeightResponse(
+                        sw.getAssetCode(),
+                        sw.getRecommendedWeight(),
+                        sw.getCurrentWeight()
+                ));
+            }
+            stockWeightsList.sort((a, b) -> {
+                if ("Others".equals(a.assetCode()) || "+ Diğer".equals(a.assetCode())) return 1;
+                if ("Others".equals(b.assetCode()) || "+ Diğer".equals(b.assetCode())) return -1;
+                return b.currentWeight().compareTo(a.currentWeight());
+            });
+        }
+
         return AIRecommendationResponse.builder()
                 .id(entity.getId())
                 .fundId(entity.getFund().getId())
@@ -105,6 +135,7 @@ public class AiRecommendationMapper {
                 .expectedRiskChange(entity.getExpectedRiskChange())
                 .note(entity.getNote())
                 .weights(weightsMap)
+                .stockWeights(stockWeightsList)
                 .build();
     }
 

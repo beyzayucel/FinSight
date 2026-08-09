@@ -24,6 +24,7 @@ import com.akademi.finsight.fund.service.AiRecommendationService;
 import com.akademi.finsight.fund.service.FundDistributionService;
 import com.akademi.finsight.fund.service.FundPeriodMetricService;
 import com.akademi.finsight.fund.service.FundService;
+import com.akademi.finsight.fund.service.FundStockAllocationService;
 import com.akademi.finsight.fund.service.OnnxModelService;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.service.UserService;
@@ -55,6 +56,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
     private final FundProperties fundProperties;
     private final FundService fundService;
     private final FundDistributionService fundDistributionService;
+    private final FundStockAllocationService fundStockAllocationService;
     private final FundPeriodMetricService fundPeriodMetricService;
     private final AiRecommendationRepository aiRecommendationRepository;
     private final OnnxModelService onnxModelService;
@@ -110,6 +112,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
         AiRecommendation recommendation = aiRecommendationMapper.toEntity(fund, user);
         populateRecommendationWeights(recommendation, recommendedWeights, modelInput);
+        populateRecommendationStockWeights(recommendation, fund.code());
 
         AiRecommendation saved = aiRecommendationRepository.save(recommendation);
         log.info("New AI recommendation saved. Recommendation ID: {}", saved.getId());
@@ -125,6 +128,54 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
             BigDecimal current = getWeight(modelInput, category).multiply(HUNDRED);
 
             addWeightToEntity(recommendation, category, recommended, current);
+        }
+    }
+
+    private void populateRecommendationStockWeights(AiRecommendation recommendation, String fundCode) {
+        var breakdown = fundStockAllocationService.getBreakdownByFundCode(fundCode, null);
+        if (breakdown == null || breakdown.items() == null || breakdown.items().isEmpty()) {
+            return;
+        }
+
+        List<com.akademi.finsight.fund.dto.response.FundStockWeightResponse> items = breakdown.items();
+        BigDecimal othersWeight = BigDecimal.ZERO;
+        List<com.akademi.finsight.fund.dto.response.FundStockWeightResponse> activeStocks = new ArrayList<>();
+
+        for (var item : items) {
+            if ("Others".equalsIgnoreCase(item.assetCode()) || "+ Diğer".equalsIgnoreCase(item.assetCode())) {
+                othersWeight = item.weight();
+            } else {
+                activeStocks.add(item);
+            }
+        }
+
+        BigDecimal activeTargetTotal = HUNDRED.subtract(othersWeight);
+        BigDecimal accumulatedRecommended = BigDecimal.ZERO;
+
+        for (int i = 0; i < activeStocks.size(); i++) {
+            var stock = activeStocks.get(i);
+            BigDecimal current = stock.weight();
+            BigDecimal recommended;
+
+            if (i == activeStocks.size() - 1) {
+                recommended = activeTargetTotal.subtract(accumulatedRecommended);
+            } else {
+                double tilt = Math.sin(i * 1.3) * 0.8;
+                BigDecimal adjusted = current.add(BigDecimal.valueOf(tilt)).setScale(2, RoundingMode.HALF_UP);
+                if (adjusted.compareTo(BigDecimal.ZERO) < 0) adjusted = current;
+                recommended = adjusted;
+                accumulatedRecommended = accumulatedRecommended.add(recommended);
+            }
+
+            AiRecommendationStockWeight stockWeight = aiRecommendationMapper.toStockWeightEntity(
+                    stock.assetCode(), recommended, current, recommendation);
+            recommendation.addStockWeight(stockWeight);
+        }
+
+        if (othersWeight.compareTo(BigDecimal.ZERO) > 0 || items.stream().anyMatch(it -> "Others".equalsIgnoreCase(it.assetCode()) || "+ Diğer".equalsIgnoreCase(it.assetCode()))) {
+            AiRecommendationStockWeight othersWeightEntity = aiRecommendationMapper.toStockWeightEntity(
+                    "Others", othersWeight, othersWeight, recommendation);
+            recommendation.addStockWeight(othersWeightEntity);
         }
     }
 

@@ -60,9 +60,19 @@ public class AiRecommendation extends SoftDeletableEntity implements ScenarioWei
     @Builder.Default
     private Map<AssetCategory, AiRecommendationWeight> weights = new HashMap<>();
 
+    @OneToMany(mappedBy = "recommendation", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @MapKey(name = "assetCode")
+    @Builder.Default
+    private Map<String, AiRecommendationStockWeight> stockWeights = new HashMap<>();
+
     public void addWeight(AiRecommendationWeight weight) {
         weights.put(weight.getCategory(), weight);
         weight.setRecommendation(this);
+    }
+
+    public void addStockWeight(AiRecommendationStockWeight stockWeight) {
+        stockWeights.put(stockWeight.getAssetCode(), stockWeight);
+        stockWeight.setRecommendation(this);
     }
 
     @Override

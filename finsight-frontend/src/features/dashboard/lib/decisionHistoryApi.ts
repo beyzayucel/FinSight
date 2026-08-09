@@ -46,3 +46,17 @@ export async function getDecisionHistory(fundId: string): Promise<DecisionRecord
   })
   return response.data.data
 }
+
+export type LatestDecisionState = 'PENDING' | 'AI_ACCEPTED' | 'AI_REJECTED' | 'MANUAL'
+
+function toState(record: DecisionRecord | undefined): LatestDecisionState {
+  if (!record) return 'PENDING'
+  if (record.source === 'MANUAL') return 'MANUAL'
+  return record.status === 'ACCEPTED' ? 'AI_ACCEPTED' : 'AI_REJECTED'
+}
+
+// Durum rozeti için — geçmişin ilk kaydı zaten "en güncel karar". Bilerek
+// /recommendations/pending kullanılmıyor: o endpoint PENDING kayıt yoksa yeni öneri üretiyor.
+export async function getLatestDecisionState(fundId: string): Promise<LatestDecisionState> {
+  return toState((await getDecisionHistory(fundId))[0])
+}

@@ -3,11 +3,12 @@ interface LLMCommentSectionProps {
 }
 
 export function LLMCommentSection({ comment }: LLMCommentSectionProps) {
+  const t = getTranslations()
   const paragraphs = comment.split('\n').filter(Boolean)
 
   return (
     <div className="space-y-2">
-      <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">LLM Yorumu</h3>
+      <h3 className="text-sm font-bold text-slate-900 uppercase tracking-wide">{t.stressLlmComment}</h3>
       <div className="space-y-2 text-xs leading-relaxed">
         {paragraphs.map((paragraph, index) => {
           const isLast = index === paragraphs.length - 1
@@ -21,3 +22,4 @@ export function LLMCommentSection({ comment }: LLMCommentSectionProps) {
     </div>
   )
 }
+import { getTranslations } from '@/i18n/translations'

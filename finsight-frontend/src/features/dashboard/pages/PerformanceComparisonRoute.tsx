@@ -1,6 +1,6 @@
 import { useEffect } from 'react'
-import { useLocation, useNavigate } from 'react-router-dom'
-import PerformanceComparisonPage, { type ReapplyScenario } from './PerformanceComparisonPage'
+import { useNavigate } from 'react-router-dom'
+import PerformanceComparisonPage from './PerformanceComparisonPage'
 import { useDecision } from '../context/decisionStore'
 import { ROUTES } from '@/lib/routes'
 
@@ -12,10 +12,7 @@ import { ROUTES } from '@/lib/routes'
  */
 export default function PerformanceComparisonRoute() {
   const navigate = useNavigate()
-  const location = useLocation()
   const { markPerformanceViewed } = useDecision()
-
-  const reapplyScenario = (location.state as { reapplyScenario?: ReapplyScenario } | null)?.reapplyScenario ?? null
 
   useEffect(() => {
     markPerformanceViewed()
@@ -23,8 +20,6 @@ export default function PerformanceComparisonRoute() {
 
   return (
     <PerformanceComparisonPage
-      overrideScenario={reapplyScenario}
-      onGoToManualScenario={() => navigate(ROUTES.FUND_AI_DECISION)}
       onGoToStressTest={() => navigate(ROUTES.FUND_STRESS_TEST)}
     />
   )

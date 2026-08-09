@@ -1,4 +1,5 @@
 import api from '@/lib/api/client'
+import { getLang } from '@/lib/authStore'
 
 export type AssetCategory = 'STOCK' | 'REPO' | 'FUTURE' | 'FUND'
 
@@ -7,6 +8,11 @@ export const AssetCategoryLabels: Record<AssetCategory, { tr: string; en: string
   REPO: { tr: 'Ters-Repo', en: 'Reverse Repo' },
   FUTURE: { tr: 'Vadeli İşl. Nakit Teminatı', en: 'Futures Cash Collateral' },
   FUND: { tr: 'Yatırım Fonu Katılma Payı', en: 'Mutual Fund Share' },
+}
+
+export function getAssetCategoryLabel(category: AssetCategory): string {
+  const lang = getLang() === 'en' ? 'en' : 'tr'
+  return AssetCategoryLabels[category]?.[lang] ?? category
 }
 
 export type RecommendationStatus = 'PENDING' | 'ACCEPTED' | 'REJECTED'

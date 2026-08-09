@@ -1,7 +1,9 @@
 import { useState, useMemo } from 'react'
-import { submitRecommendationDecision, AssetCategoryLabels } from '../dashboardApi'
+import { submitRecommendationDecision, getAssetCategoryLabel } from '../dashboardApi'
 import type { AIRecommendation, AssetCategory } from '../dashboardApi'
 import { IoTrendingDown, IoTrendingUp } from 'react-icons/io5'
+import { getTranslations, translations } from '@/i18n/translations'
+import { getLang } from '@/lib/authStore'
 
 type AIRecommendationTabProps = {
   recommendation: AIRecommendation
@@ -14,6 +16,8 @@ export default function AIRecommendationTab({
   onDecisionSubmitted,
   isLoading = false,
 }: AIRecommendationTabProps) {
+  const t = getTranslations()
+  const isEnglish = getLang() === 'en'
   const [submitting, setSubmitting] = useState<boolean>(false)
   const [error, setError] = useState<string | null>(null)
   const [note, setNote] = useState<string>('')
@@ -47,7 +51,7 @@ export default function AIRecommendationTab({
       await submitRecommendationDecision(recommendation.id, status, note.trim() || undefined)
       onDecisionSubmitted(status)
     } catch (err: any) {
-      setError(err?.message || 'Karar iletilirken bir hata oluştu.')
+      setError(err?.message || t.aiSubmittingError)
     } finally {
       setSubmitting(false)
     }
@@ -57,7 +61,7 @@ export default function AIRecommendationTab({
     return (
       <div className="flex flex-col items-center justify-center py-20 select-none">
         <div className="h-10 w-10 border-4 border-[#c89834] border-t-transparent rounded-full animate-spin mb-4" />
-        <span className="text-slate-500 font-medium">AI Önerisi yükleniyor...</span>
+        <span className="text-slate-500 font-medium">{t.aiLoading}</span>
       </div>
     )
   }
@@ -70,23 +74,23 @@ export default function AIRecommendationTab({
       <div className="bg-white rounded-xl border border-slate-200/75 shadow-sm p-4 space-y-4">
         <div className="space-y-1.5">
           <h3 className="text-xs font-bold text-slate-800">
-            Kategori Bazında Karşılaştırma
+            {t.aiCategoryComparison}
           </h3>
           <p className="text-[10.5px] text-slate-400 font-medium">
-            Mevcut → AI Önerisi (güncel verilerle üretildi)
+            {t.aiComparisonSubtitle}
           </p>
         </div>
 
         {/* Karşılaştırma Tablosu */}
-        <div className="overflow-hidden border border-slate-100 rounded-xl">
-          <table className="w-full border-collapse text-left text-xs">
+        <div className="overflow-x-auto border border-slate-100 rounded-xl">
+          <table className="min-w-[680px] w-full border-collapse text-left text-xs">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px]">
-                <th className="px-4 py-2.5 font-bold">KATEGORİ</th>
-                <th className="px-4 py-2.5 font-bold w-[200px]">MEVCUT → ÖNERİLEN</th>
-                <th className="px-4 py-2.5 text-right font-bold">MEVCUT</th>
-                <th className="px-4 py-2.5 text-right font-bold">ÖNERİLEN</th>
-                <th className="px-4 py-2.5 text-right font-bold">DEĞİŞİM</th>
+                <th className="px-4 py-2.5 font-bold">{t.aiCategory}</th>
+                <th className="px-4 py-2.5 font-bold w-[200px]">{t.aiCurrentToRecommended}</th>
+                <th className="px-4 py-2.5 text-right font-bold">{t.aiCurrent}</th>
+                <th className="px-4 py-2.5 text-right font-bold">{t.aiRecommended}</th>
+                <th className="px-4 py-2.5 text-right font-bold">{t.aiChange}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -95,7 +99,7 @@ export default function AIRecommendationTab({
                 const current = weightData?.currentWeight ?? 0
                 const recommended = weightData?.recommendedWeight ?? 0
                 const diff = recommended - current
-                const label = AssetCategoryLabels[cat]?.tr || cat
+                const label = getAssetCategoryLabel(cat)
                 const isStock = cat === 'STOCK'
 
                 return (
@@ -109,7 +113,7 @@ export default function AIRecommendationTab({
                           className="inline-flex items-center text-[11px] font-semibold text-[#c89834] hover:text-[#b08226] transition-colors mt-0.5 outline-none cursor-pointer select-none"
                         >
                           <span>
-                            {stockBreakdownOpen ? '▲ Hisse bazında gizle' : '▼ Hisse bazında incele'}
+                            {stockBreakdownOpen ? t.aiHideStocks : t.aiInspectStocks}
                           </span>
                         </button>
                       )}
@@ -165,27 +169,27 @@ export default function AIRecommendationTab({
             {/* Filtreleme ve Başlık Barı */}
             <div className="flex items-center justify-between pt-1">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Hisse Senedi Alt Kırılımı
+                {t.aiStockBreakdown}
               </span>
               <button
                 type="button"
                 onClick={() => setShowOnlyChanged(!showOnlyChanged)}
                 className="text-xs font-semibold text-slate-600 hover:text-[#c89834] transition-colors outline-none cursor-pointer flex items-center gap-1 select-none"
               >
-                <span>{showOnlyChanged ? 'Tüm Hisseleri Göster ▾' : 'Sadece Değişenleri Göster ▴'}</span>
+                <span>{showOnlyChanged ? t.aiShowAllStocks : t.aiShowChangedStocks}</span>
               </button>
             </div>
 
             {/* Alt Kırılım Tablosu */}
-            <div className="overflow-hidden border border-slate-200/80 rounded-xl bg-white shadow-2xs">
-              <table className="w-full border-collapse text-left text-xs">
+            <div className="overflow-x-auto border border-slate-200/80 rounded-xl bg-white shadow-2xs">
+              <table className="min-w-[680px] w-full border-collapse text-left text-xs">
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">
-                    <th className="px-4 py-2 font-bold">HİSSE</th>
-                    <th className="px-4 py-2 font-bold w-[180px]">MEVCUT → ÖNERİLEN</th>
-                    <th className="px-4 py-2 text-right font-bold">MEVCUT</th>
-                    <th className="px-4 py-2 text-right font-bold">ÖNERİLEN</th>
-                    <th className="px-4 py-2 text-right font-bold">DEĞİŞİM</th>
+                    <th className="px-4 py-2 font-bold">{t.aiStock}</th>
+                    <th className="px-4 py-2 font-bold w-[180px]">{t.aiCurrentToRecommended}</th>
+                    <th className="px-4 py-2 text-right font-bold">{t.aiCurrent}</th>
+                    <th className="px-4 py-2 text-right font-bold">{t.aiRecommended}</th>
+                    <th className="px-4 py-2 text-right font-bold">{t.aiChange}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -194,7 +198,7 @@ export default function AIRecommendationTab({
                     const recommended = Number(stock.recommendedWeight) || 0
                     const diff = recommended - current
                     const isReadOnly = stock.assetCode === 'Others' || stock.assetCode === '+ Diğer'
-                    const displayName = isReadOnly ? '+ Diğer' : stock.assetCode
+                    const displayName = isReadOnly ? t.other : stock.assetCode
 
                     return (
                       <tr key={stock.assetCode} className="hover:bg-slate-50/30 transition-colors">
@@ -240,14 +244,14 @@ export default function AIRecommendationTab({
                   {displayedStocks.length === 0 && (
                     <tr>
                       <td colSpan={5} className="px-4 py-4 text-center text-slate-400 text-xs italic">
-                        Değişiklik önerilen hisse bulunmamaktadır.
+                        {t.aiNoChangedStocks}
                       </td>
                     </tr>
                   )}
 
                   {/* Toplam Satırı */}
                   <tr className="bg-slate-50 border-t border-slate-200 font-bold select-none text-slate-800">
-                    <td className="px-4 py-2 font-bold font-mono">Toplam</td>
+                    <td className="px-4 py-2 font-bold font-mono">{t.aiTotal}</td>
                     <td className="px-4 py-2"></td>
                     <td className="px-4 py-2 text-right font-bold font-mono text-slate-500">
                       {totalStockCurrent.toFixed(2).replace('.', ',')}%
@@ -281,11 +285,11 @@ export default function AIRecommendationTab({
         <div className="flex items-center space-x-6 text-[11px] font-semibold text-slate-500 px-1 select-none">
           <div className="flex items-center space-x-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#6b7683]" />
-            <span>Mevcut</span>
+            <span>{t.aiCurrent}</span>
           </div>
           <div className="flex items-center space-x-1.5">
             <span className="w-2.5 h-2.5 rounded-full bg-[#c89834]" />
-            <span>AI Önerisi</span>
+            <span>{t.aiRecommendationTab}</span>
           </div>
         </div>
       </div>
@@ -294,10 +298,12 @@ export default function AIRecommendationTab({
       <div className="bg-[#fcfaf5] rounded-xl border border-[#e2d5b8] p-4 space-y-3">
         <div className="space-y-1.5">
           <h4 className="text-xs font-bold text-slate-800">
-            AI Gerekçesi
+            {t.aiRationale}
           </h4>
           <p className="text-xs text-slate-600 leading-relaxed font-semibold">
-            {recommendation.rationale || 'Mevcut piyasa göstergeleri ve model analizlerine göre, performansı optimize etmek için portföy ağırlıklarınızın ayarlanması önerilmektedir.'}
+            {isEnglish && recommendation.rationale === translations.tr.aiDefaultRationale
+              ? t.aiDefaultRationale
+              : recommendation.rationale || t.aiDefaultRationale}
           </p>
         </div>
 
@@ -309,7 +315,7 @@ export default function AIRecommendationTab({
             ) : (
               <IoTrendingDown size={14} className="text-emerald-700" />
             )}
-            <span>Beklenen Risk Değişimi: {recommendation.expectedRiskChange}</span>
+            <span>{t.aiExpectedRiskChange}: {isEnglish && recommendation.expectedRiskChange === translations.tr.aiDefaultRiskChange ? t.aiDefaultRiskChange : recommendation.expectedRiskChange}</span>
           </div>
         )}
       </div>
@@ -318,13 +324,13 @@ export default function AIRecommendationTab({
       {!isDecided && (
         <div className="space-y-1.5 bg-white rounded-xl border border-slate-200/75 shadow-sm p-4">
           <label className="text-[10px] font-bold text-slate-400 tracking-wider uppercase block">
-            Senaryo Notu (opsiyonel)
+            {t.aiNoteLabel}
           </label>
           <textarea
             rows={3}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Örn. AI önerisini kabul ederek portföy riskini azaltmayı hedefliyorum."
+            placeholder={t.aiNotePlaceholder}
             className="w-full bg-white text-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-xs outline-none focus:border-[#c89834] focus:ring-2 focus:ring-[#c89834]/20 transition-all placeholder-slate-400 resize-none font-medium"
           />
         </div>
@@ -349,7 +355,7 @@ export default function AIRecommendationTab({
                     : 'bg-[#f5f5f5] text-[#9e9e9e] border border-[#e0e0e0] cursor-not-allowed'
                 }`}
               >
-                Kabul Et → Simülasyona Uygula
+                {t.aiAcceptApply}
               </button>
               <button
                 disabled
@@ -359,17 +365,17 @@ export default function AIRecommendationTab({
                     : 'bg-[#f5f5f5] text-[#9e9e9e] border border-[#e0e0e0] cursor-not-allowed'
                 }`}
               >
-                Reddet
+                {t.aiReject}
               </button>
             </div>
             <div className="flex items-center space-x-1.5 text-xs font-semibold py-1">
               {recommendation.status === 'ACCEPTED' ? (
                 <span className="text-[#2d7a4d] flex items-center gap-1.5 leading-relaxed font-semibold">
-                  ✓ AI önerisi kabul edildi. Bu dağılım artık ayrı bir Simülasyon Portföyü olarak kaydedildi — mevcut portföyünüz gerçek emirle değişmedi.
+                  {t.aiAcceptedNotice}
                 </span>
               ) : (
                 <span className="text-rose-700 flex items-center gap-1.5 leading-relaxed font-semibold">
-                  ✕ Öneri reddedildi. Karşılaştırma, mevcut portföy ile benchmark üzerinden devam edecek.
+                  {t.aiRejectedNotice}
                 </span>
               )}
             </div>
@@ -381,14 +387,14 @@ export default function AIRecommendationTab({
               onClick={() => handleDecision('ACCEPTED')}
               className="px-5 py-2.5 rounded-xl bg-[#c89834] text-white font-extrabold text-xs tracking-wider uppercase hover:bg-[#b08226] shadow-sm hover:shadow disabled:opacity-50 transition-all select-none cursor-pointer"
             >
-              {submitting ? 'Uygulanıyor...' : 'Kabul Et → Simülasyona Uygula'}
+              {submitting ? t.aiApplying : t.aiAcceptApply}
             </button>
             <button
               disabled={submitting}
               onClick={() => handleDecision('REJECTED')}
               className="px-5 py-2.5 rounded-xl border border-slate-300 text-slate-700 bg-white font-extrabold text-xs tracking-wider uppercase hover:bg-slate-50 hover:border-slate-400 disabled:opacity-50 transition-all select-none cursor-pointer"
             >
-              Reddet
+              {t.aiReject}
             </button>
           </div>
         )}
@@ -396,4 +402,3 @@ export default function AIRecommendationTab({
     </div>
   )
 }
-

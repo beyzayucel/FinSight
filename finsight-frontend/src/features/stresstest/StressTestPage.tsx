@@ -3,10 +3,11 @@ import { IoLockClosedOutline } from 'react-icons/io5'
 import { ScenarioSelector } from './ScenarioSelector'
 import { ResultsTable } from './ResultsTable'
 import { LLMCommentSection } from './LLMCommentSection'
-import { SCENARIO_TITLES, type PortfolioDataDto, type ScenarioKey, type StressTestInferenceResponseDto } from './types'
+import { getScenarioTitle, type PortfolioDataDto, type ScenarioKey, type StressTestInferenceResponseDto } from './types'
 import { useDecision } from '@/features/dashboard/context/decisionStore'
 import { runSimulation, getSimulationResultByPeriod } from './stressTestApi'
 import { formatIsoDate } from '@/features/dashboard/lib/fund-dashboard/fundDashboardFormatters'
+import { getTranslations } from '@/i18n/translations'
 
 interface StressTestPageProps {
   portfolio: PortfolioDataDto | null
@@ -25,6 +26,7 @@ export default function StressTestPage({
   loadingPeriod,
   onSaveAndNavigate,
 }: StressTestPageProps) {
+  const t = getTranslations()
   const { activeFund } = useDecision()
 
   const [scenario, setScenario] = useState<ScenarioKey>('EQUITY_SHOCK')
@@ -105,7 +107,7 @@ export default function StressTestPage({
     try {
       await onSaveAndNavigate(result.id)
     } catch {
-      setSaveError('Kayıt başarısız, lütfen tekrar deneyin.')
+      setSaveError(t.stressSaveError)
     } finally {
       setIsSaving(false)
     }
@@ -116,14 +118,11 @@ export default function StressTestPage({
     <div className="space-y-6 max-w-6xl mx-auto font-ibm">
       {/* Header */}
       <div>
-        <span className="text-[10px] font-extrabold uppercase tracking-widest text-[#c89834]">
-          Ekran 05 · Varsayımsal Şok Testi
-        </span>
-        <h1 className="text-xl font-extrabold text-slate-900 tracking-tight mt-0.5">
-          Stres Testi {viewMode === 'HISTORICAL' ? `(Son ${analysisWindow} Günlük Dönem Analizi)` : ''}
+        <h1 className="text-xl font-extrabold text-slate-900 tracking-tight">
+          {t.stressTitle} {viewMode === 'HISTORICAL' ? `(${t.stressHistoricalTitle(analysisWindow)})` : ''}
         </h1>
         <p className="mt-1 text-xs text-slate-500 max-w-2xl">
-          Seçili analiz dönemi (Son {analysisWindow} gün{periodDate ? ` · ${formatIsoDate(periodDate)}'den beri` : ''}) baz alınarak, aynı şok senaryosu mevcut portföy, Ekran 04'te oluşturulan simülasyon portföyü ve benchmark üzerine eşzamanlı uygulanır.
+          {t.stressDescription(analysisWindow, periodDate ? t.stressSince(formatIsoDate(periodDate)) : '')}
         </p>
       </div>
 
@@ -133,9 +132,9 @@ export default function StressTestPage({
             <IoLockClosedOutline size={22} />
           </div>
           <div className="space-y-1">
-            <h3 className="text-sm font-bold text-[#1c2530]">Stres Testi Kilitli</h3>
+            <h3 className="text-sm font-bold text-[#1c2530]">{t.stressLocked}</h3>
             <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
-              🔒 Stres testi, Ekran 04'teki simülasyon sonucundaki portföy ağırlıklarını kullanır — önce simülasyonu çalıştırın.
+              {t.stressLockedDescription}
             </p>
           </div>
         </div>
@@ -154,8 +153,8 @@ export default function StressTestPage({
               <div className="h-5 w-5 border-2 border-[#c89834] border-t-transparent rounded-full animate-spin mr-3" />
               <span className="text-xs text-slate-600 font-semibold tracking-wide">
                 {viewMode === 'HISTORICAL'
-                  ? `Seçili döneme (Son ${analysisWindow} Gün) ait analiz verileri yükleniyor...`
-                  : `${SCENARIO_TITLES[scenario]} senaryosu canlı hesaplanıyor...`}
+                  ? t.stressHistoricalLoading(analysisWindow)
+                  : t.stressLiveLoading(getScenarioTitle(scenario))}
               </span>
             </div>
           ) : result ? (
@@ -164,7 +163,7 @@ export default function StressTestPage({
                 <div>
                   <div className="flex items-center justify-between">
                     <h2 className="text-sm font-bold text-slate-900">
-                      Senaryo Sonucu: {SCENARIO_TITLES[scenario]}
+                      {t.stressScenarioResult(getScenarioTitle(scenario))}
                     </h2>
                     {/* Hangi modda olunduğunu gösteren Rozet (Badge) */}
                     <span
@@ -174,21 +173,21 @@ export default function StressTestPage({
                           : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
                       }`}
                     >
-                      {viewMode === 'HISTORICAL' ? `Dönemsel Kayıt · Son ${analysisWindow} Gün` : 'Canlı Hesaplama'}
+                      {viewMode === 'HISTORICAL' ? t.stressPeriodicRecord(analysisWindow) : t.stressLiveCalculation}
                     </span>
                   </div>
                   <p className="text-[11px] text-slate-500 mt-1">
                     {viewMode === 'HISTORICAL'
-                      ? `Şok testi, seçilen ${analysisWindow} günlük dönem başlangıcındaki portföy değerleri üzerinden hesaplanmıştır.`
-                      : 'Şok testi, Ekran 04 simülasyon portföyünün güncel değerleri üzerinden canlı hesaplanmıştır.'}
+                      ? t.stressHistoricalResultDescription(analysisWindow)
+                      : t.stressLiveResultDescription}
                   </p>
                 </div>
 
                 <ResultsTable
                   rows={[
-                    { label: 'Mevcut Portföy', result: result.currentPortfolioResult },
-                    { label: 'Simülasyon Portföyü', result: result.simulationPortfolioResult },
-                    { label: 'Benchmark', result: result.benchmarkPortfolioResult },
+                    { label: t.stressCurrentPortfolio, result: result.currentPortfolioResult },
+                    { label: t.stressSimulationPortfolio, result: result.simulationPortfolioResult },
+                    { label: t.stressBenchmark, result: result.benchmarkPortfolioResult },
                   ]}
                 />
               </section>
@@ -202,13 +201,13 @@ export default function StressTestPage({
             <div className="p-10 text-center bg-white rounded-2xl border border-slate-200/80 shadow-sm space-y-2">
               <div className="text-xs font-bold text-slate-800">
                 {viewMode === 'HISTORICAL'
-                  ? `Son ${analysisWindow} Günlük Döneme Ait Kayıt Bulunamadı`
-                  : 'Stres Testi Simülasyonu'}
+                  ? t.stressNoHistoricalRecord(analysisWindow)
+                  : t.stressSimulation}
               </div>
               <p className="text-xs text-slate-500 max-w-lg mx-auto leading-relaxed">
                 {viewMode === 'HISTORICAL'
-                  ? `Seçilen analiz dönemi (Son ${analysisWindow} Gün) için veritabanında önceden kaydedilmiş bir şok testi bulunmamaktadır. Canlı hesaplama yapmak için yukarıdaki senaryo kartlarından birini seçebilirsiniz.`
-                  : 'Varsayımsal şok senaryolarını çalıştırmak için yukarıdaki senaryo kartlarından birini seçebilir veya sol menüden analiz dönemini değiştirebilirsiniz.'}
+                  ? t.stressNoHistoricalDescription(analysisWindow)
+                  : t.stressSimulationDescription}
               </p>
             </div>
           )}
@@ -229,10 +228,10 @@ export default function StressTestPage({
               {isSaving ? (
                 <>
                   <div className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  <span>Kaydediliyor...</span>
+                  <span>{t.stressSaving}</span>
                 </>
               ) : (
-                <span>Karar Geçmişine Kaydet →</span>
+                <span>{t.stressSaveToHistory}</span>
               )}
             </button>
           </div>

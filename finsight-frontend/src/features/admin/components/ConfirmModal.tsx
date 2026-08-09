@@ -29,9 +29,9 @@ export default function ConfirmModal({
         : 'bg-gradient-to-br from-[#C99738] to-admin-gold text-[#241a08] hover:brightness-105'
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-50 flex items-center justify-center overflow-y-auto p-4">
       <div className="absolute inset-0 bg-admin-ink/40 backdrop-blur-sm" onClick={onCancel} />
-      <div className="relative bg-white rounded-[18px] shadow-2xl border border-admin-line w-full max-w-sm mx-4 p-6">
+      <div className="relative max-h-[calc(100dvh-2rem)] w-full max-w-sm overflow-y-auto rounded-[18px] border border-admin-line bg-white p-5 shadow-2xl sm:p-6">
         <h3 className="font-heading text-base font-bold text-admin-ink mb-2">{title}</h3>
         <p className="text-sm text-admin-text-mute leading-relaxed mb-6">{message}</p>
 

@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom'
 import { IoChevronDownOutline, IoChevronUpOutline, IoPulseOutline, IoTimeOutline } from 'react-icons/io5'
 import { getLang } from '@/lib/authStore'
 import { ROUTES } from '@/lib/routes'
-import { AssetCategoryLabels } from '../dashboardApi'
+import { getAssetCategoryLabel } from '../dashboardApi'
 import type { AssetCategory } from '../dashboardApi'
 import { useDashboardOutlet } from '../DashboardShell'
 import { getDecisionHistory, type DecisionRecord } from '../lib/decisionHistoryApi'
-import { formatCurrency, formatDate, formatSignedPercent, formatUnsignedPercent } from '../lib/formatters'
-import { SCENARIO_TITLES, type PortfolioResultDto } from '@/features/stresstest/types'
+import { formatCurrency, formatDate } from '../lib/formatters'
+import { getScenarioTitle, type PortfolioResultDto } from '@/features/stresstest/types'
+import { getTranslations, translations, type Translations } from '@/i18n/translations'
 
 const ASSET_CATEGORIES: AssetCategory[] = ['STOCK', 'REPO', 'FUTURE', 'FUND']
 
@@ -18,38 +19,52 @@ const ASSET_CATEGORIES: AssetCategory[] = ['STOCK', 'REPO', 'FUTURE', 'FUND']
  * gelebildiği için satırlar süzülerek kuruluyor.
  */
 function stressTestRows(
-  stressTest: NonNullable<DecisionRecord['stressTest']>
+  stressTest: NonNullable<DecisionRecord['stressTest']>,
+  t: Translations
 ): { label: string; result: PortfolioResultDto }[] {
   return (
     [
-      { label: 'Mevcut Portföy', result: stressTest.currentPortfolioResult },
-      { label: 'Simülasyon Portföyü', result: stressTest.simulationPortfolioResult },
-      { label: 'Benchmark', result: stressTest.benchmarkPortfolioResult },
+      { label: t.stressCurrentPortfolio, result: stressTest.currentPortfolioResult },
+      { label: t.stressSimulationPortfolio, result: stressTest.simulationPortfolioResult },
+      { label: t.stressBenchmark, result: stressTest.benchmarkPortfolioResult },
     ] as { label: string; result: PortfolioResultDto | null }[]
   ).filter((row): row is { label: string; result: PortfolioResultDto } => row.result != null)
 }
 
-function formatPct(value: number): string {
-  return `%${value.toFixed(2).replace('.', ',')}`
+function formatPct(value: number, lang: 'tr' | 'en'): string {
+  return lang === 'tr' ? `%${value.toFixed(2).replace('.', ',')}` : `${value.toFixed(2)}%`
 }
 
-function formatDeltaPts(delta: number): string {
+function formatDeltaPts(delta: number, lang: 'tr' | 'en'): string {
   const sign = delta > 0 ? '+' : ''
-  return `${sign}${delta.toFixed(2).replace('.', ',')}`
+  const value = lang === 'tr' ? delta.toFixed(2).replace('.', ',') : delta.toFixed(2)
+  return `${sign}${value}`
 }
 
-function statusLabel(record: DecisionRecord): { text: string; sourceTag: string } {
+function formatSignedPct(value: number, lang: 'tr' | 'en'): string {
+  const sign = value > 0 ? '+' : ''
+  const formatted = lang === 'tr' ? value.toFixed(2).replace('.', ',') : value.toFixed(2)
+  return `${sign}${formatted}%`
+}
+
+function formatUnsignedPct(value: number, lang: 'tr' | 'en'): string {
+  const formatted = lang === 'tr' ? Math.abs(value).toFixed(2).replace('.', ',') : Math.abs(value).toFixed(2)
+  return `${formatted}%`
+}
+
+function statusLabel(record: DecisionRecord, t: Translations): { text: string; sourceTag: string } {
   if (record.source === 'AI') {
     return record.status === 'ACCEPTED'
-      ? { text: 'AI önerisi kabul edildi', sourceTag: 'AI' }
-      : { text: 'Öneri reddedildi', sourceTag: 'AI' }
+      ? { text: t.historyAiAccepted, sourceTag: 'AI' }
+      : { text: t.historyAiRejected, sourceTag: 'AI' }
   }
-  return { text: 'Manuel senaryo uygulandı', sourceTag: 'Manuel' }
+  return { text: t.historyManualApplied, sourceTag: t.historyManualSource }
 }
 
 
 export default function DecisionHistoryPage() {
   const lang = getLang() === 'en' ? 'en' : 'tr'
+  const t = getTranslations()
   const navigate = useNavigate()
   const { fund } = useDashboardOutlet()
 
@@ -68,13 +83,13 @@ export default function DecisionHistoryPage() {
         if (!cancelled) setHistory(records)
       })
       .catch(() => {
-        if (!cancelled) setError('Karar geçmişi alınamadı, lütfen tekrar deneyin.')
+        if (!cancelled) setError(t.historyLoadError)
       })
 
     return () => {
       cancelled = true
     }
-  }, [fund.id])
+  }, [fund.id, t.historyLoadError])
 
   function handleReapply() {
     navigate(ROUTES.FUND_PERFORMANCE)
@@ -85,16 +100,16 @@ export default function DecisionHistoryPage() {
   return (
     <div className="space-y-4 max-w-[1100px] animate-fade-in select-none">
       <div>
-        <h2 className="text-xl font-bold text-slate-800 tracking-tight">Karar Geçmişi</h2>
+        <h2 className="text-xl font-bold text-slate-800 tracking-tight">{t.historyTitle}</h2>
         <p className="text-xs text-slate-500 font-medium mt-1">
-          En yeniden en eskiye · detay için satıra tıklayın.
+          {t.historySubtitle}
         </p>
       </div>
 
       {isLoading ? (
         <div className="flex flex-col items-center justify-center py-20">
           <div className="h-8 w-8 border-4 border-[#c89834] border-t-transparent rounded-full animate-spin mb-3" />
-          <span className="text-slate-500 font-medium text-sm">Karar geçmişi yükleniyor...</span>
+          <span className="text-slate-500 font-medium text-sm">{t.historyLoading}</span>
         </div>
       ) : error ? (
         <div className="bg-rose-50 border border-rose-100 rounded-2xl p-6 text-center text-sm font-medium text-rose-700">
@@ -106,9 +121,9 @@ export default function DecisionHistoryPage() {
             <IoTimeOutline size={28} />
           </div>
           <div className="max-w-md">
-            <h3 className="text-lg font-bold text-slate-800">Henüz karar kaydı yok</h3>
+            <h3 className="text-lg font-bold text-slate-800">{t.historyEmptyTitle}</h3>
             <p className="text-sm text-slate-500 mt-2 leading-relaxed">
-              AI önerisini kabul/reddettiğinizde ya da manuel bir senaryo uyguladığınızda burada listelenecek.
+              {t.historyEmptyDescription}
             </p>
           </div>
           <button
@@ -116,14 +131,14 @@ export default function DecisionHistoryPage() {
             onClick={() => navigate(ROUTES.FUND_AI_DECISION)}
             className="mt-1 px-5 py-2.5 rounded-xl bg-[#c89834] text-white font-extrabold text-xs tracking-wider uppercase hover:bg-[#b08226] shadow-sm transition-all cursor-pointer"
           >
-            Manuel Senaryo Oluştur
+            {t.historyCreateManual}
           </button>
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200/75 shadow-sm divide-y divide-slate-100">
           {history!.map((record) => {
             const isOpen = openId === record.id
-            const label = statusLabel(record)
+            const label = statusLabel(record, t)
             const hasWeights = record.weights.length > 0
             // Kayıt, kırılımın tamamını (fonun tüm hisseleri) tutuyor; geçmiş ekranında anlamlı olan
             // yalnızca karar anında değiştirilenler. Değişmeyenleri listelemek 50+ satırlık gürültü olur.
@@ -132,6 +147,9 @@ export default function DecisionHistoryPage() {
             const isStocksOpen = openStocksId === record.id
             const canReapply = record.status === 'ACCEPTED' && hasWeights
             const m = record.metrics
+            const rawSummary = record.note || record.rationale
+            const localizedSummary =
+              lang === 'en' && rawSummary === translations.tr.aiDefaultRationale ? t.aiDefaultRationale : rawSummary
 
             return (
               <div key={record.id}>
@@ -152,22 +170,22 @@ export default function DecisionHistoryPage() {
                         {record.stressTest && (
                           <span
                             className="ml-2 inline-flex items-center gap-1 align-middle rounded-md bg-[#c89834]/10 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-[#c89834]"
-                            title="Bu karara bir stres testi sonucu iliştirilmiş"
+                            title={t.historyStressAttached}
                           >
                             <IoPulseOutline size={9} />
-                            Stres Testi
+                            {t.historyStressTest}
                           </span>
                         )}
                       </p>
                       {m ? (
                         <p className="text-[11px] text-slate-500 font-medium mt-0.5">
-                          {m.analysisWindowDays != null && `Süre: ${m.analysisWindowDays} işlem günü · `}
-                          {m.totalReturnPct != null && `Simülasyon getirisi: ${formatSignedPercent(m.totalReturnPct)} · `}
-                          {m.benchmarkDiffPct != null && `Benchmark farkı: ${formatSignedPercent(m.benchmarkDiffPct)}`}
+                          {m.analysisWindowDays != null && `${t.historyDuration(m.analysisWindowDays)} · `}
+                          {m.totalReturnPct != null && `${t.historySimulationReturn}: ${formatSignedPct(m.totalReturnPct, lang)} · `}
+                          {m.benchmarkDiffPct != null && `${t.historyBenchmarkDifference}: ${formatSignedPct(m.benchmarkDiffPct, lang)}`}
                         </p>
                       ) : record.note || record.rationale ? (
                         <p className="text-[11px] text-slate-500 font-medium mt-0.5 line-clamp-1">
-                          {record.note || record.rationale}
+                          {localizedSummary}
                         </p>
                       ) : null}
                     </div>
@@ -188,22 +206,26 @@ export default function DecisionHistoryPage() {
                   <div className="px-4 pb-4 animate-fade-in space-y-3">
                     <div className="rounded-xl bg-slate-50 border border-slate-100 p-3.5">
                       <p className="text-[9.5px] font-bold tracking-wider text-slate-400 uppercase mb-1">
-                        {record.source === 'AI' ? 'AI Gerekçesi' : 'Karar Notu'}
+                        {record.source === 'AI' ? t.historyAiRationale : t.historyDecisionNote}
                       </p>
                       <p className="text-xs text-slate-600 leading-relaxed">
-                        {(record.source === 'AI' ? record.rationale : record.note) || '(kayıtlı not yok)'}
+                        {(record.source === 'AI'
+                          ? lang === 'en' && record.rationale === translations.tr.aiDefaultRationale
+                            ? t.aiDefaultRationale
+                            : record.rationale
+                          : record.note) || t.historyNoNote}
                       </p>
                     </div>
 
                     {hasWeights ? (
-                      <div className="overflow-hidden border border-slate-100 rounded-xl">
-                        <table className="w-full border-collapse text-left text-xs">
+                      <div className="overflow-x-auto border border-slate-100 rounded-xl">
+                        <table className="min-w-[580px] w-full border-collapse text-left text-xs">
                           <thead>
                             <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px]">
-                              <th className="px-4 py-2.5 font-bold">KATEGORİ</th>
-                              <th className="px-4 py-2.5 text-right font-bold">O ZAMANKİ MEVCUT</th>
-                              <th className="px-4 py-2.5 text-right font-bold">KARAR VERİLEN</th>
-                              <th className="px-4 py-2.5 text-right font-bold">DEĞİŞİM</th>
+                              <th className="px-4 py-2.5 font-bold">{t.historyCategory}</th>
+                              <th className="px-4 py-2.5 text-right font-bold">{t.historyPreviousWeight}</th>
+                              <th className="px-4 py-2.5 text-right font-bold">{t.historyDecidedWeight}</th>
+                              <th className="px-4 py-2.5 text-right font-bold">{t.historyChange}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-slate-100">
@@ -214,18 +236,18 @@ export default function DecisionHistoryPage() {
                               return (
                                 <tr key={cat}>
                                   <td className="px-4 py-2 font-semibold text-slate-700">
-                                    {AssetCategoryLabels[cat]?.tr || cat}
+                                    {getAssetCategoryLabel(cat)}
                                   </td>
-                                  <td className="px-4 py-2 text-right text-slate-500">{formatPct(w.currentWeight)}</td>
+                                  <td className="px-4 py-2 text-right text-slate-500">{formatPct(w.currentWeight, lang)}</td>
                                   <td className="px-4 py-2 text-right font-semibold text-slate-700">
-                                    {formatPct(w.targetWeight)}
+                                    {formatPct(w.targetWeight, lang)}
                                   </td>
                                   <td
                                     className={`px-4 py-2 text-right font-semibold ${
                                       delta > 0 ? 'text-[#3a7d74]' : delta < 0 ? 'text-[#ab6262]' : 'text-slate-400'
                                     }`}
                                   >
-                                    {formatDeltaPts(delta)}
+                                    {formatDeltaPts(delta, lang)}
                                   </td>
                                 </tr>
                               )
@@ -235,7 +257,7 @@ export default function DecisionHistoryPage() {
                       </div>
                     ) : (
                       <div className="rounded-xl bg-rose-50 border border-rose-100 px-4 py-3 text-xs font-medium text-rose-700 text-center">
-                        Reddedildiği için kayıtlı ağırlık yok
+                        {t.historyNoRejectedWeights}
                       </div>
                     )}
 
@@ -247,21 +269,21 @@ export default function DecisionHistoryPage() {
                           className="flex items-center gap-1.5 text-[11px] font-bold text-[#c89834] hover:underline cursor-pointer"
                         >
                           {isStocksOpen ? <IoChevronUpOutline size={11} /> : <IoChevronDownOutline size={11} />}
-                          Hisse bazında kırılımı gör
+                          {t.historyViewStocks}
                           <span className="font-semibold text-slate-400">
-                            ({changedStocks.length} hisse değişti)
+                            ({t.historyChangedStocks(changedStocks.length)})
                           </span>
                         </button>
 
                         {isStocksOpen && (
-                          <div className="mt-2 overflow-hidden border border-slate-100 rounded-xl animate-fade-in">
-                            <table className="w-full border-collapse text-left text-xs">
+                          <div className="mt-2 overflow-x-auto border border-slate-100 rounded-xl animate-fade-in">
+                            <table className="min-w-[580px] w-full border-collapse text-left text-xs">
                               <thead>
                                 <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px]">
-                                  <th className="px-4 py-2.5 font-bold">HİSSE</th>
-                                  <th className="px-4 py-2.5 text-right font-bold">O ZAMANKİ MEVCUT</th>
-                                  <th className="px-4 py-2.5 text-right font-bold">KARAR VERİLEN</th>
-                                  <th className="px-4 py-2.5 text-right font-bold">DEĞİŞİM</th>
+                                  <th className="px-4 py-2.5 font-bold">{t.historyStock}</th>
+                                  <th className="px-4 py-2.5 text-right font-bold">{t.historyPreviousWeight}</th>
+                                  <th className="px-4 py-2.5 text-right font-bold">{t.historyDecidedWeight}</th>
+                                  <th className="px-4 py-2.5 text-right font-bold">{t.historyChange}</th>
                                 </tr>
                               </thead>
                               <tbody className="divide-y divide-slate-100">
@@ -270,16 +292,16 @@ export default function DecisionHistoryPage() {
                                   return (
                                     <tr key={s.assetCode}>
                                       <td className="px-4 py-2 font-semibold text-slate-700">{s.assetCode}</td>
-                                      <td className="px-4 py-2 text-right text-slate-500">{formatPct(s.currentWeight)}</td>
+                                      <td className="px-4 py-2 text-right text-slate-500">{formatPct(s.currentWeight, lang)}</td>
                                       <td className="px-4 py-2 text-right font-semibold text-slate-700">
-                                        {formatPct(s.targetWeight)}
+                                        {formatPct(s.targetWeight, lang)}
                                       </td>
                                       <td
                                         className={`px-4 py-2 text-right font-semibold ${
                                           delta > 0 ? 'text-[#3a7d74]' : delta < 0 ? 'text-[#ab6262]' : 'text-slate-400'
                                         }`}
                                       >
-                                        {formatDeltaPts(delta)}
+                                        {formatDeltaPts(delta, lang)}
                                       </td>
                                     </tr>
                                   )
@@ -287,8 +309,7 @@ export default function DecisionHistoryPage() {
                               </tbody>
                             </table>
                             <p className="border-t border-slate-100 px-4 py-2 text-[10px] text-slate-400">
-                              Yalnızca karar anında değiştirilen hisseler listelenir; ağırlıklar hisse senedi kovası
-                              içindeki paylardır.
+                              {t.historyStocksNote}
                             </p>
                           </div>
                         )}
@@ -299,28 +320,28 @@ export default function DecisionHistoryPage() {
                       <div className="flex flex-wrap gap-x-4 gap-y-1.5 text-[11px] font-semibold">
                         {m.totalReturnPct != null && (
                           <span className="text-slate-500">
-                            Simülasyon getirisi:{' '}
+                            {t.historySimulationReturn}:{' '}
                             <span className={m.totalReturnPct >= 0 ? 'text-[#3a7d74]' : 'text-[#ab6262]'}>
-                              {formatSignedPercent(m.totalReturnPct)}
+                              {formatSignedPct(m.totalReturnPct, lang)}
                             </span>
                           </span>
                         )}
                         {m.benchmarkDiffPct != null && (
                           <span className="text-slate-500">
-                            Benchmark farkı:{' '}
+                            {t.historyBenchmarkDifference}:{' '}
                             <span className={m.benchmarkDiffPct >= 0 ? 'text-[#3a7d74]' : 'text-[#ab6262]'}>
-                              {formatSignedPercent(m.benchmarkDiffPct)}
+                              {formatSignedPct(m.benchmarkDiffPct, lang)}
                             </span>
                           </span>
                         )}
                         {m.maxDrawdownPct != null && (
                           <span className="text-slate-500">
-                            Maks. düşüş: <span className="text-[#ab6262]">{formatSignedPercent(m.maxDrawdownPct)}</span>
+                            {t.historyMaxDrawdown}: <span className="text-[#ab6262]">{formatSignedPct(m.maxDrawdownPct, lang)}</span>
                           </span>
                         )}
                         {m.dailyVolatilityPct != null && (
                           <span className="text-slate-500">
-                            Oynaklık: <span className="text-slate-700">{formatUnsignedPercent(m.dailyVolatilityPct)}</span>
+                            {t.historyVolatility}: <span className="text-slate-700">{formatUnsignedPct(m.dailyVolatilityPct, lang)}</span>
                           </span>
                         )}
                       </div>
@@ -331,7 +352,7 @@ export default function DecisionHistoryPage() {
                         <div className="bg-slate-50 border-b border-slate-100 px-4 py-2.5 flex items-center gap-2">
                           <IoPulseOutline className="text-[#c89834]" size={13} />
                           <span className="text-[9.5px] font-bold tracking-wider text-slate-400 uppercase">
-                            Stres Testi · {SCENARIO_TITLES[record.stressTest.scenarioKey] ?? record.stressTest.scenarioKey}
+                            {t.historyStressTest} · {getScenarioTitle(record.stressTest.scenarioKey)}
                           </span>
                         </div>
 
@@ -339,14 +360,14 @@ export default function DecisionHistoryPage() {
                           <table className="w-full min-w-[440px] border-collapse text-left text-xs">
                             <thead>
                               <tr className="border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px]">
-                                <th className="px-4 py-2.5 font-bold">PORTFÖY</th>
-                                <th className="px-4 py-2.5 text-right font-bold">ŞOK ÖNCESİ</th>
-                                <th className="px-4 py-2.5 text-right font-bold">BEKLENEN ETKİ</th>
-                                <th className="px-4 py-2.5 text-right font-bold">ŞOK SONRASI</th>
+                                <th className="px-4 py-2.5 font-bold">{t.historyPortfolio}</th>
+                                <th className="px-4 py-2.5 text-right font-bold">{t.historyPreShock}</th>
+                                <th className="px-4 py-2.5 text-right font-bold">{t.historyExpectedImpact}</th>
+                                <th className="px-4 py-2.5 text-right font-bold">{t.historyPostShock}</th>
                               </tr>
                             </thead>
                             <tbody className="divide-y divide-slate-100">
-                              {stressTestRows(record.stressTest).map(({ label, result }) => (
+                              {stressTestRows(record.stressTest, t).map(({ label, result }) => (
                                 <tr key={label}>
                                   <td className="px-4 py-2 font-semibold text-slate-700 whitespace-nowrap">{label}</td>
                                   <td className="px-4 py-2 text-right text-slate-500 whitespace-nowrap">
@@ -357,7 +378,7 @@ export default function DecisionHistoryPage() {
                                       result.expectedImpactRate >= 0 ? 'text-[#3a7d74]' : 'text-[#ab6262]'
                                     }`}
                                   >
-                                    {formatSignedPercent(result.expectedImpactRate * 100)}
+                                    {formatSignedPct(result.expectedImpactRate * 100, lang)}
                                   </td>
                                   <td className="px-4 py-2 text-right font-semibold text-slate-700 whitespace-nowrap">
                                     {formatCurrency(result.postShockValue)}
@@ -382,7 +403,7 @@ export default function DecisionHistoryPage() {
                         onClick={() => handleReapply()}
                         className="px-4 py-2 rounded-xl border border-[#c89834]/40 text-[#c89834] font-bold text-[11px] tracking-wide uppercase hover:bg-[#c89834]/10 transition-all cursor-pointer"
                       >
-                        ↻ Tekrar Uygula (bugünün verisiyle)
+                        {t.historyReapply}
                       </button>
                     )}
                   </div>

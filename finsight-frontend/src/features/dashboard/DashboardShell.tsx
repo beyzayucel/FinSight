@@ -5,6 +5,7 @@ import type { Fund } from './dashboardApi'
 import { ROUTES } from '@/lib/routes'
 import { useDecision } from './context/decisionStore'
 import type { SimulationWindow } from './lib/simulation'
+import { getTranslations } from '@/i18n/translations'
 
 type MenuIndex = 1 | 2 | 3 | 4 | 5
 
@@ -43,6 +44,7 @@ function resolveActiveMenu(pathname: string): MenuIndex {
  * Ekranlar artık state ile değil, nested route ile değişiyor.
  */
 export default function DashboardShell() {
+  const t = getTranslations()
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -59,7 +61,7 @@ export default function DashboardShell() {
       return (
         <div className="flex flex-col items-center justify-center min-h-[50vh]">
           <div className="h-10 w-10 border-4 border-[#c89834] border-t-transparent rounded-full animate-spin mb-4" />
-          <span className="text-slate-500 font-medium">Finsight yükleniyor...</span>
+          <span className="text-slate-500 font-medium">{t.appLoading}</span>
         </div>
       )
     }
@@ -67,15 +69,15 @@ export default function DashboardShell() {
     if (!fund) {
       return (
         <div className="bg-rose-50 border border-rose-100 rounded-2xl p-6 text-center max-w-xl mx-auto mt-12 space-y-4">
-          <h3 className="text-lg font-bold text-rose-800">Sistem Bağlantı Hatası</h3>
+          <h3 className="text-lg font-bold text-rose-800">{t.appConnectionError}</h3>
           <p className="text-sm text-rose-700">
-            {fundState.status === 'error' ? fundState.message : 'Veriler yüklenemedi. Lütfen tekrar deneyin.'}
+            {fundState.status === 'error' ? fundState.message : t.appLoadError}
           </p>
           <button
             onClick={reloadFund}
             className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold uppercase select-none transition-all shadow-sm"
           >
-            Yeniden Dene
+            {t.retry}
           </button>
         </div>
       )

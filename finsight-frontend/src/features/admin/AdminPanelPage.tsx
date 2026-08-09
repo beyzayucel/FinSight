@@ -109,7 +109,7 @@ export default function AdminPanelPage() {
     >
       <DecisionKpiCards decisions={decisions} loading={loading} t={t} />
 
-      <div className="grid grid-cols-[1fr_320px] gap-5 items-start">
+      <div className="grid grid-cols-1 items-start gap-5 xl:grid-cols-[minmax(0,1fr)_320px]">
         <div>
           <DecisionFilters
             users={users}

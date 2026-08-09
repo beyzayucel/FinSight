@@ -1,17 +1,7 @@
-import type { ScenarioKey, ScenarioOption } from './types'
+import { getScenarioTitle, type ScenarioKey } from './types'
+import { getTranslations } from '@/i18n/translations'
 
-export const SCENARIOS: ScenarioOption[] = [
-  {
-    key: 'EQUITY_SHOCK',
-    title: 'Hisse Şoku',
-    description: 'BIST 100 endeksinde anlık –%10 düşüş',
-  },
-  {
-    key: 'INTEREST_RATE_SHOCK',
-    title: 'Faiz Şoku',
-    description: 'Gösterge faiz oranında +300 baz puan artış',
-  },
-]
+const SCENARIO_KEYS: ScenarioKey[] = ['EQUITY_SHOCK', 'INTEREST_RATE_SHOCK']
 
 interface ScenarioSelectorProps {
   selected: ScenarioKey
@@ -20,9 +10,15 @@ interface ScenarioSelectorProps {
 }
 
 export function ScenarioSelector({ selected, onSelect, disabled }: ScenarioSelectorProps) {
+  const t = getTranslations()
+  const scenarios = SCENARIO_KEYS.map((key) => ({
+    key,
+    title: getScenarioTitle(key),
+    description: key === 'EQUITY_SHOCK' ? t.stressEquityDescription : t.stressInterestDescription,
+  }))
   return (
     <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-      {SCENARIOS.map((scenario) => {
+      {scenarios.map((scenario) => {
         const isActive = scenario.key === selected
         return (
           <button

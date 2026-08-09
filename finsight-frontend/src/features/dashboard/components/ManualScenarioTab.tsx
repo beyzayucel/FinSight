@@ -1,7 +1,9 @@
 import { useState, useEffect, useMemo } from 'react'
-import { AssetCategoryLabels, applyManualScenario } from '../dashboardApi'
+import { getAssetCategoryLabel, applyManualScenario } from '../dashboardApi'
 import type { Fund, AssetCategory } from '../dashboardApi'
 import { getFundDashboard } from '../lib/fund-dashboard/fundDashboardApi'
+import { getLang } from '@/lib/authStore'
+import { getTranslations } from '@/i18n/translations'
 
 type ManualScenarioTabProps = {
   fund: Fund
@@ -13,13 +15,29 @@ type StockItem = {
   defaultWeight: number
 }
 
+function formatValue(value: number, lang: 'tr' | 'en'): string {
+  const formatted = value.toFixed(2)
+  return lang === 'tr' ? formatted.replace('.', ',') : formatted
+}
+
+function formatPercent(value: number, lang: 'tr' | 'en'): string {
+  return `${formatValue(value, lang)}%`
+}
+
+function formatDelta(value: number, lang: 'tr' | 'en', positiveZero = false): string {
+  const sign = value > 0 || (positiveZero && Math.abs(value) <= 0.01) ? '+' : ''
+  return `${sign}${formatValue(value, lang)}`
+}
+
 export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualScenarioTabProps) {
+  const lang = getLang() === 'en' ? 'en' : 'tr'
+  const t = getTranslations()
   // Input states for main categories (stored as strings with commas for Turkish UI formatting)
   const [weights, setWeights] = useState<Record<AssetCategory, string>>({
-    STOCK: (fund.weights?.STOCK ?? 0).toFixed(2).replace('.', ','),
-    REPO: (fund.weights?.REPO ?? 0).toFixed(2).replace('.', ','),
-    FUTURE: (fund.weights?.FUTURE ?? 0).toFixed(2).replace('.', ','),
-    FUND: (fund.weights?.FUND ?? 0).toFixed(2).replace('.', ','),
+    STOCK: formatValue(fund.weights?.STOCK ?? 0, lang),
+    REPO: formatValue(fund.weights?.REPO ?? 0, lang),
+    FUTURE: formatValue(fund.weights?.FUTURE ?? 0, lang),
+    FUND: formatValue(fund.weights?.FUND ?? 0, lang),
   })
 
   // Dynamic stock breakdown list from DB / API
@@ -53,7 +71,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
 
           dynamicStocks.forEach((s) => {
             newBaseline[s.assetCode] = s.defaultWeight
-            newInputs[s.assetCode] = s.defaultWeight.toFixed(2).replace('.', ',')
+            newInputs[s.assetCode] = formatValue(s.defaultWeight, lang)
           })
 
           setStocks(dynamicStocks)
@@ -70,7 +88,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
     return () => {
       isMounted = false
     }
-  }, [fund?.code])
+  }, [fund?.code, lang])
 
   // Helper to parse input values (handling Turkish commas)
   const getParsedWeight = (valStr: string): number => {
@@ -95,14 +113,14 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
   // Re-initialize state when fund id changes
   useEffect(() => {
     setWeights({
-      STOCK: (fund.weights?.STOCK ?? 0).toFixed(2).replace('.', ','),
-      REPO: (fund.weights?.REPO ?? 0).toFixed(2).replace('.', ','),
-      FUTURE: (fund.weights?.FUTURE ?? 0).toFixed(2).replace('.', ','),
-      FUND: (fund.weights?.FUND ?? 0).toFixed(2).replace('.', ','),
+      STOCK: formatValue(fund.weights?.STOCK ?? 0, lang),
+      REPO: formatValue(fund.weights?.REPO ?? 0, lang),
+      FUTURE: formatValue(fund.weights?.FUTURE ?? 0, lang),
+      FUND: formatValue(fund.weights?.FUND ?? 0, lang),
     })
     setErrors([])
     setSuccessMsg(null)
-  }, [fund?.id])
+  }, [fund?.id, lang])
 
   const categories: AssetCategory[] = ['STOCK', 'REPO', 'FUTURE', 'FUND']
 
@@ -116,15 +134,13 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
     // 1. Sum check (within tolerance)
     const diffFrom100 = Math.abs(totalWeight - 100)
     if (diffFrom100 > 0.01) {
-      newErrors.push(`Toplam ağırlık %100.00 olmalıdır. (Mevcut: %${totalWeight.toFixed(2).replace('.', ',')})`)
+      newErrors.push(t.manualTotalWeightError(formatValue(totalWeight, lang)))
     }
 
     // 2. STOCK minimum check
     const stockWeight = getParsedWeightForCat('STOCK')
     if (stockWeight < 80.0) {
-      newErrors.push(
-        `Hisse senedi yoğun fon yasal gerekliliği nedeniyle Hisse Senedi ağırlığı %80.00'den az olamaz. (Mevcut: %${stockWeight.toFixed(2).replace('.', ',')})`
-      )
+      newErrors.push(t.manualStockFloorError(formatValue(stockWeight, lang)))
     }
 
     // 3. Category deviation limits check (±10% max)
@@ -133,8 +149,8 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
       const target = getParsedWeightForCat(cat)
       const dev = Math.abs(target - current)
       if (dev > 10.0) {
-        const name = AssetCategoryLabels[cat]?.tr || cat
-        newErrors.push(`${name} sapması ±10.00% puanı aşamaz. (Sapma: ${dev.toFixed(2).replace('.', ',')}%)`)
+        const name = getAssetCategoryLabel(cat)
+        newErrors.push(t.manualCategoryDeviationError(name, formatValue(dev, lang)))
       }
     })
 
@@ -143,9 +159,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
       const diffFrom100 = Math.abs(totalStockBreakdownSum - 100)
 
       if (diffFrom100 > 0.01) {
-        newErrors.push(
-          `Hisse senedi alt kırılım toplamı %100.00 olmalıdır. (Mevcut: %${totalStockBreakdownSum.toFixed(2).replace('.', ',')})`
-        )
+        newErrors.push(t.manualStockTotalError(formatValue(totalStockBreakdownSum, lang)))
       }
 
       stocks.forEach((stock) => {
@@ -155,20 +169,19 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
           const target = getParsedWeightForStock(stock.assetCode)
           const dev = Math.abs(target - current)
           if (dev > 5.0) {
-            newErrors.push(
-              `Hissede (${stock.assetCode}) izin verilen maksimum sapma ±5.00 puanı aşamaz. (Sapma: ${dev.toFixed(2).replace('.', ',')}%)`
-            )
+            newErrors.push(t.manualStockDeviationError(stock.assetCode, formatValue(dev, lang)))
           }
         }
       })
     }
 
     setErrors(newErrors)
-  }, [weights, fund, stockBreakdownOpen, stockInputs, stockBaseline, totalWeight, stocks, totalStockBreakdownSum])
+  }, [weights, fund, stockBreakdownOpen, stockInputs, stockBaseline, totalWeight, stocks, totalStockBreakdownSum, lang, t])
 
   function handleInputChange(cat: AssetCategory, val: string) {
-    const clean = val.replace(/\./g, ',')
-    if (clean === '' || /^[0-9]*,?[0-9]*$/.test(clean)) {
+    const clean = lang === 'tr' ? val.replace(/\./g, ',') : val.replace(/,/g, '.')
+    const valid = lang === 'tr' ? /^[0-9]*,?[0-9]*$/.test(clean) : /^[0-9]*\.?[0-9]*$/.test(clean)
+    if (clean === '' || valid) {
       setWeights((prev) => ({ ...prev, [cat]: clean }))
     }
   }
@@ -178,14 +191,15 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
     const newVal = Math.max(0, Math.min(100, currentVal + step))
     setWeights((prev) => ({
       ...prev,
-      [cat]: newVal.toFixed(2).replace('.', ','),
+      [cat]: formatValue(newVal, lang),
     }))
   }
 
   function handleStockInputChange(assetCode: string, val: string) {
     if (assetCode === 'Others' || assetCode === '+ Diğer') return
-    const clean = val.replace(/\./g, ',')
-    if (clean === '' || /^[0-9]*,?[0-9]*$/.test(clean)) {
+    const clean = lang === 'tr' ? val.replace(/\./g, ',') : val.replace(/,/g, '.')
+    const valid = lang === 'tr' ? /^[0-9]*,?[0-9]*$/.test(clean) : /^[0-9]*\.?[0-9]*$/.test(clean)
+    if (clean === '' || valid) {
       setStockInputs((prev) => ({ ...prev, [assetCode]: clean }))
     }
   }
@@ -196,22 +210,22 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
     const newVal = Math.max(0, Math.min(100, currentVal + step))
     setStockInputs((prev) => ({
       ...prev,
-      [assetCode]: newVal.toFixed(2).replace('.', ','),
+      [assetCode]: formatValue(newVal, lang),
     }))
   }
 
   function handleReset() {
     setWeights({
-      STOCK: (fund.weights?.STOCK ?? 0).toFixed(2).replace('.', ','),
-      REPO: (fund.weights?.REPO ?? 0).toFixed(2).replace('.', ','),
-      FUTURE: (fund.weights?.FUTURE ?? 0).toFixed(2).replace('.', ','),
-      FUND: (fund.weights?.FUND ?? 0).toFixed(2).replace('.', ','),
+      STOCK: formatValue(fund.weights?.STOCK ?? 0, lang),
+      REPO: formatValue(fund.weights?.REPO ?? 0, lang),
+      FUTURE: formatValue(fund.weights?.FUTURE ?? 0, lang),
+      FUND: formatValue(fund.weights?.FUND ?? 0, lang),
     })
 
     const resetInputs: Record<string, string> = {}
     stocks.forEach((s) => {
       const current = stockBaseline[s.assetCode] ?? s.defaultWeight
-      resetInputs[s.assetCode] = current.toFixed(2).replace('.', ',')
+      resetInputs[s.assetCode] = formatValue(current, lang)
     })
     setStockInputs(resetInputs)
 
@@ -246,12 +260,10 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
       }
 
       await applyManualScenario(payload)
-      setSuccessMsg(
-        '✓ Manuel dağılım simülasyona uygulandı. Bu dağılım artık ayrı bir Simülasyon Portföyü olarak kaydedildi — mevcut portföyünüz gerçek emirle değişmedi.'
-      )
+      setSuccessMsg(t.manualSuccess)
       onScenarioApplied()
     } catch (err: any) {
-      setErrors([err?.message || 'Simülasyon kaydedilirken bir hata oluştu.'])
+      setErrors([err?.message || t.manualSaveError])
     } finally {
       setSubmitting(false)
     }
@@ -274,21 +286,21 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
       <div className="bg-white rounded-xl border border-slate-200/75 shadow-sm p-4 space-y-4">
         {/* Başlık ve Kılavuz */}
         <div className="space-y-1.5">
-          <h3 className="text-xs font-bold text-slate-800">Manuel Senaryo Oluştur</h3>
+          <h3 className="text-xs font-bold text-slate-800">{t.manualTitle}</h3>
           <p className="text-[10.5px] leading-relaxed text-slate-400 font-medium">
-            Mevcut portföy referans alınır; AI önerisinden bağımsızdır. Toplam her zaman %100 olmalı, tek bir varlıktaki sapma ±10 puanı aşamaz (taslak uyumluluk kuralı). Ayrıca hisse ağırlığı, hisse senedi yoğun fon statüsü gereği %80'in altına düşürülemez (sabit yasal alt sınır).
+            {t.manualDescription}
           </p>
         </div>
 
         {/* Form Tablosu */}
-        <div className="overflow-hidden border border-slate-100 rounded-xl">
-          <table className="w-full border-collapse text-left text-xs">
+        <div className="overflow-x-auto border border-slate-100 rounded-xl">
+          <table className="min-w-[580px] w-full border-collapse text-left text-xs">
             <thead>
               <tr className="bg-slate-50 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9.5px] select-none">
-                <th className="px-4 py-2.5 font-bold">KATEGORİ</th>
-                <th className="px-4 py-2.5 text-right font-bold">MEVCUT</th>
-                <th className="px-4 py-2.5 text-center font-bold">YENİ AĞIRLIK</th>
-                <th className="px-4 py-2.5 text-right font-bold">DEĞİŞİM</th>
+                <th className="px-4 py-2.5 font-bold">{t.aiCategory}</th>
+                <th className="px-4 py-2.5 text-right font-bold">{t.aiCurrent}</th>
+                <th className="px-4 py-2.5 text-center font-bold">{t.manualNewWeight}</th>
+                <th className="px-4 py-2.5 text-right font-bold">{t.aiChange}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -296,7 +308,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
                 const current = fund.weights?.[cat] ?? 0
                 const target = getParsedWeightForCat(cat)
                 const diff = target - current
-                const label = AssetCategoryLabels[cat]?.tr || cat
+                const label = getAssetCategoryLabel(cat)
 
                 const isStock = cat === 'STOCK'
                 const isFloorBreach = isStock && target < 80.0
@@ -318,13 +330,13 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
                           className="inline-flex items-center text-[11px] font-semibold text-[#c89834] hover:text-[#b08226] transition-colors mt-0.5 outline-none cursor-pointer select-none"
                         >
                           <span>
-                            {stockBreakdownOpen ? '▲ Hisse bazında gizle' : '▼ Hisse bazında düzenle'}
+                            {stockBreakdownOpen ? t.manualHideStocks : t.manualEditStocks}
                           </span>
                         </button>
                       )}
                     </td>
                     <td className="px-4 py-2 text-right font-semibold text-slate-500">
-                      {current.toFixed(2).replace('.', ',')}%
+                      {formatPercent(current, lang)}
                     </td>
                     <td className="px-4 py-1.5 text-center">
                       <div className="inline-flex flex-col items-center justify-center">
@@ -371,11 +383,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
                           : 'text-[#8a94a6]'
                       }`}
                     >
-                      {diff > 0
-                        ? `+${diff.toFixed(2).replace('.', ',')}`
-                        : diff === 0
-                        ? '0,00'
-                        : diff.toFixed(2).replace('.', ',')}
+                      {formatDelta(diff, lang)}
                     </td>
                   </tr>
                 )
@@ -383,15 +391,15 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
 
               {/* Toplam Row */}
               <tr className="bg-slate-50 border-t border-slate-200 font-bold select-none text-slate-800">
-                <td className="px-4 py-2.5 font-bold">Toplam</td>
-                <td className="px-4 py-2.5 text-right font-bold text-slate-500">100,00%</td>
+                <td className="px-4 py-2.5 font-bold">{t.aiTotal}</td>
+                <td className="px-4 py-2.5 text-right font-bold text-slate-500">{formatPercent(100, lang)}</td>
                 <td className="px-4 py-2.5 text-center font-bold">
                   <span
                     className={`${
                       Math.abs(totalWeight - 100) > 0.01 ? 'text-rose-600' : 'text-[#c89834]/90'
                     }`}
                   >
-                    {totalWeight.toFixed(2).replace('.', ',')}%
+                    {formatPercent(totalWeight, lang)}
                   </span>
                 </td>
                 <td
@@ -403,9 +411,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
                       : 'text-slate-400'
                   }`}
                 >
-                  {totalWeight - 100 > 0
-                    ? `+${(totalWeight - 100).toFixed(2).replace('.', ',')}`
-                    : (totalWeight - 100).toFixed(2).replace('.', ',')}
+                  {formatDelta(totalWeight - 100, lang)}
                 </td>
               </tr>
             </tbody>
@@ -418,14 +424,14 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
             {/* Filtreleme ve Başlık Barı */}
             <div className="flex items-center justify-between pt-1">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Hisse Senedi Alt Kırılımı
+                {t.aiStockBreakdown}
               </span>
               <button
                 type="button"
                 onClick={() => setShowOnlyChanged(!showOnlyChanged)}
                 className="text-xs font-semibold text-slate-600 hover:text-[#c89834] transition-colors outline-none cursor-pointer flex items-center gap-1 select-none"
               >
-                <span>{showOnlyChanged ? 'Tüm Hisseleri Göster ▾' : 'Sadece Değişenleri Göster ▴'}</span>
+                <span>{showOnlyChanged ? t.aiShowAllStocks : t.aiShowChangedStocks}</span>
               </button>
             </div>
 
@@ -433,17 +439,17 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
             {loadingStocks ? (
               <div className="flex items-center justify-center py-8 text-xs text-slate-500 font-medium bg-white rounded-xl border border-slate-200/80">
                 <div className="h-4 w-4 border-2 border-[#c89834] border-t-transparent rounded-full animate-spin mr-2.5" />
-                Hisse kırılım verileri yükleniyor...
+                {t.manualStockLoading}
               </div>
             ) : (
-              <div className="overflow-hidden border border-slate-200/80 rounded-xl bg-white shadow-2xs">
-                <table className="w-full border-collapse text-left text-xs">
+              <div className="overflow-x-auto border border-slate-200/80 rounded-xl bg-white shadow-2xs">
+                <table className="min-w-[580px] w-full border-collapse text-left text-xs">
                   <thead>
                     <tr className="bg-slate-50/80 border-b border-slate-100 text-slate-400 font-bold uppercase tracking-wider text-[9px] select-none">
-                    <th className="px-4 py-2 font-bold">HİSSE</th>
-                    <th className="px-4 py-2 text-right font-bold">MEVCUT</th>
-                    <th className="px-4 py-2 text-center font-bold">YENİ AĞIRLIK</th>
-                    <th className="px-4 py-2 text-right font-bold">DEĞİŞİM</th>
+                    <th className="px-4 py-2 font-bold">{t.aiStock}</th>
+                    <th className="px-4 py-2 text-right font-bold">{t.aiCurrent}</th>
+                    <th className="px-4 py-2 text-center font-bold">{t.manualNewWeight}</th>
+                    <th className="px-4 py-2 text-right font-bold">{t.aiChange}</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
@@ -453,7 +459,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
                     const target = isReadOnly ? current : getParsedWeightForStock(stock.assetCode)
                     const diff = target - current
                     const isDevError = !isReadOnly && Math.abs(diff) > 5.0
-                    const displayName = isReadOnly ? '+ Diğer' : stock.assetCode
+                    const displayName = isReadOnly ? t.manualOtherStocks : stock.assetCode
 
                     return (
                       <tr
@@ -466,12 +472,12 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
                           {displayName}
                         </td>
                         <td className="px-4 py-2 text-right font-semibold font-mono text-slate-500">
-                          {current.toFixed(2).replace('.', ',')}%
+                          {formatPercent(current, lang)}
                         </td>
                         <td className="px-4 py-1.5 text-center">
                           <div className="inline-flex items-center justify-center">
                             <div
-                              title={isReadOnly ? 'Diğer hisseler kategorisi sabittir ve değiştirilemez' : undefined}
+                              title={isReadOnly ? t.manualOtherStocksLocked : undefined}
                               className={`relative flex items-center ${
                                 isReadOnly
                                   ? 'bg-slate-50/90 border-slate-200/90 cursor-not-allowed'
@@ -482,7 +488,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
                             >
                               <input
                                 type="text"
-                                value={isReadOnly ? current.toFixed(2).replace('.', ',') : stockInputs[stock.assetCode]}
+                                value={isReadOnly ? formatValue(current, lang) : stockInputs[stock.assetCode]}
                                 readOnly={isReadOnly}
                                 onChange={(e) =>
                                   handleStockInputChange(stock.assetCode, e.target.value)
@@ -523,11 +529,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
                               : 'text-[#8a94a6]'
                           }`}
                         >
-                          {diff > 0
-                            ? `+${diff.toFixed(2).replace('.', ',')}`
-                            : diff === 0
-                            ? '+0,00'
-                            : diff.toFixed(2).replace('.', ',')}
+                          {formatDelta(diff, lang, true)}
                         </td>
                       </tr>
                     )
@@ -535,16 +537,16 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
                   {displayedStocks.length === 0 && (
                     <tr>
                       <td colSpan={4} className="px-4 py-4 text-center text-slate-400 text-xs italic">
-                        Henüz değiştirilmiş bir hisse bulunmamaktadır.
+                        {t.manualNoChangedStocks}
                       </td>
                     </tr>
                   )}
 
                   {/* Hisse Alt Kırılım Toplamı Satırı */}
                   <tr className="bg-slate-50 border-t border-slate-200 font-bold select-none text-slate-800">
-                    <td className="px-4 py-2 font-bold font-mono">Toplam</td>
+                    <td className="px-4 py-2 font-bold font-mono">{t.aiTotal}</td>
                     <td className="px-4 py-2 text-right font-bold font-mono text-slate-500">
-                      100,00%
+                      {formatPercent(100, lang)}
                     </td>
                     <td className="px-4 py-2 text-center font-bold font-mono">
                       <span
@@ -554,7 +556,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
                             : 'text-[#c89834]/90'
                         }`}
                       >
-                        {totalStockBreakdownSum.toFixed(2).replace('.', ',')}%
+                        {formatPercent(totalStockBreakdownSum, lang)}
                       </span>
                     </td>
                     <td
@@ -566,11 +568,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
                           : 'text-[#8a94a6]'
                       }`}
                     >
-                      {totalStockBreakdownSum - 100 > 0.01
-                        ? `+${(totalStockBreakdownSum - 100).toFixed(2).replace('.', ',')}`
-                        : Math.abs(totalStockBreakdownSum - 100) <= 0.01
-                        ? '+0,00'
-                        : (totalStockBreakdownSum - 100).toFixed(2).replace('.', ',')}
+                      {formatDelta(totalStockBreakdownSum - 100, lang, true)}
                     </td>
                   </tr>
                 </tbody>
@@ -583,7 +581,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
               <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-800 flex items-center space-x-2 text-xs font-semibold animate-fade-in shadow-2xs">
                 <span className="text-sm leading-none flex-shrink-0">⚠️</span>
                 <span>
-                  Hisse senedi alt kırılım toplamı %100.00 olmalıdır. (Mevcut: %{totalStockBreakdownSum.toFixed(2).replace('.', ',')})
+                  {t.manualStockTotalError(formatValue(totalStockBreakdownSum, lang))}
                 </span>
               </div>
             )}
@@ -591,13 +589,13 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
         )}
 
         {/* Validasyon Hata Mesajları / Uyarı Banner'ları (Bölüm 5.8) */}
-        {errors.filter((err) => !err.includes('alt kırılım toplamı')).length > 0 && (
+        {errors.filter((err) => err !== t.manualStockTotalError(formatValue(totalStockBreakdownSum, lang))).length > 0 && (
           <div className="space-y-2.5 animate-fade-in">
             {errors
-              .filter((err) => !err.includes('alt kırılım toplamı'))
+              .filter((err) => err !== t.manualStockTotalError(formatValue(totalStockBreakdownSum, lang)))
               .map((err, idx) => {
-                const isStockFloor = err.includes('Hisse senedi yoğun fon') || err.includes('%80')
-                const isDeviation = err.includes('sapması') || err.includes('±10') || err.includes('±5')
+                const isStockFloor = err.includes('80.00')
+                const isDeviation = err.includes('±10') || err.includes('±5')
 
                 if (isStockFloor) {
                   // 🚫 Sabit Alt Sınır Uyarısı: Koyu/dolu kırmızı, daha vurgulu
@@ -642,13 +640,13 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
         {/* Senaryo Notu */}
         <div className="space-y-1.5">
           <label className="text-[10px] font-bold text-slate-400 tracking-wider uppercase block">
-            Senaryo Notu (opsiyonel)
+            {t.aiNoteLabel}
           </label>
           <textarea
             rows={3}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="Örn. Yaklaşan temettü döneminde likiditeyi güçlendirmek istiyorum."
+            placeholder={t.manualNotePlaceholder}
             className="w-full bg-white text-slate-800 border border-slate-200 rounded-xl px-4 py-3 text-xs outline-none focus:border-[#c89834] focus:ring-2 focus:ring-[#c89834]/20 transition-all placeholder-slate-400 resize-none font-medium"
           />
         </div>
@@ -661,14 +659,14 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
             onClick={handleSubmit}
             className="px-5 py-2.5 rounded-xl bg-[#c89834] text-white font-extrabold text-xs tracking-wider uppercase hover:bg-[#b08226] shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all select-none cursor-pointer"
           >
-            {submitting ? 'Kaydediliyor...' : 'Dağılımı Simülasyona Uygula'}
+            {submitting ? t.stressSaving : t.manualApply}
           </button>
           <button
             type="button"
             onClick={handleReset}
             className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white font-extrabold text-xs tracking-wider uppercase hover:bg-slate-50 select-none cursor-pointer"
           >
-            Mevcut Portföye Sıfırla
+            {t.manualReset}
           </button>
         </div>
 

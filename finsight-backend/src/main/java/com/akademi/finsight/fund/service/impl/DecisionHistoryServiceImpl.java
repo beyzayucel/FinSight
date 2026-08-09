@@ -3,6 +3,7 @@ package com.akademi.finsight.fund.service.impl;
 import com.akademi.finsight.fund.dto.request.AttachStressTestRequest;
 import com.akademi.finsight.fund.dto.response.DecisionRecordResponse;
 import com.akademi.finsight.fund.dto.response.ManualScenarioResponse;
+import com.akademi.finsight.fund.dto.response.ManualScenarioStockWeightResponse;
 import com.akademi.finsight.fund.dto.response.ManualScenarioWeightResponse;
 import com.akademi.finsight.fund.dto.response.PerformanceMetricsResponse;
 import com.akademi.finsight.fund.entity.AiRecommendation;
@@ -143,6 +144,14 @@ public class DecisionHistoryServiceImpl implements DecisionHistoryService {
                                 .toList()
                 : List.of();
 
+        List<ManualScenarioStockWeightResponse> stockWeights =
+                recommendation.getStatus() == RecommendationStatus.ACCEPTED
+                        ? recommendation.getStockWeights().values().stream()
+                                .map(w -> new ManualScenarioStockWeightResponse(
+                                        w.getAssetCode(), w.getRecommendedWeight(), w.getCurrentWeight()))
+                                .toList()
+                        : List.of();
+
         return new DecisionRecordResponse(
                 recommendation.getId(),
                 "AI",
@@ -151,9 +160,7 @@ public class DecisionHistoryServiceImpl implements DecisionHistoryService {
                 recommendation.getNote(),
                 recommendation.getCreatedAt(),
                 weights,
-                // AI önerisi hisse bazında sinyal üretmiyor; tablo alanı da yok (AiRecommendationWeight
-                // yalnızca kategori tutuyor). Motor bu granülerliğe geçtiğinde burası dolacak.
-                List.of(),
+                stockWeights,
                 toMetricsResponse(recommendation.getMetrics()),
                 stressTestResponseAssembler.toResponse(recommendation.getStressTestResult())
         );

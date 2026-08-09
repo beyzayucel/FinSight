@@ -153,9 +153,8 @@ news:
   api:
     url: ${NEWS_API_URL}
     token: ${NEWS_API_TOKEN}
-    search-text: "hisse OR borsa OR BIST OR altın OR faiz OR TCMB OR tahvil OR repo OR fed OR \"döviz kuru\""
     cache-size: 3
-    max-news-age-hours: 15
+    max-news-age-hours: ${NEWS_MAX_AGE_HOURS:15}
 
   cache:
     key-prefix: "infina:latest_news:"

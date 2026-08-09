@@ -25,7 +25,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 
-@RequestMapping(ApiEndpoints.StressTest.BASE)
+@RequestMapping("/api/v1/stress-tests")
 @Tag(name = "Stress Test", description = "Fund stress test simulation operations and latest result querying.")
 public interface StressTestApi {
 
@@ -40,12 +40,13 @@ public interface StressTestApi {
             @ApiResponse(responseCode = "500", description = "Model execution failed.",
                     content = @Content(schema = @Schema(implementation = ApiStandardResponse.class)))
     })
-    @PostMapping(ApiEndpoints.StressTest.RUN)
+    @PostMapping("/run")
     ResponseEntity<ApiStandardResponse<StressTestInferenceResponseDto>> runSimulation(
             @AuthenticationPrincipal String userEmail,
             @RequestParam("fundId") String fundId,
             @RequestParam("simulationType") SimulationType simulationType,
-            @Valid @RequestBody PortfolioDataDto portfolioDataDto);
+            @Valid @RequestBody PortfolioDataDto portfolioDataDto,
+            @RequestParam(value = "analysisWindow", defaultValue = "30") int analysisWindow);
 
     @Operation(
             summary = "Get latest stress test result",
@@ -57,7 +58,7 @@ public interface StressTestApi {
             @ApiResponse(responseCode = "404", description = "User or Fund not found.",
                     content = @Content(schema = @Schema(implementation = ApiStandardResponse.class)))
     })
-    @GetMapping(ApiEndpoints.StressTest.LATEST)
+    @GetMapping("/latest")
     ResponseEntity<ApiStandardResponse<StressTestInferenceResponseDto>> getLatestSimulationResult(
             @Parameter(hidden = true) @AuthenticationPrincipal String email,
             @Parameter(description = "Fund UUID", example = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", required = true)
@@ -74,7 +75,7 @@ public interface StressTestApi {
             @ApiResponse(responseCode = "404", description = "User or Fund not found.",
                     content = @Content(schema = @Schema(implementation = ApiStandardResponse.class)))
     })
-    @GetMapping(ApiEndpoints.StressTest.PERIOD)
+    @GetMapping("/period")
     ResponseEntity<ApiStandardResponse<StressTestInferenceResponseDto>> getSimulationResultByPeriod(
             @Parameter(hidden = true) @AuthenticationPrincipal String email,
             @Parameter(description = "Fund UUID", example = "a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11", required = true)
@@ -96,7 +97,7 @@ public interface StressTestApi {
             @ApiResponse(responseCode = "404", description = "Stress test result not found, or no decision exists to attach it to.",
                     content = @Content(schema = @Schema(implementation = ApiStandardResponse.class)))
     })
-    @PostMapping(ApiEndpoints.StressTest.SAVE)
+    @PostMapping("/save")
     ResponseEntity<ApiStandardResponse<Void>> saveDecisionRecord(
             @AuthenticationPrincipal String userEmail,
             @Valid @RequestBody SaveStressTestDecisionRequestDto requestDto

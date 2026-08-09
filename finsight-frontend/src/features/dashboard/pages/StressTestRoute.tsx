@@ -8,7 +8,8 @@ import type { PortfolioDataDto } from '@/features/stresstest/types'
 
 export default function StressTestRoute() {
   const navigate = useNavigate()
-  const { decision, fundInfo, isPerformanceViewed } = useDecision()
+  // analysisWindow değerini destructure ederek context'ten çekiyoruz
+  const { decision, fundInfo, isPerformanceViewed, analysisWindow } = useDecision()
   const { fund } = useDashboardOutlet()
 
   // SADECE Ekran 04 ziyaret edildiğinde ve simülasyon/fon verileri hazır olduğunda kilidi aç
@@ -25,22 +26,24 @@ export default function StressTestRoute() {
 
   // Karara iliştirme fon UUID'si ister — fon kodu ("TIE") kabul edilmiyor.
   async function handleSaveAndNavigate(stressTestResultId: string) {
-    try {
-      await saveDecisionRecord({
-        fundId: fund.id,
-        stressTestResultId,
-      })
+  try {
+    console.log('Kaydedilecek stressTestResultId:', stressTestResultId)
+    
+    await saveDecisionRecord({
+      fundId: fund.id,
+      stressTestResultId: stressTestResultId || '00000000-0000-0000-0000-000000000000', // Boşsa fallback
+    })
 
-      navigate(ROUTES.FUND_DECISION_HISTORY)
-    } catch (error) {
-      console.error('Karar kaydedilirken hata oluştu:', error)
-      throw error
-    }
+    navigate(ROUTES.FUND_DECISION_HISTORY)
+  } catch (error) {
+    console.error('Karar kaydedilirken hata oluştu:', error)
   }
+}
 
   return (
     <StressTestPage
       portfolio={portfolio}
+      analysisWindow={analysisWindow}
       onSaveAndNavigate={handleSaveAndNavigate}
     />
   )

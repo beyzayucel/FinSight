@@ -9,8 +9,10 @@ import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.hibernate.annotations.SQLDelete;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "stress_test_results")

@@ -1,9 +1,12 @@
 package com.akademi.finsight.fund.dto.response;
 
+import lombok.RequiredArgsConstructor;
+
 import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.UUID;
+
 
 public record FundPeriodMetricResponse(
         UUID id,
@@ -19,4 +22,6 @@ public record FundPeriodMetricResponse(
         BigDecimal benchmarkDiffBps,
         Instant fetchedAt,
         Instant createdAt
-) {}
+) {
+
+}

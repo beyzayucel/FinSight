@@ -16,6 +16,8 @@ public record PortfolioDataDto(
         BigDecimal initialValue,
 
         @NotEmpty(message = "{error.validation.portfolio.asset_weights.not_empty}")
-        Map<String, Float> assetWeights
+        Map<String, Float> assetWeights,
+
+        Integer analysisWindow
 ) {}
 

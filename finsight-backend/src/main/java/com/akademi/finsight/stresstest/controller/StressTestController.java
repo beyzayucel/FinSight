@@ -8,10 +8,12 @@ import com.akademi.finsight.stresstest.dto.request.SaveStressTestDecisionRequest
 import com.akademi.finsight.stresstest.dto.response.StressTestInferenceResponseDto;
 import com.akademi.finsight.stresstest.enums.SimulationType;
 import com.akademi.finsight.stresstest.service.StressTestSimulationService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.Optional;
@@ -28,10 +30,11 @@ public class StressTestController extends BaseController implements StressTestAp
             String userEmail,
             String fundId,
             SimulationType simulationType,
-            @RequestBody PortfolioDataDto portfolioDataDto) {
+            @RequestBody PortfolioDataDto portfolioDataDto,
+            @RequestParam(value = "analysisWindow", defaultValue = "30") int analysisWindow) {
 
         StressTestInferenceResponseDto response = stressTestSimulationService
-                .runSimulation(userEmail, fundId, simulationType, portfolioDataDto);
+                .runSimulation(userEmail, fundId, simulationType, portfolioDataDto, analysisWindow);
 
         return ok(response);
     }
@@ -66,7 +69,7 @@ public class StressTestController extends BaseController implements StressTestAp
     @Override
     public ResponseEntity<ApiStandardResponse<Void>> saveDecisionRecord(
             String userEmail,
-            @RequestBody SaveStressTestDecisionRequestDto requestDto) {
+            @RequestBody @Valid SaveStressTestDecisionRequestDto requestDto) {
 
         stressTestSimulationService.saveDecisionRecord(userEmail, requestDto);
         return ok();

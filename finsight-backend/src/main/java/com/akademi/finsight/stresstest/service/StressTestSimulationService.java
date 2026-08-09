@@ -9,7 +9,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 public interface StressTestSimulationService {
-    StressTestInferenceResponseDto runSimulation(String userEmail, String fundId, SimulationType simulationType, PortfolioDataDto currentPortfolio);
+    StressTestInferenceResponseDto runSimulation(String userEmail, String fundId, SimulationType simulationType, PortfolioDataDto currentPortfolio, int analysisWindow);
     Optional<StressTestInferenceResponseDto> getLatestSimulationResult(String userEmail, String fundId);
 
     Optional<StressTestInferenceResponseDto> getSimulationResultByPeriod(

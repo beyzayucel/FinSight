@@ -415,15 +415,10 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
         {/* HISSE ALT KIRILIM TABLOSU (ACCORDION EXPANDED) */}
         {stockBreakdownOpen && (
           <div className="bg-[#fffdf9] border border-[#f5d9a8]/70 rounded-xl p-4 space-y-3 animate-fade-in shadow-xs">
-            {/* Bilgi Kutusu / Taslak Kural Banner */}
-            <div className="bg-[#fff8ee] border border-[#f5d9a8] rounded-xl p-3 text-[11px] text-[#9c5a14] font-medium leading-relaxed">
-              Taslak kural: tek hissede izin verilen maksimum sapma ±5 puan — Ar-Ge/uyum onayı bekliyor. Fondaki hisselerin tamamı listelenir; toplam kategori tablosundaki Hisse Senedi Mevcut değeriyle (%{(fund.weights?.STOCK ?? 94.9).toFixed(2).replace('.', ',')}) birebir mutabıktır.
-            </div>
-
             {/* Filtreleme ve Başlık Barı */}
             <div className="flex items-center justify-between pt-1">
               <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">
-                Hisse Senedi Alt Kırılımı ({stocks.length} Varlık)
+                Hisse Senedi Alt Kırılımı
               </span>
               <button
                 type="button"

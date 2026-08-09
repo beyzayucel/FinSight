@@ -13,23 +13,25 @@ import com.akademi.finsight.news.service.TranslationService;
 import com.akademi.finsight.news.util.DateUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestClient;
-
-import java.net.URI;
-
 import org.springframework.web.util.UriComponentsBuilder;
 import tools.jackson.core.type.TypeReference;
 import tools.jackson.databind.ObjectMapper;
-import org.springframework.data.redis.core.StringRedisTemplate;
+
 import org.springframework.stereotype.Service;
 
+import java.net.URI;
 import java.util.*;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class NewsServiceImpl implements NewsService {
+
+    private static final String NEWS_SEARCH_QUERY = "\"hisse senedi\" OR TCMB OR \"faiz kararı\" OR borsa OR döviz OR \"halka arz\" OR tahvil OR finans";
+    private static final String NEWS_CATEGORIES = "business";
 
     private final StringRedisTemplate redisTemplate;
     private final TranslationService translationService;
@@ -88,13 +90,14 @@ public class NewsServiceImpl implements NewsService {
 
     private List<NewsItem> getCachedNews(Locale locale) {
         try {
-            String key = newsProperties.getCache().getKeyPrefix() + locale.getLanguage();
+            String language = locale != null ? locale.getLanguage() : SupportedLanguage.TR.getCode();
+
+            String key = newsProperties.getCache().getKeyPrefix() + language;
             String json = redisTemplate.opsForValue().get(key);
             if (Objects.isNull(json)) {
                 return Collections.emptyList();
             }
-            return objectMapper.readValue(json, new TypeReference<>() {
-            });
+            return objectMapper.readValue(json, new TypeReference<>() {});
         } catch (Exception e) {
             log.error("Redis read error", e);
             return Collections.emptyList();
@@ -105,9 +108,11 @@ public class NewsServiceImpl implements NewsService {
         return UriComponentsBuilder.fromUriString(newsProperties.getApi().getUrl())
                 .queryParam("language", "tr")
                 .queryParam("api-key", newsProperties.getApi().getToken())
-                .queryParam("text", newsProperties.getApi().getSearchText())
+                .queryParam("text", NEWS_SEARCH_QUERY)
+                .queryParam("categories", NEWS_CATEGORIES)
                 .queryParam("sort", "publish-time")
                 .queryParam("sort-direction", "DESC")
+                .encode(java.nio.charset.StandardCharsets.UTF_8)
                 .build()
                 .toUri();
     }

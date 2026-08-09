@@ -20,7 +20,6 @@ public class NewsProperties {
     public static class Api {
         private String url;
         private String token;
-        private String searchText;
         private int cacheSize;
         private int maxNewsAgeHours;
     }

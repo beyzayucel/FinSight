@@ -24,6 +24,7 @@ export type DashboardOutletContext = {
   reloadFund: () => void
   /** Sidebar'daki Analiz Dönemi seçimi: '10' | '20' | '30' | '90' */
   analysisPeriod: string
+  reportAssetClassCount: (count: number) => void
 }
 
 /** Alt sayfaların kabuktaki ortak veriye erişmesi için kısayol. */
@@ -53,6 +54,8 @@ export default function DashboardShell() {
   const { analysisWindow, setAnalysisWindow } = useDecision()
   const period = String(analysisWindow)
 
+  const [assetClassCount, setAssetClassCount] = useState<number>()
+
   const loadData = useCallback(async () => {
     try {
       setLoading(true)
@@ -72,10 +75,6 @@ export default function DashboardShell() {
   }, [loadData])
 
   const activeMenu = resolveActiveMenu(location.pathname)
-
-  const assetClassCount = fund
-    ? Object.values(fund.weights).filter((weight) => weight > 0).length
-    : undefined
 
   function renderMainContent() {
     if (loading) {
@@ -104,7 +103,14 @@ export default function DashboardShell() {
 
     return (
       <Outlet
-        context={{ fund, reloadFund: loadData, analysisPeriod: period } satisfies DashboardOutletContext}
+        context={
+          {
+            fund,
+            reloadFund: loadData,
+            analysisPeriod: period,
+            reportAssetClassCount: setAssetClassCount,
+          } satisfies DashboardOutletContext
+        }
       />
     )
   }

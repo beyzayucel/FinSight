@@ -1,8 +1,4 @@
 import api from '@/lib/api/client'
-
-// GET /funds/{code}/dashboard cevabının tipleri.
-// Tüm yüzde alanları yüzde cinsindendir (96.03 = %96,03), para birimi TRY.
-
 export type FundDashboardPeriodCode = 'P10D' | 'P20D' | 'P30D' | 'P90D'
 
 export type FundDashboardFund = {
@@ -21,7 +17,6 @@ export type FundDashboardPeriod = {
   code: FundDashboardPeriodCode
   previousTotalValue: number
   previousDate: string // ISO
-  /** İşlem günü sayısı — takvim günü değil (P10D için 9 dönebilir). */
   days: number
   change: number
   changePercent: number

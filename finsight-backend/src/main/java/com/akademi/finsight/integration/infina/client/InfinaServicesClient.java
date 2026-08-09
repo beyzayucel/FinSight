@@ -43,13 +43,6 @@ public interface InfinaServicesClient {
 	);
 
 
-	@GetExchange(InfinaEndpoints.CUMULATIVE_RETURNS)
-	InfinaResponse<CumulativeReturnsData> getCumulativeReturns(
-			@RequestParam(value = "fundCode") String fundCode,
-			@RequestParam(value = "beginDate") String beginDate,
-			@RequestParam(value = "endDate", required = false) String endDate
-	);
-
 	@GetExchange(InfinaEndpoints.FX_PRICE)
 	InfinaResponse<FxPriceData> getFxPrices(
 			@RequestParam(value = "asset_code", required = false) String assetCode,

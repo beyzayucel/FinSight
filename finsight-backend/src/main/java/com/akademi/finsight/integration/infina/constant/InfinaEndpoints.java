@@ -13,7 +13,4 @@ public final class InfinaEndpoints {
 	public static final String INDEX_PRICE = "/EndeksFiyat";
 	public static final String ECONOMIC_PRICE = "/EkonomikFiyat";
 	public static final String FUND_DAILY_RETURN = "/FonGunlukGetiri";
-	// 403 — erişim henüz açılmadı.
-	public static final String CUMULATIVE_RETURNS = "/CumulativeReturns";
-
 }

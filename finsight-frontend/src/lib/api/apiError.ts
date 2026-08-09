@@ -10,6 +10,7 @@ type ApiErrorBody = {
     message?: string
     code?: string
     fieldErrors?: FieldError[]
+    remainingAttempts?: number
   }
 }
 
@@ -18,6 +19,7 @@ type ApiError = {
   code: string
   status: number
   fieldErrors?: FieldError[]
+  remainingAttempts?: number
 }
 
 const FALLBACK: ApiError = {
@@ -37,5 +39,6 @@ export function getApiError(err: unknown): ApiError {
     code: error?.code ?? FALLBACK.code,
     status: resp?.status ?? FALLBACK.status,
     fieldErrors: error?.fieldErrors,
+    remainingAttempts: error?.remainingAttempts,
   }
 }

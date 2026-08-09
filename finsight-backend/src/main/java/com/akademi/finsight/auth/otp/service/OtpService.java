@@ -1,9 +1,7 @@
 package com.akademi.finsight.auth.otp.service;
 
-import java.util.Locale;
-
 public interface OtpService {
-    void generateOtp(String email, String firstName, Locale locale);
+    void generateOtp(String email, String firstName);
 
     void validateOtp(String email, String inputCode);
 

@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
+import java.time.Duration;
 import java.util.concurrent.TimeUnit;
 
 
@@ -23,10 +24,14 @@ public class LoginBlockListServiceImpl implements LoginBlocklistService {
 
     @Override
     public void blockUser(String hashedIdentifier) {
-        String blockKey = keyGenerator.createBlockKey(hashedIdentifier);
-        redisTemplate.opsForValue().set(blockKey, Boolean.TRUE.toString(), loginRateLimitProperties.getBlockDuration());
-        log.warn("User has been blocked for {} after exceeding the maximum number of login attempts. User: {}", loginRateLimitProperties.getBlockDuration(), hashedIdentifier);
+        blockUser(hashedIdentifier, loginRateLimitProperties.getBlockDuration());
+    }
 
+    @Override
+    public void blockUser(String hashedIdentifier, Duration blockDuration) {
+        String blockKey = keyGenerator.createBlockKey(hashedIdentifier);
+        redisTemplate.opsForValue().set(blockKey, Boolean.TRUE.toString(), blockDuration);
+        log.warn("User has been blocked for {} after exceeding the maximum number of attempts. User: {}", blockDuration, hashedIdentifier);
     }
 
     @Override

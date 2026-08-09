@@ -25,6 +25,10 @@ public class OtpKeyGenerator {
         return generateKey(ATTEMPTS_SUFFIX, email);
     }
 
+    public String generateAbuseKey(String email) {
+        return generateKey(ABUSE_SUFFIX, email);
+    }
+
     private String generateKey(String suffixPattern, String email) {
         return PREFIX + String.format(suffixPattern, hashEmail(email));
     }

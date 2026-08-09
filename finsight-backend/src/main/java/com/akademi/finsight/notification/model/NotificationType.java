@@ -8,7 +8,8 @@ public enum NotificationType {
     OTP_EMAIL("notification.otpEmail"),
     ACCOUNT_LOCKED_EMAIL("notification.accountLockedEmail"),
     PASSWORD_RESET_EMAIL("notification.passwordResetEmail"),
-    PASSWORD_CHANGED_EMAIL("notification.passwordChangedEmail");
+    PASSWORD_CHANGED_EMAIL("notification.passwordChangedEmail"),
+    OTP_ABUSE_LOCKED_EMAIL("notification.otpAbuseLockedEmail");
 
     private final String templateKey;
 

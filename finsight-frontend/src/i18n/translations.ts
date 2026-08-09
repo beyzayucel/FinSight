@@ -26,6 +26,7 @@ export const translations = {
     otpResend: 'Kodu Tekrar Gönder',
     otpFallbackError: 'Doğrulama başarısız',
     otpResendFallbackError: 'Kod gönderilemedi',
+    otpRemainingAttempts: 'Kalan deneme hakkı: {remaining}/{max}',
     // Change Password
     cpTitle: 'Şifre Değiştir',
     cpSubtitle: 'İlk girişiniz için şifrenizi değiştirmeniz gerekmektedir.',
@@ -267,6 +268,7 @@ export const translations = {
     otpResend: 'Resend Code',
     otpFallbackError: 'Verification failed',
     otpResendFallbackError: 'Failed to send code',
+    otpRemainingAttempts: 'Remaining attempts: {remaining}/{max}',
     // Change Password
     cpTitle: 'Change Password',
     cpSubtitle: 'You must change your password on first login.',

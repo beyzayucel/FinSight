@@ -122,6 +122,10 @@ app:
     expire-duration: ${OTP_EXPIRE_DURATION}
     cooldown-duration: ${OTP_COOLDOWN_DURATION}
     max-attempts: ${OTP_MAX_ATTEMPTS}
+    abuse:
+      max-cycles: ${OTP_ABUSE_MAX_CYCLES}
+      block-duration: ${OTP_ABUSE_BLOCK_DURATION}
+      window-duration: ${OTP_ABUSE_WINDOW_DURATION}
 
   verification:
     url: ${VERIFICATION_BASE_URL}

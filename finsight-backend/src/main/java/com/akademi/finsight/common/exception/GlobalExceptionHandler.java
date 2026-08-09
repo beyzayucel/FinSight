@@ -2,6 +2,8 @@ package com.akademi.finsight.common.exception;
 
 
 import com.akademi.finsight.auth.exception.AuthErrorType;
+import com.akademi.finsight.auth.exception.LoginLimitException;
+import com.akademi.finsight.auth.otp.exception.OtpLimitException;
 import com.akademi.finsight.auth.ratelimiter.exception.RateLimitException;
 import com.akademi.finsight.auth.otp.exception.OtpException;
 import com.akademi.finsight.common.response.ApiStandardResponse;
@@ -210,7 +212,32 @@ public class GlobalExceptionHandler {
                                         request.getRequestURI())
                                 .requestId(MDC.get(RequestIdFilter.REQUEST_ID_MDC_KEY))
                                 .remainingTime(ex.getRetryAfterSeconds())
+                                .remainingAttempts(ex.getRemainingAttempts())
                                 .build()));
+    }
+
+    @ExceptionHandler(OtpLimitException.class)
+    public ResponseEntity<ApiStandardResponse<Void>> handleOtpLimitException(
+            OtpLimitException ex, HttpServletRequest request) {
+
+        log.warn("OTP abuse limit reached: path={}", request.getRequestURI());
+
+        BaseErrorType errorType = ex.getErrorType();
+        String message = resolveMessage(errorType);
+
+        return buildResponse(errorType, message, request);
+    }
+
+    @ExceptionHandler(LoginLimitException.class)
+    public ResponseEntity<ApiStandardResponse<Void>> handleLoginLimitException(
+            LoginLimitException ex, HttpServletRequest request) {
+
+        log.warn("Login attempt limit reached: path={}", request.getRequestURI());
+
+        BaseErrorType errorType = ex.getErrorType();
+        String message = resolveMessage(errorType);
+
+        return buildResponse(errorType, message, request);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)

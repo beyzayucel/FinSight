@@ -4,6 +4,8 @@ import DashboardLayout from './components/DashboardLayout'
 import { getActiveFund } from './dashboardApi'
 import type { Fund } from './dashboardApi'
 import { ROUTES } from '@/lib/routes'
+import { useDecision } from './context/decisionStore'
+import type { SimulationWindow } from './lib/simulation'
 
 type MenuIndex = 1 | 2 | 3 | 4 | 5
 
@@ -48,7 +50,8 @@ export default function DashboardShell() {
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
 
-  const [period, setPeriod] = useState<string>('30')
+  const { analysisWindow, setAnalysisWindow } = useDecision()
+  const period = String(analysisWindow)
 
   const loadData = useCallback(async () => {
     try {
@@ -115,7 +118,7 @@ export default function DashboardShell() {
       fundName={fund?.name}
       assetClassCount={assetClassCount}
       analysisPeriod={period}
-      onPeriodChange={(newPeriod) => setPeriod(newPeriod)}
+      onPeriodChange={(newPeriod) => setAnalysisWindow(Number(newPeriod) as SimulationWindow)}
     >
       {renderMainContent()}
     </DashboardLayout>

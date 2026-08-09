@@ -3,7 +3,7 @@ import api from '@/lib/api/client'
 // ── Backend response types ─────────────────────────────────────────────────────
 
 export type CurvePoint = {
-  day: number
+  date: string // ISO date — "2026-07-28"
   value: number
 }
 
@@ -46,40 +46,32 @@ export async function getPerformanceComparison(
 // ── Chart data helper ───────────────────────────────────────────────────────────
 
 export type ChartPoint = {
-  day: number
   dateLabel: string
   mevcut: number
   simulasyon: number | null
   benchmark: number | null
 }
 
-/** Backend'den gelen ayrı point dizilerini recharts'ın beklediği tek diziye merge eder. */
 export function mergeToChartPoints(data: PerformanceComparisonResponse): ChartPoint[] {
-  const { currentPortfolio, simulationPortfolio, benchmarkPortfolio, analysisWindow } = data
+  const { currentPortfolio, simulationPortfolio, benchmarkPortfolio } = data
 
-  // dataDate backend'den gelebilir veya gelmeyebilir — güvenli fallback: bugünden geriye say
-  let endDate: Date
-  if (typeof data.dataDate === 'string' && data.dataDate.includes('-')) {
-    endDate = new Date(data.dataDate + 'T00:00:00')
-  } else {
-    endDate = new Date()
-  }
+  const benchmarkMap = new Map(
+    benchmarkPortfolio?.points.map((p) => [p.date, p.value]) ?? []
+  )
+  const simulationMap = new Map(
+    simulationPortfolio?.points.map((p) => [p.date, p.value]) ?? []
+  )
 
-  const startDate = new Date(endDate)
-  startDate.setDate(endDate.getDate() - analysisWindow)
-
-  return currentPortfolio.points.map((cp, i) => {
-    const date = new Date(startDate)
-    date.setDate(startDate.getDate() + cp.day)
-    const dd = String(date.getDate()).padStart(2, '0')
-    const mm = String(date.getMonth() + 1).padStart(2, '0')
+  return currentPortfolio.points.map((cp) => {
+    const d = new Date(cp.date + 'T00:00:00')
+    const dd = String(d.getDate()).padStart(2, '0')
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
 
     return {
-      day: cp.day,
       dateLabel: `${dd}.${mm}`,
       mevcut: cp.value,
-      simulasyon: simulationPortfolio?.points[i]?.value ?? null,
-      benchmark: benchmarkPortfolio?.points[i]?.value ?? null,
+      simulasyon: simulationMap.get(cp.date) ?? null,
+      benchmark: benchmarkMap.get(cp.date) ?? null,
     }
   })
 }

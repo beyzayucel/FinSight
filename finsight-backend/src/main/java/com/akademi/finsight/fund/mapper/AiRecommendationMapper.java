@@ -1,11 +1,14 @@
 package com.akademi.finsight.fund.mapper;
 
+import com.akademi.finsight.fund.dto.request.MarketDataRequest;
+import com.akademi.finsight.fund.dto.request.FundModelInputRequest;
 import com.akademi.finsight.fund.dto.response.AIRecommendationResponse;
 import com.akademi.finsight.fund.dto.response.AiWeightResponse;
 import com.akademi.finsight.fund.dto.response.FundResponse;
 import com.akademi.finsight.fund.entity.AiRecommendation;
 import com.akademi.finsight.fund.entity.AiRecommendationWeight;
 import com.akademi.finsight.fund.entity.AssetCategory;
+import com.akademi.finsight.fund.entity.FundPriceData;
 import com.akademi.finsight.fund.entity.RecommendationStatus;
 import com.akademi.finsight.user.entity.User;
 import lombok.RequiredArgsConstructor;
@@ -13,8 +16,11 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Component;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -36,6 +42,42 @@ public class AiRecommendationMapper {
                 .build();
     }
 
+    public FundModelInputRequest toModelInput(
+            Map<AssetCategory, BigDecimal> weights,
+            MarketDataRequest marketRow,
+            BigDecimal fundReturn,
+            BigDecimal portfolioGrowth,
+            FundPriceData priceData) {
+
+        return FundModelInputRequest.builder()
+                .stockWeight(weights.getOrDefault(AssetCategory.STOCK, BigDecimal.ZERO))
+                .repoWeight(weights.getOrDefault(AssetCategory.REPO, BigDecimal.ZERO))
+                .futureWeight(weights.getOrDefault(AssetCategory.FUTURE, BigDecimal.ZERO))
+                .fundWeight(weights.getOrDefault(AssetCategory.FUND, BigDecimal.ZERO))
+                .usdReturn(marketRow.usdReturn())
+                .goldReturn(marketRow.goldReturn())
+                .brentReturn(marketRow.brentReturn())
+                .us10yReturn(marketRow.us10yReturn())
+                .cdsSpreadBps(marketRow.cdsSpreadBps())
+                .annualInflation(marketRow.annualInflation())
+                .policyRate(marketRow.policyRate())
+                .fundReturn(fundReturn)
+                .portfolioGrowth(portfolioGrowth)
+                .activeValue(priceData != null ? valueOrZero(priceData.getActiveValue()) : BigDecimal.ZERO)
+                .portfolioValue(priceData != null ? valueOrZero(priceData.getPortfolioValue()) : BigDecimal.ZERO)
+                .cashValue(priceData != null ? valueOrZero(priceData.getCashValue()) : BigDecimal.ZERO)
+                .investorCount(priceData != null ? valueOrZero(priceData.getInvestorCount()) : BigDecimal.ZERO)
+                .build();
+    }
+
+    public AiRecommendationWeight toWeightEntity(AssetCategory category, BigDecimal recommended, BigDecimal current) {
+        return AiRecommendationWeight.builder()
+                .category(category)
+                .recommendedWeight(recommended.setScale(2, RoundingMode.HALF_UP))
+                .currentWeight(current.setScale(2, RoundingMode.HALF_UP))
+                .build();
+    }
+
     public AIRecommendationResponse toResponse(AiRecommendation entity) {
         if (entity == null) {
             return null;
@@ -47,7 +89,9 @@ public class AiRecommendationMapper {
             for (Map.Entry<AssetCategory, AiRecommendationWeight> entry : entity.getWeights().entrySet()) {
                 AiRecommendationWeight weightEntity = entry.getValue();
 
-                AiWeightResponse weightDto = new AiWeightResponse(weightEntity.getRecommendedWeight(), weightEntity.getCurrentWeight());
+                AiWeightResponse weightDto = new AiWeightResponse(
+                        weightEntity.getRecommendedWeight(),
+                        weightEntity.getCurrentWeight());
 
                 weightsMap.put(entry.getKey(), weightDto);
             }
@@ -64,4 +108,7 @@ public class AiRecommendationMapper {
                 .build();
     }
 
+    private BigDecimal valueOrZero(BigDecimal value) {
+        return Optional.ofNullable(value).orElse(BigDecimal.ZERO);
+    }
 }

@@ -84,17 +84,11 @@ function setStoredRecommendation(rec: AIRecommendation) {
 
 const CATEGORY_MAP: Record<string, AssetCategory> = {
   'hisse senedi': 'STOCK',
-  'stock': 'STOCK',
   'ters-repo': 'REPO',
-  'ters repo': 'REPO',
-  'repo': 'REPO',
-  'vadeli işl. nakit teminatı': 'FUTURE',
-  'vadeli işlem nakit teminatı': 'FUTURE',
   'vadeli işlemler teminat': 'FUTURE',
-  'future': 'FUTURE',
-  'yatırım fonu katılma payı': 'FUND',
+  'vadeli işl. nakit teminatı': 'FUTURE',
   'yatırım fonları katılma payları': 'FUND',
-  'fund': 'FUND',
+  'yatırım fonu katılma payı': 'FUND',
 }
 
 export async function getActiveFund(fundCode: string = 'TIE'): Promise<Fund> {
@@ -119,8 +113,22 @@ export async function getActiveFund(fundCode: string = 'TIE'): Promise<Fund> {
     }
 
     for (const item of distributions) {
-      const normalizedCat = item.category?.trim().toLowerCase()
-      const mappedKey = CATEGORY_MAP[normalizedCat]
+      const rawCat = (item.category || '').trim()
+      const normalizedCat = rawCat
+        .toLocaleLowerCase('tr')
+        .replace(/i̇/g, 'i')
+        .toLowerCase()
+
+      let mappedKey: AssetCategory | undefined = CATEGORY_MAP[normalizedCat]
+
+      if (!mappedKey) {
+        const lower = rawCat.toLowerCase()
+        if (lower.includes('hisse') || lower.includes('stock')) mappedKey = 'STOCK'
+        else if (lower.includes('repo') || lower.includes('takasbank')) mappedKey = 'REPO'
+        else if (lower.includes('vadel') || lower.includes('teminat') || lower.includes('viop') || lower.includes('future')) mappedKey = 'FUTURE'
+        else if (lower.includes('fon') || lower.includes('fund') || lower.includes('katıl') || lower.includes('katil')) mappedKey = 'FUND'
+      }
+
       if (mappedKey) {
         weights[mappedKey] = Number(item.weight) || 0
       }
@@ -140,25 +148,34 @@ export async function getActiveFund(fundCode: string = 'TIE'): Promise<Fund> {
 }
 
 export async function getPendingRecommendation(fundId: string = MOCK_FUND_ID): Promise<AIRecommendation> {
+  const localRec = getStoredRecommendation()
   try {
     const response = await api.get(`/funds/${fundId}/recommendations/pending`)
-    return response.data.data
+    const data = response.data?.data
+    if (data) {
+      if (localRec.id === data.id && localRec.status !== 'PENDING') {
+        data.status = localRec.status
+      }
+      return data
+    }
+    return localRec
   } catch {
     console.warn('getPendingRecommendation API failed, falling back to local storage.')
-    return getStoredRecommendation()
+    return localRec
   }
 }
 
 export async function submitRecommendationDecision(recommendationId: string, status: 'ACCEPTED' | 'REJECTED', note?: string): Promise<void> {
+  const rec = getStoredRecommendation()
+  if (rec.id === recommendationId || !recommendationId) {
+    rec.status = status
+    setStoredRecommendation(rec)
+  }
+
   try {
     await api.post(`/funds/recommendations/${recommendationId}/decision`, { status, note })
-  } catch {
-    console.warn('submitRecommendationDecision API failed, falling back to local storage.')
-    const rec = getStoredRecommendation()
-    if (rec.id === recommendationId) {
-      rec.status = status
-      setStoredRecommendation(rec)
-    }
+  } catch (error) {
+    console.warn('submitRecommendationDecision API failed, state preserved locally.', error)
   }
 }
 

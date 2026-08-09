@@ -1,6 +1,6 @@
 package com.akademi.finsight.fund.scheduler;
 
-import com.akademi.finsight.fund.service.MarketDataSyncService;
+import com.akademi.finsight.fund.service.ModelDataSyncService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.context.event.ApplicationReadyEvent;
@@ -8,16 +8,15 @@ import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class MarketSyncScheduler {
+public class ModelDataSyncScheduler {
 
     private static final String SCHEDULED_TRIGGER = "SCHEDULED";
     private static final String STARTUP_TRIGGER = "STARTUP";
 
-    private final MarketDataSyncService marketSyncService;
+    private final ModelDataSyncService modelDataSyncService;
 
     @Scheduled(cron = "${market.sync.cron}", zone = "${market.sync.zone}")
     public void syncHourly() {
@@ -30,13 +29,12 @@ public class MarketSyncScheduler {
     }
 
     private void runSync(String trigger) {
-        log.info("Market data sync triggered: trigger={}", trigger);
+        log.info("Model data sync triggered: trigger={}", trigger);
         try {
-            marketSyncService.sync();
+            modelDataSyncService.sync();
         } catch (Exception e) {
-            log.warn("Market data sync failed: event=MARKET_SYNC_FAILED, trigger={}; application will continue with the "
+            log.warn("Model data sync failed: event=MODEL_DATA_SYNC_FAILED, trigger={}; application will continue with "
                     + "previously synced data.", trigger, e);
         }
     }
-
 }

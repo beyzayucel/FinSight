@@ -5,7 +5,7 @@ import { IoTrendingDown } from 'react-icons/io5'
 
 type AIRecommendationTabProps = {
   recommendation: AIRecommendation
-  onDecisionSubmitted: () => void
+  onDecisionSubmitted: (status: 'ACCEPTED' | 'REJECTED') => void
   isLoading?: boolean
 }
 
@@ -25,7 +25,7 @@ export default function AIRecommendationTab({
       setSubmitting(true)
       setError(null)
       await submitRecommendationDecision(recommendation.id, status, note.trim() || undefined)
-      onDecisionSubmitted()
+      onDecisionSubmitted(status)
     } catch (err: any) {
       setError(err?.message || 'Karar iletilirken bir hata oluştu.')
     } finally {
@@ -189,7 +189,7 @@ export default function AIRecommendationTab({
                 className={`px-5 py-2.5 rounded-xl font-extrabold text-xs tracking-wider uppercase select-none transition-all ${
                   recommendation.status === 'ACCEPTED'
                     ? 'bg-[#c89834] text-white opacity-80'
-                    : 'bg-slate-100 text-slate-400 border border-slate-200 cursor-not-allowed'
+                    : 'bg-[#f5f5f5] text-[#9e9e9e] border border-[#e0e0e0] cursor-not-allowed'
                 }`}
               >
                 Kabul Et → Simülasyona Uygula
@@ -199,7 +199,7 @@ export default function AIRecommendationTab({
                 className={`px-5 py-2.5 rounded-xl font-extrabold text-xs tracking-wider uppercase select-none border transition-all ${
                   recommendation.status === 'REJECTED'
                     ? 'border-rose-300 text-rose-700 bg-rose-50/50 opacity-80'
-                    : 'border-slate-200 text-slate-400 bg-white cursor-not-allowed'
+                    : 'bg-[#f5f5f5] text-[#9e9e9e] border border-[#e0e0e0] cursor-not-allowed'
                 }`}
               >
                 Reddet
@@ -207,12 +207,12 @@ export default function AIRecommendationTab({
             </div>
             <div className="flex items-center space-x-1.5 text-xs font-semibold py-1">
               {recommendation.status === 'ACCEPTED' ? (
-                <span className="text-[#2d7a4d] flex items-center gap-1.5 leading-relaxed">
+                <span className="text-[#2d7a4d] flex items-center gap-1.5 leading-relaxed font-semibold">
                   ✓ AI önerisi kabul edildi. Bu dağılım artık ayrı bir Simülasyon Portföyü olarak kaydedildi — mevcut portföyünüz gerçek emirle değişmedi.
                 </span>
               ) : (
-                <span className="text-rose-700 flex items-center gap-1.5 leading-relaxed">
-                  ✗ Bu öneri reddedildi.
+                <span className="text-rose-700 flex items-center gap-1.5 leading-relaxed font-semibold">
+                  ✕ Öneri reddedildi. Karşılaştırma, mevcut portföy ile benchmark üzerinden devam edecek.
                 </span>
               )}
             </div>

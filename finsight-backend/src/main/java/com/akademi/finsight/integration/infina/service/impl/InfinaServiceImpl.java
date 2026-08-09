@@ -6,6 +6,7 @@ import com.akademi.finsight.integration.infina.client.dto.base.InfinaResponse;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundDailyReturnData;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundInfoData;
 import com.akademi.finsight.integration.infina.client.dto.fund.FundPortfolioAllocationData;
+import com.akademi.finsight.integration.infina.client.dto.fund.FundPriceData;
 import com.akademi.finsight.integration.infina.client.dto.fx.FxPriceData;
 import com.akademi.finsight.integration.infina.client.dto.index.IndexPriceData;
 import com.akademi.finsight.integration.infina.client.dto.economic.EconomicPriceData;
@@ -13,6 +14,7 @@ import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkI
 import com.akademi.finsight.integration.infina.dto.response.fund.FundDailyReturnResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundPortfolioAllocationResponse;
+import com.akademi.finsight.integration.infina.dto.response.fund.FundPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.fx.FxPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.index.IndexPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.economic.EconomicPriceResponse;
@@ -139,6 +141,15 @@ public class InfinaServiceImpl implements InfinaService {
 				.findFirst()
 				.map(infinaMapper::toFundDailyReturnResponse)
 				.orElseThrow(() -> new InfinaIntegrationException(InfinaErrorType.INFINA_ERROR_RESPONSE));
+	}
+
+	@Override
+	public List<FundPriceResponse> getFundPrices(String fundCode, String dates) {
+		FundPriceData data = callInfina(
+				() -> infinaServicesClient.getFundPrices(fundCode, dates),
+				fundCode != null ? fundCode : "ALL");
+
+		return infinaMapper.toFundPriceResponseList(data.fundPrices());
 	}
 
 }

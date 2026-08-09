@@ -2,10 +2,7 @@ package com.akademi.finsight.integration.infina.client;
 
 import com.akademi.finsight.integration.infina.client.dto.benchmark.BenchmarkInfoData;
 import com.akademi.finsight.integration.infina.client.dto.base.InfinaResponse;
-import com.akademi.finsight.integration.infina.client.dto.fund.CumulativeReturnsData;
-import com.akademi.finsight.integration.infina.client.dto.fund.FundDailyReturnData;
-import com.akademi.finsight.integration.infina.client.dto.fund.FundInfoData;
-import com.akademi.finsight.integration.infina.client.dto.fund.FundPortfolioAllocationData;
+import com.akademi.finsight.integration.infina.client.dto.fund.*;
 import com.akademi.finsight.integration.infina.client.dto.fx.FxPriceData;
 import com.akademi.finsight.integration.infina.client.dto.index.IndexPriceData;
 import com.akademi.finsight.integration.infina.client.dto.economic.EconomicPriceData;
@@ -58,6 +55,12 @@ public interface InfinaServicesClient {
 	@GetExchange(InfinaEndpoints.ECONOMIC_PRICE)
 	InfinaResponse<EconomicPriceData> getEconomicPrices(
 			@RequestParam(value = "asset_code", required = false) String assetCode,
+			@RequestParam(value = "data_date", required = false) String dataDate
+	);
+
+	@GetExchange(InfinaEndpoints.FUND_PRICE)
+	InfinaResponse<FundPriceData> getFundPrices(
+			@RequestParam(value = "fund_code", required = false) String fundCode,
 			@RequestParam(value = "data_date", required = false) String dataDate
 	);
 }

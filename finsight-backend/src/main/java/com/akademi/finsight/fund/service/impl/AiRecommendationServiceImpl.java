@@ -272,7 +272,6 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
                 toFloat(input.fundReturn()),
                 toFloat(input.portfolioGrowth()),
                 toFloat(input.activeValue()) / BILLION_SCALE,
-                toFloat(input.portfolioValue()),
                 toFloat(input.cashValue()) / MILLION_SCALE,
                 toFloat(input.investorCount()) / INVESTOR_COUNT_SCALE,
                 toFloat(input.stockWeight()),

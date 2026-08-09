@@ -69,7 +69,6 @@ public class AiRecommendationMapper {
                 .fundReturn(fundReturn)
                 .portfolioGrowth(portfolioGrowth)
                 .activeValue(priceData != null ? valueOrZero(priceData.getActiveValue()) : BigDecimal.ZERO)
-                .portfolioValue(priceData != null ? valueOrZero(priceData.getPortfolioValue()) : BigDecimal.ZERO)
                 .cashValue(priceData != null ? valueOrZero(priceData.getCashValue()) : BigDecimal.ZERO)
                 .investorCount(priceData != null ? valueOrZero(priceData.getInvestorCount()) : BigDecimal.ZERO)
                 .build();

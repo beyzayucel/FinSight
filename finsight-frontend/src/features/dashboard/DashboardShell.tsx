@@ -76,10 +76,6 @@ export default function DashboardShell() {
 
   const activeMenu = resolveActiveMenu(location.pathname)
 
-  const assetClassCount = fund
-    ? Object.values(fund.weights).filter((weight) => weight > 0).length
-    : undefined
-
   function renderMainContent() {
     if (loading) {
       return (

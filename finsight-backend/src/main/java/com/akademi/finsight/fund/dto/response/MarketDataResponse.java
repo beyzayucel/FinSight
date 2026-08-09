@@ -20,7 +20,7 @@ public record MarketDataResponse(
             return null;
         }
         return new MarketDataResponse(
-                entity.getDate(),
+                entity.getDataDate(),
                 entity.getUsdReturn(),
                 entity.getGoldReturn(),
                 entity.getBrentReturn(),

@@ -23,7 +23,6 @@ public record FundModelInputRequest(
         BigDecimal portfolioGrowth,
 
         BigDecimal activeValue,
-        BigDecimal portfolioValue,
         BigDecimal cashValue,
         BigDecimal investorCount
 ) {}

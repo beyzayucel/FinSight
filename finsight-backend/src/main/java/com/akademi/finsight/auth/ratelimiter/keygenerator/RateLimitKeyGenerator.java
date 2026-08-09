@@ -20,13 +20,4 @@ public class RateLimitKeyGenerator {
     public String createPasswordResetEmailKey(String hashedEmail) {
         return String.format(PASSWORD_RESET_EMAIL_REQUESTS_KEY, hashedEmail);
     }
-
-    public String createPasswordResetIpKey(String hashedIp) {
-        return String.format(PASSWORD_RESET_IP_REQUESTS_KEY, hashedIp);
-    }
-
-    public String createPasswordResetSubmitIpKey(String hashedIp) {
-        return String.format(PASSWORD_RESET_SUBMIT_IP_KEY, hashedIp);
-    }
-
 }

@@ -1,7 +1,6 @@
 package com.akademi.finsight.auth.ratelimiter.config;
 
 import com.akademi.finsight.auth.ratelimiter.interceptor.PasswordResetRateLimitInterceptor;
-import com.akademi.finsight.auth.ratelimiter.interceptor.PasswordResetSubmitRateLimitInterceptor;
 import com.akademi.finsight.auth.ratelimiter.interceptor.RateLimitInterceptor;
 import com.akademi.finsight.common.constants.ApiEndpoints;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,6 @@ import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 public class RateLimitWebConfig implements WebMvcConfigurer {
     private final RateLimitInterceptor rateLimitInterceptor;
     private final PasswordResetRateLimitInterceptor passwordResetRateLimitInterceptor;
-    private final PasswordResetSubmitRateLimitInterceptor passwordResetSubmitRateLimitInterceptor;
 
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
@@ -23,9 +21,6 @@ public class RateLimitWebConfig implements WebMvcConfigurer {
 
         registry.addInterceptor(passwordResetRateLimitInterceptor)
                 .addPathPatterns(ApiEndpoints.Auth.BASE + ApiEndpoints.Auth.FORGOT_PASSWORD);
-
-        registry.addInterceptor(passwordResetSubmitRateLimitInterceptor)
-                .addPathPatterns(ApiEndpoints.Auth.BASE + ApiEndpoints.Auth.RESET_PASSWORD);
     }
 
 }

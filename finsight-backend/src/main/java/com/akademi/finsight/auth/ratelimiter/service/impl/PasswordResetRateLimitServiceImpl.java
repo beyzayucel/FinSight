@@ -23,23 +23,11 @@ public class PasswordResetRateLimitServiceImpl implements PasswordResetRateLimit
     private final PasswordResetRateLimitProperties properties;
     private final IdentifierHasher identifierHasher;
 
-    /** E-posta limiti once bakilir; IP limiti tek adresin farkli e-postalarla dolasmasini engeller. */
     @Override
-    public void checkAndCountOrThrow(String email, String clientIp) {
+    public void checkAndCountOrThrow(String email) {
         String hashedEmail = identifierHasher.hash(email);
         countOrThrow(rateLimitKeyGenerator.createPasswordResetEmailKey(hashedEmail),
                 properties.getMaxRequestsPerEmail(), "email", hashedEmail);
-
-        String hashedIp = identifierHasher.hash(clientIp);
-        countOrThrow(rateLimitKeyGenerator.createPasswordResetIpKey(hashedIp),
-                properties.getMaxRequestsPerIp(), "ip", hashedIp);
-    }
-
-    @Override
-    public void checkAndCountSubmitOrThrow(String clientIp) {
-        String hashedIp = identifierHasher.hash(clientIp);
-        countOrThrow(rateLimitKeyGenerator.createPasswordResetSubmitIpKey(hashedIp),
-                properties.getMaxSubmitsPerIp(), "submit-ip", hashedIp);
     }
 
     private void countOrThrow(String key, int maxRequests, String scope, String hashedValue) {

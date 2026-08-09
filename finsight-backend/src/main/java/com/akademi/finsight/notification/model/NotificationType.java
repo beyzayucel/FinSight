@@ -7,7 +7,8 @@ public enum NotificationType {
     VERIFICATION_EMAIL("notification.verificationEmail"),
     OTP_EMAIL("notification.otpEmail"),
     ACCOUNT_LOCKED_EMAIL("notification.accountLockedEmail"),
-    PASSWORD_RESET_EMAIL("notification.passwordResetEmail");
+    PASSWORD_RESET_EMAIL("notification.passwordResetEmail"),
+    PASSWORD_CHANGED_EMAIL("notification.passwordChangedEmail");
 
     private final String templateKey;
 

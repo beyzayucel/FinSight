@@ -12,6 +12,7 @@ import com.akademi.finsight.auth.dto.password.ResetPasswordRequest;
 import com.akademi.finsight.auth.exception.AuthErrorType;
 import com.akademi.finsight.auth.exception.AuthException;
 import com.akademi.finsight.auth.otp.service.OtpService;
+import com.akademi.finsight.auth.passwordhistory.service.PasswordHistoryService;
 import com.akademi.finsight.auth.passwordreset.service.PasswordResetTokenService;
 import com.akademi.finsight.auth.ratelimiter.config.LoginRateLimitProperties;
 import com.akademi.finsight.auth.ratelimiter.service.LoginRateLimitService;
@@ -21,6 +22,8 @@ import com.akademi.finsight.auth.refreshtoken.dto.RefreshTokenResult;
 import com.akademi.finsight.auth.refreshtoken.entity.RefreshToken;
 import com.akademi.finsight.auth.refreshtoken.service.RefreshTokenService;
 import com.akademi.finsight.auth.service.impl.AuthServiceImpl;
+import com.akademi.finsight.monitoring.AppMetrics;
+import com.akademi.finsight.security.jwt.service.TokenInvalidationService;
 import com.akademi.finsight.auth.verificationtoken.service.VerificationTokenService;
 import com.akademi.finsight.notification.service.NotificationService;
 import com.akademi.finsight.security.jwt.service.JwtService;
@@ -89,7 +92,16 @@ class AuthServiceImplTest {
     private PasswordResetTokenService passwordResetTokenService;
 
     @Mock
+    private PasswordHistoryService passwordHistoryService;
+
+    @Mock
     private AuditLogService auditLogService;
+
+    @Mock
+    private AppMetrics appMetrics;
+
+    @Mock
+    private TokenInvalidationService tokenInvalidationService;
 
     @InjectMocks
     private AuthServiceImpl authService;

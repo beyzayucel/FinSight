@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Outlet, useLocation, useNavigate, useOutletContext } from 'react-router-dom'
 import DashboardLayout from './components/DashboardLayout'
-import { getActiveFund } from './dashboardApi'
 import type { Fund } from './dashboardApi'
 import { ROUTES } from '@/lib/routes'
 import { useDecision } from './context/decisionStore'
@@ -47,37 +46,16 @@ export default function DashboardShell() {
   const navigate = useNavigate()
   const location = useLocation()
 
-  const [fund, setFund] = useState<Fund | null>(null)
-  const [loading, setLoading] = useState<boolean>(true)
-  const [error, setError] = useState<string | null>(null)
-
-  const { analysisWindow, setAnalysisWindow } = useDecision()
+  const { analysisWindow, setAnalysisWindow, fundState, reloadFund } = useDecision()
   const period = String(analysisWindow)
 
   const [assetClassCount, setAssetClassCount] = useState<number>()
 
-  const loadData = useCallback(async (isInitial = false) => {
-    try {
-      if (isInitial || !fund) setLoading(true)
-      setError(null)
-
-      const activeFund = await getActiveFund()
-      setFund(activeFund)
-    } catch (err: any) {
-      setError(err?.message || 'Veriler yüklenirken bir hata oluştu.')
-    } finally {
-      setLoading(false)
-    }
-  }, [fund])
-
-  useEffect(() => {
-    loadData(true)
-  }, [])
-
+  const fund = fundState.status === 'ready' ? fundState.fund : null
   const activeMenu = resolveActiveMenu(location.pathname)
 
   function renderMainContent() {
-    if (loading) {
+    if (fundState.status === 'loading') {
       return (
         <div className="flex flex-col items-center justify-center min-h-[50vh]">
           <div className="h-10 w-10 border-4 border-[#c89834] border-t-transparent rounded-full animate-spin mb-4" />
@@ -86,13 +64,15 @@ export default function DashboardShell() {
       )
     }
 
-    if (error || !fund) {
+    if (!fund) {
       return (
         <div className="bg-rose-50 border border-rose-100 rounded-2xl p-6 text-center max-w-xl mx-auto mt-12 space-y-4">
           <h3 className="text-lg font-bold text-rose-800">Sistem Bağlantı Hatası</h3>
-          <p className="text-sm text-rose-700">{error || 'Veriler yüklenemedi. Lütfen tekrar deneyin.'}</p>
+          <p className="text-sm text-rose-700">
+            {fundState.status === 'error' ? fundState.message : 'Veriler yüklenemedi. Lütfen tekrar deneyin.'}
+          </p>
           <button
-            onClick={() => loadData(true)}
+            onClick={reloadFund}
             className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold uppercase select-none transition-all shadow-sm"
           >
             Yeniden Dene
@@ -106,7 +86,7 @@ export default function DashboardShell() {
         context={
           {
             fund,
-            reloadFund: loadData,
+            reloadFund,
             analysisPeriod: period,
             reportAssetClassCount: setAssetClassCount,
           } satisfies DashboardOutletContext

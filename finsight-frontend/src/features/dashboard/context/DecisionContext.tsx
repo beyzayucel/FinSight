@@ -1,14 +1,15 @@
-import { useEffect, useMemo, useState, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { AI_WEIGHTS, type SimulationWindow, type Weights } from '@/features/dashboard/lib/simulation'
 import {
-  getFundIdByCode,
   getFundInfo,
   mapAssetDistributionToWeights,
   submitManualScenario,
 } from '@/features/dashboard/lib/fundApi'
+import { getActiveFund } from '@/features/dashboard/dashboardApi'
 import {
   DecisionContext,
   type ActiveFund,
+  type ActiveFundState,
   type Decision,
   type DecisionContextValue,
   type FundInfoState,
@@ -24,20 +25,37 @@ export function DecisionProvider({ children }: { children: ReactNode }) {
   const [analysisWindow, setAnalysisWindow] = useState<SimulationWindow>(30)
   const [decision, setDecision] = useState<Decision | null>(null)
   const [fundInfo, setFundInfo] = useState<FundInfoState>({ status: 'loading' })
-  const [fundId, setFundId] = useState<string | null>(null)
+  const [fundState, setFundState] = useState<ActiveFundState>({ status: 'loading' })
   const [isPerformanceViewed, setIsPerformanceViewed] = useState<boolean>(false)
 
-  useEffect(() => {
-    let cancelled = false
-    getFundIdByCode(ACTIVE_FUND.code)
-      .then((id) => {
-        if (!cancelled) setFundId(id)
+  const fundRequestIdRef = useRef(0)
+
+  const loadFund = useCallback(() => {
+    const requestId = ++fundRequestIdRef.current
+    getActiveFund(ACTIVE_FUND.code)
+      .then((fund) => {
+        if (requestId !== fundRequestIdRef.current) return
+        setFundState({ status: 'ready', fund })
       })
-      .catch(() => {})
-    return () => {
-      cancelled = true
-    }
+      .catch((err: unknown) => {
+        if (requestId !== fundRequestIdRef.current) return
+        setFundState({
+          status: 'error',
+          message: err instanceof Error ? err.message : 'Veriler yüklenirken bir hata oluştu.',
+        })
+      })
   }, [])
+
+  const reloadFund = useCallback(() => {
+    setFundState((prev) => (prev.status === 'ready' ? prev : { status: 'loading' }))
+    loadFund()
+  }, [loadFund])
+
+  useEffect(() => {
+    loadFund()
+  }, [loadFund])
+
+  const fundId = fundState.status === 'ready' ? fundState.fund.id : null
 
   useEffect(() => {
     let cancelled = false
@@ -67,6 +85,8 @@ export function DecisionProvider({ children }: { children: ReactNode }) {
     () => ({
       activeFund: ACTIVE_FUND,
       fundInfo,
+      fundState,
+      reloadFund,
       analysisWindow,
       setAnalysisWindow,
       decision,
@@ -106,7 +126,7 @@ export function DecisionProvider({ children }: { children: ReactNode }) {
         setIsPerformanceViewed(false)
       },
     }),
-    [analysisWindow, decision, fundInfo, fundId, isPerformanceViewed]
+    [analysisWindow, decision, fundInfo, fundState, reloadFund, fundId, isPerformanceViewed]
   )
 
   return <DecisionContext.Provider value={value}>{children}</DecisionContext.Provider>

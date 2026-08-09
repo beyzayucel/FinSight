@@ -9,16 +9,20 @@ import {
 } from '../../components/fund-dashboard'
 import { getFundDashboard } from '../../lib/fund-dashboard/fundDashboardApi'
 import type { FundDashboard, FundDashboardPeriod } from '../../lib/fund-dashboard/fundDashboardApi'
+import { getLatestDecisionState } from '../../lib/decisionHistoryApi'
+import type { LatestDecisionState } from '../../lib/decisionHistoryApi'
 import { formatBps, nominalDays } from '../../lib/fund-dashboard/fundDashboardFormatters'
 import { formatSignedPercent } from '../../lib/formatters'
 
 type FundDashboardPageProps = {
+  fundId: string
   analysisPeriod: string
   onGoToAiDecision: () => void
   onAssetClassCountChange: (count: number) => void
 }
 
 export default function FundDashboardPage({
+  fundId,
   analysisPeriod,
   onGoToAiDecision,
   onAssetClassCountChange,
@@ -27,6 +31,7 @@ export default function FundDashboardPage({
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [breakdownOpen, setBreakdownOpen] = useState(false)
+  const [decisionState, setDecisionState] = useState<LatestDecisionState | null>(null)
 
   const loadData = useCallback(async () => {
     try {
@@ -49,6 +54,16 @@ export default function FundDashboardPage({
   useEffect(() => {
     loadData()
   }, [loadData])
+
+  useEffect(() => {
+    let cancelled = false
+    getLatestDecisionState(fundId)
+      .then((state) => !cancelled && setDecisionState(state))
+      .catch(() => !cancelled && setDecisionState('PENDING'))
+    return () => {
+      cancelled = true
+    }
+  }, [fundId])
 
   const period: FundDashboardPeriod | null = useMemo(() => {
     if (!data || data.periods.length === 0) return null
@@ -134,7 +149,7 @@ export default function FundDashboardPage({
         <BenchmarkComparisonCard period={period} periodDays={periodDays} />
       </div>
 
-      <LatestAiSuggestionCard onGoToAiDecision={onGoToAiDecision} />
+      <LatestAiSuggestionCard state={decisionState} onGoToAiDecision={onGoToAiDecision} />
 
       {breakdownOpen && (
         <StockBreakdownModal

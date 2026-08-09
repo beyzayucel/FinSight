@@ -5,10 +5,11 @@ import { ROUTES } from '@/lib/routes'
 
 export default function FundDashboardRoute() {
   const navigate = useNavigate()
-  const { analysisPeriod, reportAssetClassCount } = useDashboardOutlet()
+  const { fund, analysisPeriod, reportAssetClassCount } = useDashboardOutlet()
 
   return (
     <FundDashboardPage
+      fundId={fund.id}
       analysisPeriod={analysisPeriod}
       onGoToAiDecision={() => navigate(ROUTES.FUND_AI_DECISION)}
       onAssetClassCountChange={reportAssetClassCount}

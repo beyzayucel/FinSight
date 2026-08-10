@@ -1,17 +1,23 @@
 package com.akademi.finsight.fund.service.impl;
 
-import com.akademi.finsight.fund.converter.FundDistributionConverter;
-import com.akademi.finsight.fund.dto.request.ManualScenarioRequest;
+import com.akademi.finsight.fund.decision.converter.FundDistributionConverter;
+import com.akademi.finsight.fund.decision.dto.request.ManualScenarioRequest;
+import com.akademi.finsight.fund.decision.entity.AssetCategory;
+import com.akademi.finsight.fund.decision.entity.ManualScenario;
+import com.akademi.finsight.fund.decision.entity.ManualScenarioStockWeight;
+import com.akademi.finsight.fund.decision.entity.ManualScenarioWeight;
+import com.akademi.finsight.fund.decision.service.impl.ManualScenarioServiceImpl;
+import com.akademi.finsight.fund.decision.service.impl.ScenarioValidationService;
 import com.akademi.finsight.fund.dto.response.FundStockBreakdownResponse;
 import com.akademi.finsight.fund.dto.response.FundStockWeightResponse;
-import com.akademi.finsight.fund.dto.response.ManualScenarioResponse;
+import com.akademi.finsight.fund.decision.dto.response.ManualScenarioResponse;
 import com.akademi.finsight.fund.entity.*;
 import com.akademi.finsight.fund.exception.FundErrorType;
 import com.akademi.finsight.fund.exception.FundValidationException;
-import com.akademi.finsight.fund.mapper.ManualScenarioMapper;
+import com.akademi.finsight.fund.decision.mapper.ManualScenarioMapper;
 import com.akademi.finsight.fund.performancecomparison.service.PortfolioSimulationCalculationService;
 import com.akademi.finsight.fund.repository.FundRepository;
-import com.akademi.finsight.fund.repository.ManualScenarioRepository;
+import com.akademi.finsight.fund.decision.repository.ManualScenarioRepository;
 import com.akademi.finsight.fund.service.FundDistributionService;
 import com.akademi.finsight.fund.service.FundStockAllocationService;
 import com.akademi.finsight.user.entity.User;
@@ -135,12 +141,23 @@ class ManualScenarioServiceImplTest {
                     .build();
             when(manualScenarioMapper.toEntity(request, user, fund)).thenReturn(entity);
             when(manualScenarioMapper.toWeightEntity(any(), any(), any(), any())).thenReturn(new ManualScenarioWeight());
-            when(manualScenarioMapper.toStockWeightEntity(any(), any(), any(), any())).thenReturn(new ManualScenarioStockWeight());
+            when(manualScenarioMapper.toStockWeightEntity(any(), any(), any(), any())).thenAnswer(invocation -> {
+                String assetCode = invocation.getArgument(0);
+                BigDecimal targetWeight = invocation.getArgument(1);
+                BigDecimal currentWeight = invocation.getArgument(2);
+                ManualScenario scenario = invocation.getArgument(3);
+                return ManualScenarioStockWeight.builder()
+                        .assetCode(assetCode)
+                        .targetWeight(targetWeight)
+                        .currentWeight(currentWeight)
+                        .scenario(scenario)
+                        .build();
+            });
 
             assertDoesNotThrow(() -> manualScenarioService.applyManualScenario(email, request));
 
             verify(validationService).validate(targetWeights, currentWeights);
-            verify(validationService).validateStockWeights(targetStockWeights, anyMap());
+            verify(validationService).validateStockWeights(eq(targetStockWeights), anyMap());
             assertEquals(Set.of("THYAO", "GARAN"), entity.getStockWeights().keySet());
             // scenario.getSimulationStockWeights() entity'nin kendi stockWeights map'inden turetilir,
             // targetStockWeights (request'ten gelen ham map) ile ayni referans/icerik degildir - bu yuzden

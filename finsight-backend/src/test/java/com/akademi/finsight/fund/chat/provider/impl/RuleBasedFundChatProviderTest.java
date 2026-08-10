@@ -1,26 +1,23 @@
 package com.akademi.finsight.fund.chat.provider.impl;
 
+import com.akademi.finsight.common.constants.SupportedLanguage;
+import com.akademi.finsight.fund.chat.config.FundChatProperties;
 import com.akademi.finsight.fund.chat.dto.FundChatContext;
 import com.akademi.finsight.fund.chat.dto.FundChatPrompt;
 import com.akademi.finsight.fund.chat.dto.FundChatReply;
 import com.akademi.finsight.fund.chat.dto.FundChatSource;
-import com.akademi.finsight.fund.chat.knowledge.FundChatFaqEntry;
 import com.akademi.finsight.fund.chat.knowledge.FundChatKnowledgeBase;
 import com.akademi.finsight.fund.dto.response.FundDashboardResponse;
 import com.akademi.finsight.fund.dto.response.FundStockBreakdownResponse;
 import com.akademi.finsight.fund.dto.response.FundStockWeightResponse;
-import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.mockito.InjectMocks;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.mockito.junit.jupiter.MockitoSettings;
-import org.mockito.quality.Strictness;
+import org.junit.jupiter.params.provider.EnumSource;
+import tools.jackson.databind.json.JsonMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -28,48 +25,28 @@ import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.when;
 
-@ExtendWith(MockitoExtension.class)
-@MockitoSettings(strictness = Strictness.LENIENT)
 @DisplayName("RuleBasedFundChatProvider")
 class RuleBasedFundChatProviderTest {
 
     private static final String FUND_CODE = "TIE";
     private static final LocalDate DATA_DATE = LocalDate.of(2026, Month.JULY, 31);
-    private static final String FALLBACK = "Bu soruyu cevaplayacak veriye sahip değilim.";
 
-    @Mock
-    private FundChatKnowledgeBase knowledgeBase;
+    private static FundChatKnowledgeBase knowledgeBase;
 
-    @InjectMocks
-    private RuleBasedFundChatProvider provider;
+    private final RuleBasedFundChatProvider provider = new RuleBasedFundChatProvider();
 
-    @BeforeEach
-    void setUp() {
-        when(knowledgeBase.fallbackAnswer()).thenReturn(FALLBACK);
-        when(knowledgeBase.faqEntries()).thenReturn(List.of(
-                new FundChatFaqEntry("bps-explained",
-                        List.of("baz puan nedir", "bps nedir"),
-                        "Baz puan, yüzdenin yüzde biridir."),
-                new FundChatFaqEntry("benchmark-explained",
-                        List.of("benchmark nedir", "endeks nedir"),
-                        "Benchmark, fonun kıyaslandığı referans endekstir."),
-                new FundChatFaqEntry("cumulative-explained",
-                        List.of("kumulatif getiri nedir", "kumulatif ne demek"),
-                        "Kümülatif getiri, dönem başından biriken toplam yüzde getiridir."),
-                new FundChatFaqEntry("no-advice",
-                        List.of("alayim mi", "tavsiye", "ne onerirsin"),
-                        "Yatırım tavsiyesi veremem; \"AI Önerisi & Karar\" sayfasına gidebilirsin."),
-                new FundChatFaqEntry("scenario-redirect",
-                        List.of("senaryo", "simulasyon", "dagilimi degistir", "agirlik degistir"),
-                        "Senaryo kurmak için \"AI Önerisi & Karar\" sayfasını kullan.")));
+    @BeforeAll
+    static void loadShippedContent() {
+        knowledgeBase = new FundChatKnowledgeBase(new FundChatProperties(), JsonMapper.builder().build());
+        knowledgeBase.load();
     }
 
-    private FundChatReply ask(String message) {
+    private FundChatReply ask(SupportedLanguage language, String message) {
         return provider.generate(new FundChatPrompt(
-                FUND_CODE, "system", "glossary", context(), List.of(), message));
+                FUND_CODE, language, knowledgeBase.content(language), context(), List.of(), message));
     }
 
     private FundChatContext context() {
@@ -100,59 +77,78 @@ class RuleBasedFundChatProviderTest {
     }
 
     @Nested
-    @DisplayName("dashboard-backed answers")
-    class DataAnswers {
+    @DisplayName("shipped content")
+    class ShippedContent {
 
-        @DisplayName("should answer from live dashboard data")
-        @ParameterizedTest(name = "\"{0}\" mentions {1}")
+        @DisplayName("should load every supported language with a usable fallback")
+        @ParameterizedTest(name = "{0}")
+        @EnumSource(SupportedLanguage.class)
+        void shouldLoadEveryLanguage(SupportedLanguage language) {
+            assertFalse(knowledgeBase.content(language).faq().fallback().isBlank());
+            assertFalse(knowledgeBase.content(language).intents().entries().isEmpty());
+        }
+    }
+
+    @Nested
+    @DisplayName("Turkish")
+    class Turkish {
+
+        @DisplayName("should route Turkish questions")
+        @ParameterizedTest(name = "\"{0}\" -> {1} mentions {2}")
         @CsvSource(delimiter = '|', textBlock = """
-                Günlük getiri ne kadar?           | 0.15
-                GÜNLÜK GETİRİ NE KADAR?           | 0.15
-                Son 30 günlük getirisi ne oldu?   | P30D
-                Son 30 günlük getirisi ne oldu?   | 5.67
-                Bu fon ne kadar kazandırdı?       | P10D
-                Benchmark ile arasındaki fark ne? | üzerinde
-                Hangi hisseler var?               | ASELS
-                Veri tarihi hangi gün?            | 2026-07-31
-                Portföy dağılımı nasıl?           | Hisse Senedi
-                Toplam değer nedir?               | 1056679
+                Günlük getiri ne kadar?          | RULE      | 0.15
+                Son 30 günlük getirisi ne oldu?  | RULE      | P30D
+                Benchmark ile farkı ne?          | RULE      | üzerinde
+                Hangi hisseler var?              | RULE      | ASELS
+                Veri tarihi hangi gün?           | RULE      | 2026-07-31
+                Portföy dağılımı nasıl?          | RULE      | Hisse Senedi
+                Toplam değer nedir?              | RULE      | 1056679
+                Benchmark nedir?                 | KNOWLEDGE | referans endeks
+                Ne önerirsin?                    | KNOWLEDGE | AI Önerisi & Karar
+                Dağılımı değiştirebilir miyim?   | KNOWLEDGE | AI Önerisi & Karar
+                Yarın hava nasıl olacak?         | FALLBACK  | veriye sahip değilim
                 """)
-        void shouldAnswerFromData(String question, String expectedFragment) {
-            FundChatReply reply = ask(question);
+        void shouldRouteTurkishQuestion(String question, FundChatSource expectedSource, String expectedFragment) {
+            FundChatReply reply = ask(SupportedLanguage.TR, question);
 
-            assertEquals(FundChatSource.RULE, reply.source());
+            assertEquals(expectedSource, reply.source());
             assertTrue(reply.text().contains(expectedFragment), reply.text());
         }
     }
 
     @Nested
-    @DisplayName("knowledge, redirects and fallback")
-    class KnowledgeAnswers {
+    @DisplayName("English")
+    class English {
 
-        @DisplayName("should answer from the FAQ file instead of the data intents")
-        @ParameterizedTest(name = "\"{0}\" mentions {1}")
+        @DisplayName("should route English questions")
+        @ParameterizedTest(name = "\"{0}\" -> {1} mentions {2}")
         @CsvSource(delimiter = '|', textBlock = """
-                Baz puan nedir?                | yüzdenin yüzde biridir
-                bps nedir?                     | yüzdenin yüzde biridir
-                Benchmark nedir?               | referans endekstir
-                Kümülatif getiri nedir?        | biriken toplam
-                Sence ne önerirsin, alayım mı? | AI Önerisi & Karar
-                Dağılımı değiştirebilir miyim? | AI Önerisi & Karar
+                What was the daily return?                | RULE      | 0.15
+                What is the return over the last 30 days? | RULE      | P30D
+                Benchmark gap?                            | RULE      | above
+                Which stocks does it hold?                | RULE      | ASELS
+                What is the data date?                    | RULE      | 2026-07-31
+                Portfolio allocation?                     | RULE      | Hisse Senedi
+                What is the total value?                  | RULE      | 1056679
+                What is the benchmark?                    | KNOWLEDGE | reference index
+                Should I buy this fund?                   | KNOWLEDGE | AI Recommendation & Decision
+                Can I change the allocation?              | KNOWLEDGE | AI Recommendation & Decision
+                How is the weather tomorrow?              | FALLBACK  | don't have the data
                 """)
-        void shouldAnswerFromKnowledge(String question, String expectedFragment) {
-            FundChatReply reply = ask(question);
+        void shouldRouteEnglishQuestion(String question, FundChatSource expectedSource, String expectedFragment) {
+            FundChatReply reply = ask(SupportedLanguage.EN, question);
 
-            assertEquals(FundChatSource.KNOWLEDGE, reply.source());
+            assertEquals(expectedSource, reply.source());
             assertTrue(reply.text().contains(expectedFragment), reply.text());
         }
 
         @Test
-        @DisplayName("should return the configured fallback when nothing matches")
-        void shouldReturnFallback() {
-            FundChatReply reply = ask("Yarın hava nasıl olacak?");
+        @DisplayName("should answer in English while keeping data values untranslated")
+        void shouldKeepDataValuesUntranslated() {
+            FundChatReply reply = ask(SupportedLanguage.EN, "What is the total value?");
 
-            assertEquals(FundChatSource.FALLBACK, reply.source());
-            assertEquals(FALLBACK, reply.text());
+            assertTrue(reply.text().contains("TRY"), reply.text());
+            assertTrue(reply.text().contains(FUND_CODE), reply.text());
         }
     }
 }

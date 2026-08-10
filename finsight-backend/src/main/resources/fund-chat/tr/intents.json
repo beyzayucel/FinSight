@@ -1,0 +1,51 @@
+{
+  "knowledgeFirstMarkers": [
+    "nedir", "ne demek", "ne anlama", "aciklar misin", "aciklayabilir",
+    "degistir", "simule", "senaryo", "tavsiye", "onerir"
+  ],
+  "vocabulary": {
+    "positive": "pozitif",
+    "negative": "negatif",
+    "unchanged": "değişim yok",
+    "aboveBenchmark": "üzerinde",
+    "belowBenchmark": "altında",
+    "unknownValue": "-"
+  },
+  "entries": [
+    {
+      "id": "data-date",
+      "keywords": ["veri tarihi", "hangi tarihe", "hangi tarih", "ne kadar guncel", "guncel mi"],
+      "template": "%s fonunun ekranda gördüğünüz verileri %s tarihine ait. Fon verileri Infina'dan gecikmeli geldiği için en güncel iş gününü değil, veri sağlayıcının yayınladığı son değerleme gününü gösteriyoruz."
+    },
+    {
+      "id": "benchmark",
+      "keywords": ["benchmark", "endeks", "karsilastirma", "bps", "gosterge"],
+      "template": "%s döneminde fon %%%s, benchmark %%%s getirmiş. Fon benchmark'ın %s bps %s."
+    },
+    {
+      "id": "daily-return",
+      "keywords": ["gunluk getiri", "gunluk degisim", "bugun ne kadar", "bugunku getiri"],
+      "template": "%s fonunun %s tarihli günlük getirisi %%%s (%s)."
+    },
+    {
+      "id": "total-value",
+      "keywords": ["toplam deger", "portfoy degeri", "buyukluk", "kac tl", "toplam buyukluk"],
+      "template": "%s fonunun %s tarihli toplam portföy değeri %s TL."
+    },
+    {
+      "id": "stocks",
+      "keywords": ["hangi hisse", "hisseler", "hisse agirlik", "en cok hisse"],
+      "template": "%s dönemi itibarıyla en yüksek ağırlıklı hisseler: %s."
+    },
+    {
+      "id": "distribution",
+      "keywords": ["dagilim", "varlik dagilimi", "portfoy dagilimi", "neye yatirim"],
+      "template": "%s fonunun %s tarihli varlık dağılımı: %s."
+    },
+    {
+      "id": "period-return",
+      "keywords": ["getiri", "kumulatif", "performans", "kazanc", "ne kadar kazandirdi"],
+      "template": "%s fonunun %s dönemindeki kümülatif getirisi %%%s (%s tarihinden %s tarihine, %s)."
+    }
+  ]
+}

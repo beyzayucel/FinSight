@@ -17,5 +17,5 @@ public class FundChatProperties {
 
     private int maxTurns = 10;
 
-    private String knowledgePath = "ai/fund-chat";
+    private String knowledgePath = "fund-chat";
 }

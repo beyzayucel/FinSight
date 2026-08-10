@@ -28,9 +28,10 @@ public interface FundChatApi {
             summary = "Ask the fund dashboard assistant",
             description = """
                     Answers a question about the fund using the same payload the dashboard shows, plus the
-                    editable content under resources/ai/fund-chat. Independent of the ONNX recommendation
-                    flow. Omit sessionId to start a conversation; reuse the returned id to continue it.
-                    History lives in Redis and expires after the configured idle window.""")
+                    editable content under resources/fund-chat, in the language of the Accept-Language
+                    header. Independent of the ONNX recommendation flow. Omit sessionId to start a
+                    conversation; reuse the returned id to continue it. History lives in Redis and
+                    expires after the configured idle window.""")
     @ApiResponse(responseCode = "200", description = "Answer produced")
     @ApiResponse(responseCode = "400", description = "Invalid message or session id")
     @ApiResponse(responseCode = "401", description = "Not authenticated")

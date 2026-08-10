@@ -190,7 +190,7 @@ fund-chat:
   provider: ${FUND_CHAT_PROVIDER:rule}
   session-ttl: ${FUND_CHAT_SESSION_TTL:1h}
   max-turns: ${FUND_CHAT_MAX_TURNS:10}
-  knowledge-path: ${FUND_CHAT_KNOWLEDGE_PATH:ai/fund-chat}
+  knowledge-path: ${FUND_CHAT_KNOWLEDGE_PATH:fund-chat}
 
 market:
   sync:

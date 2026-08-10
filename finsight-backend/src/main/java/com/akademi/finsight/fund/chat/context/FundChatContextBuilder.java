@@ -27,22 +27,22 @@ public class FundChatContextBuilder {
     private String render(FundDashboardResponse dashboard) {
         StringJoiner text = new StringJoiner(System.lineSeparator());
 
-        text.add("Fon: %s (%s)".formatted(dashboard.fund().name(), dashboard.fund().code()));
-        text.add("Veri tarihi: %s".formatted(dashboard.fund().dataDate()));
-        text.add("Toplam portföy değeri: %s TL".formatted(dashboard.totalValue()));
-        text.add("Günlük getiri: %%%s".formatted(dashboard.dailyReturn()));
+        text.add("Fund: %s (%s)".formatted(dashboard.fund().name(), dashboard.fund().code()));
+        text.add("Data date: %s".formatted(dashboard.fund().dataDate()));
+        text.add("Total portfolio value: %s TRY".formatted(dashboard.totalValue()));
+        text.add("Daily return: %%%s".formatted(dashboard.dailyReturn()));
 
         text.add("");
-        text.add("Dönemsel getiriler:");
+        text.add("Period returns:");
         dashboard.periods().forEach(period -> text.add(renderPeriod(period)));
 
         text.add("");
-        text.add("Varlık dağılımı:");
+        text.add("Asset allocation:");
         dashboard.distribution().forEach(category ->
                 text.add("- %s: %%%s".formatted(category.category(), category.weight())));
 
         text.add("");
-        text.add("En yüksek ağırlıklı %d hisse (%s dönemi):"
+        text.add("Top %d stock positions (%s disclosure period):"
                 .formatted(TOP_STOCK_COUNT, dashboard.stockBreakdown().period()));
         topStocks(dashboard).forEach(stock ->
                 text.add("- %s: %%%s".formatted(stock.assetCode(), stock.weight())));
@@ -51,7 +51,7 @@ public class FundChatContextBuilder {
     }
 
     private String renderPeriod(FundDashboardResponse.PeriodMetrics period) {
-        return "- %s: kümülatif %%%s, benchmark %%%s, fark %s bps (%s tarihinden bu yana)".formatted(
+        return "- %s: cumulative %%%s, benchmark %%%s, gap %s bps (since %s)".formatted(
                 period.code(),
                 period.cumulativeReturn(),
                 period.benchmarkReturn(),

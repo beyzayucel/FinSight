@@ -1,5 +1,6 @@
 package com.akademi.finsight.fund.chat.service.impl;
 
+import com.akademi.finsight.common.constants.SupportedLanguage;
 import com.akademi.finsight.common.masking.MaskType;
 import com.akademi.finsight.fund.chat.context.FundChatContextBuilder;
 import com.akademi.finsight.fund.chat.dto.FundChatContext;
@@ -10,12 +11,14 @@ import com.akademi.finsight.fund.chat.dto.request.FundChatRequest;
 import com.akademi.finsight.fund.chat.dto.response.FundChatResponse;
 import com.akademi.finsight.fund.chat.exception.FundChatErrorType;
 import com.akademi.finsight.fund.chat.exception.FundChatException;
+import com.akademi.finsight.fund.chat.knowledge.FundChatContent;
 import com.akademi.finsight.fund.chat.knowledge.FundChatKnowledgeBase;
 import com.akademi.finsight.fund.chat.memory.FundChatMemoryStore;
 import com.akademi.finsight.fund.chat.provider.FundChatProvider;
 import com.akademi.finsight.fund.chat.service.FundChatService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -39,16 +42,14 @@ public class FundChatServiceImpl implements FundChatService {
                 ? UUID.randomUUID().toString()
                 : request.sessionId();
 
+        SupportedLanguage language = resolveLanguage();
+        FundChatContent content = knowledgeBase.content(language);
+
         List<FundChatTurn> history = memoryStore.load(email, fundCode, sessionId);
         FundChatContext context = contextBuilder.build(fundCode);
 
         FundChatPrompt prompt = new FundChatPrompt(
-                fundCode,
-                knowledgeBase.getSystemPrompt(),
-                knowledgeBase.getGlossary(),
-                context,
-                history,
-                request.message());
+                fundCode, language, content, context, history, request.message());
 
         FundChatReply reply = generate(prompt, fundCode, email);
         Instant answeredAt = Instant.now();
@@ -58,8 +59,8 @@ public class FundChatServiceImpl implements FundChatService {
         updated.add(FundChatTurn.assistant(reply.text(), answeredAt));
         memoryStore.save(email, fundCode, sessionId, updated);
 
-        log.info("Fund chat answered: fundCode={}, user={}, sessionId={}, source={}, historyTurns={}",
-                fundCode, MaskType.EMAIL.mask(email), sessionId, reply.source(), history.size());
+        log.info("Fund chat answered: fundCode={}, user={}, sessionId={}, language={}, source={}, historyTurns={}",
+                fundCode, MaskType.EMAIL.mask(email), sessionId, language, reply.source(), history.size());
 
         return new FundChatResponse(sessionId, reply.text(), reply.source(), answeredAt);
     }
@@ -69,6 +70,13 @@ public class FundChatServiceImpl implements FundChatService {
         memoryStore.clear(email, fundCode, sessionId);
         log.info("Fund chat session cleared: fundCode={}, user={}, sessionId={}",
                 fundCode, MaskType.EMAIL.mask(email), sessionId);
+    }
+
+    private SupportedLanguage resolveLanguage() {
+        String requested = LocaleContextHolder.getLocale().getLanguage();
+        return SupportedLanguage.TR.getCode().equals(requested)
+                ? SupportedLanguage.TR
+                : SupportedLanguage.EN;
     }
 
     private FundChatReply generate(FundChatPrompt prompt, String fundCode, String email) {

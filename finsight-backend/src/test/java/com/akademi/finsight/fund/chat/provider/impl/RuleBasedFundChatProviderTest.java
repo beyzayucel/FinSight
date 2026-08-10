@@ -62,7 +62,7 @@ class RuleBasedFundChatProviderTest {
                         new FundStockWeightResponse("ASELS", new BigDecimal("13.440000")),
                         new FundStockWeightResponse("THYAO", new BigDecimal("9.100000")))));
 
-        return new FundChatContext(dashboard, "summary");
+        return new FundChatContext(dashboard);
     }
 
     private FundDashboardResponse.PeriodMetrics period(String code,

@@ -15,5 +15,10 @@ public record FundChatRequest(
         @Schema(description = "The user's question", example = "Bu fonun son 30 günlük getirisi ne?")
         @NotBlank
         @Size(max = 1000)
-        String message
+        String message,
+
+        @Schema(description = "Answer language. Overrides the Accept-Language header when present.",
+                allowableValues = {"tr", "en"}, example = "en")
+        @Pattern(regexp = "^(?i)(tr|en)$", message = "{validation.fund.chat.language}")
+        String language
 ) {}

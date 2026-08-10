@@ -10,6 +10,7 @@ import com.akademi.finsight.fund.entity.MarketData;
 import com.akademi.finsight.fund.repository.FundPriceDataRepository;
 import com.akademi.finsight.fund.repository.FundRepository;
 import com.akademi.finsight.fund.repository.MarketDataRepository;
+import com.akademi.finsight.fund.service.CdsDataService;
 import com.akademi.finsight.fund.service.ModelDataSyncService;
 import com.akademi.finsight.integration.infina.dto.response.economic.EconomicPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundPriceResponse;
@@ -42,6 +43,7 @@ public class ModelDataSyncServiceImpl implements ModelDataSyncService {
     private final FundRepository fundRepository;
     private final FundPriceDataRepository fundPriceDataRepository;
     private final FundProperties fundProperties;
+    private final CdsDataService cdsDataService;
 
     private static final int MAX_BACKWARD_SEARCH_DAYS = 10;
 
@@ -68,7 +70,7 @@ public class ModelDataSyncServiceImpl implements ModelDataSyncService {
         marketData.setGoldReturn(calculateIndexReturn(GOLD_CODE, effectiveDate));
         marketData.setBrentReturn(calculateIndexReturn(BRENT_CODE, effectiveDate));
         marketData.setUs10yReturn(calculateIndexReturn(BOND_10Y_CODE, effectiveDate));
-        marketData.setCdsSpreadBps(DEFAULT_CDS);
+        marketData.setCdsSpreadBps(cdsDataService.getCdsSpreadForDate(effectiveDate));
         marketData.setAnnualInflation(fetchEconomicPrice(INFLATION_CODE, effectiveDate));
         marketData.setPolicyRate(fetchEconomicPrice(POLICY_RATE_CODE, effectiveDate));
 

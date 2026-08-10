@@ -52,6 +52,8 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
     private static final float MILLION_SCALE = 1_000_000.0f;
     private static final float INVESTOR_COUNT_SCALE = 100_000.0f;
     private static final BigDecimal HUNDRED = BigDecimal.valueOf(100);
+    private static final String OTHERS_ASSET_CODE = "Others";
+    private static final String OTHERS_ASSET_CODE_TR = "Diğer";
 
     private final FundProperties fundProperties;
     private final FundService fundService;
@@ -142,7 +144,7 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
         List<com.akademi.finsight.fund.dto.response.FundStockWeightResponse> activeStocks = new ArrayList<>();
 
         for (var item : items) {
-            if ("Others".equalsIgnoreCase(item.assetCode()) || "+ Diğer".equalsIgnoreCase(item.assetCode())) {
+            if (OTHERS_ASSET_CODE.equalsIgnoreCase(item.assetCode()) || OTHERS_ASSET_CODE_TR.equalsIgnoreCase(item.assetCode())) {
                 othersWeight = item.weight();
             } else {
                 activeStocks.add(item);
@@ -172,9 +174,9 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
             recommendation.addStockWeight(stockWeight);
         }
 
-        if (othersWeight.compareTo(BigDecimal.ZERO) > 0 || items.stream().anyMatch(it -> "Others".equalsIgnoreCase(it.assetCode()) || "+ Diğer".equalsIgnoreCase(it.assetCode()))) {
+        if (othersWeight.compareTo(BigDecimal.ZERO) > 0 || items.stream().anyMatch(it -> OTHERS_ASSET_CODE.equalsIgnoreCase(it.assetCode()) || OTHERS_ASSET_CODE_TR.equalsIgnoreCase(it.assetCode()))) {
             AiRecommendationStockWeight othersWeightEntity = aiRecommendationMapper.toStockWeightEntity(
-                    "Others", othersWeight, othersWeight, recommendation);
+                    OTHERS_ASSET_CODE, othersWeight, othersWeight, recommendation);
             recommendation.addStockWeight(othersWeightEntity);
         }
     }

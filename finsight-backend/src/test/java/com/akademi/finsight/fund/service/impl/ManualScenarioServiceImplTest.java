@@ -32,7 +32,6 @@ import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
@@ -140,9 +139,14 @@ class ManualScenarioServiceImplTest {
 
             assertDoesNotThrow(() -> manualScenarioService.applyManualScenario(email, request));
 
-            verify(validationService).validate(eq(targetWeights), eq(currentWeights));
-            verify(validationService).validateStockWeights(eq(targetStockWeights), anyMap());
-            verify(portfolioSimulationCalculationService).attachSnapshot(eq(entity), eq("TIE"), eq(30), eq(targetWeights));
+            verify(validationService).validate(targetWeights, currentWeights);
+            verify(validationService).validateStockWeights(targetStockWeights, anyMap());
+            assertEquals(Set.of("THYAO", "GARAN"), entity.getStockWeights().keySet());
+            // scenario.getSimulationStockWeights() entity'nin kendi stockWeights map'inden turetilir,
+            // targetStockWeights (request'ten gelen ham map) ile ayni referans/icerik degildir - bu yuzden
+            // burada gercek kodun kullandigi kaynagi (entity.getSimulationStockWeights()) bekliyoruz.
+            verify(portfolioSimulationCalculationService).attachSnapshot(
+                    entity, "TIE", 30, targetWeights, entity.getSimulationStockWeights());
             verify(manualScenarioRepository).save(entity);
         }
 

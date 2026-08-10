@@ -212,7 +212,7 @@ public class AuthServiceImpl implements AuthService {
 
         String encodedPassword = passwordEncoder.encode(request.newPassword());
         userService.updatePassword(user, encodedPassword, user.isFirstLogin());
-        passwordHistoryService.record(user, encodedPassword);
+        passwordHistoryService.updatePasswordHistory(user, encodedPassword);
         refreshTokenService.revokeAllByUser(user);
         tokenInvalidationService.invalidateTokensIssuedBefore(user.getEmail());
         auditLogService.createAuditLogForSelf(AuditActionType.PASSWORD_CHANGED, user);
@@ -293,7 +293,7 @@ public class AuthServiceImpl implements AuthService {
 
         String encodedPassword = passwordEncoder.encode(request.newPassword());
         userService.updatePassword(user, encodedPassword, true);
-        passwordHistoryService.record(user, encodedPassword);
+        passwordHistoryService.updatePasswordHistory(user, encodedPassword);
         refreshTokenService.revokeAllByUser(user);
         tokenInvalidationService.invalidateTokensIssuedBefore(user.getEmail());
         auditLogService.createAuditLogForSelf(AuditActionType.PASSWORD_RESET_COMPLETED, user);

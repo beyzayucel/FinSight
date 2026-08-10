@@ -4,7 +4,6 @@ import com.akademi.finsight.stresstest.dto.request.PortfolioDataDto;
 import com.akademi.finsight.stresstest.dto.response.ModelInferenceResult;
 import com.akademi.finsight.stresstest.engine.AssetWeights;
 import com.akademi.finsight.stresstest.engine.StressTestCalculationEngine;
-import com.akademi.finsight.stresstest.engine.StressTestStrategyFactory;
 import com.akademi.finsight.stresstest.enums.ExecutionStrategyType;
 import org.springframework.stereotype.Component;
 
@@ -14,7 +13,6 @@ import java.util.Map;
 
 @Component("ruleBasedStressTestEngine")
 public class RuleBasedStressTestEngineImpl implements StressTestCalculationEngine {
-    // TODO: AI modeli çıkana kadar kullanılacak stres testi
 
     private static final String SCENARIO_EQUITY_SHOCK = "EQUITY_SHOCK";
     private static final String SCENARIO_INTEREST_RATE_SHOCK = "INTEREST_RATE_SHOCK";

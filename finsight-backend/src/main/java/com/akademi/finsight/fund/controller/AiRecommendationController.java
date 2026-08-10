@@ -5,7 +5,6 @@ import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.fund.controller.api.AiRecommendationApi;
 import com.akademi.finsight.fund.dto.request.FundDecisionRequest;
 import com.akademi.finsight.fund.dto.response.AIRecommendationResponse;
-import com.akademi.finsight.fund.dto.response.FundActivePortfolioResponse;
 import com.akademi.finsight.fund.service.AiRecommendationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

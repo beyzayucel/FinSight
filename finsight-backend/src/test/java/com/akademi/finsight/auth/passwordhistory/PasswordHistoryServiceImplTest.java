@@ -75,8 +75,15 @@ class PasswordHistoryServiceImplTest {
                     .thenReturn(List.of(historyEntry("hash-1")));
             when(passwordEncoder.matches(RAW_PASSWORD, "hash-1")).thenReturn(true);
 
-            AuthException exception = assertThrows(AuthException.class,
-                    () -> passwordHistoryService.assertNotRecentlyUsed(createUser(), RAW_PASSWORD));
+            User user = createUser();
+
+            AuthException exception = assertThrows(
+                    AuthException.class,
+                    () -> passwordHistoryService.assertNotRecentlyUsed(
+                            user,
+                            RAW_PASSWORD
+                    )
+            );
 
             assertEquals(AuthErrorType.PASSWORD_RECENTLY_USED, exception.getErrorType());
         }
@@ -91,8 +98,15 @@ class PasswordHistoryServiceImplTest {
             when(passwordEncoder.matches(RAW_PASSWORD, "hash-2")).thenReturn(false);
             when(passwordEncoder.matches(RAW_PASSWORD, "hash-3")).thenReturn(true);
 
-            assertThrows(AuthException.class,
-                    () -> passwordHistoryService.assertNotRecentlyUsed(createUser(), RAW_PASSWORD));
+            User user = createUser();
+
+            assertThrows(
+                    AuthException.class,
+                    () -> passwordHistoryService.assertNotRecentlyUsed(
+                            user,
+                            RAW_PASSWORD
+                    )
+            );
         }
 
         @Test
@@ -121,7 +135,7 @@ class PasswordHistoryServiceImplTest {
         void shouldStoreEncodedPassword() {
             User user = createUser();
 
-            passwordHistoryService.record(user, "encoded-new-password");
+            passwordHistoryService.updatePasswordHistory(user, "encoded-new-password");
 
             ArgumentCaptor<PasswordHistory> captor = ArgumentCaptor.forClass(PasswordHistory.class);
             verify(repository).save(captor.capture());
@@ -133,7 +147,7 @@ class PasswordHistoryServiceImplTest {
         @Test
         @DisplayName("should prune entries beyond the configured size")
         void shouldPruneOlderEntries() {
-            passwordHistoryService.record(createUser(), "encoded-new-password");
+            passwordHistoryService.updatePasswordHistory(createUser(), "encoded-new-password");
 
             verify(repository).deleteOlderThanNewest(USER_ID, HISTORY_SIZE);
         }

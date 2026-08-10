@@ -53,20 +53,20 @@ public class KafkaConfiguration {
             NotificationProperties properties
     ) {
         String deadLetterSuffix = properties.kafka().deadLetterSuffix();
-        DeadLetterPublishingRecoverer deadLetterRecoverer = new DeadLetterPublishingRecoverer(
+        var deadLetterRecoverer = new DeadLetterPublishingRecoverer(
                 rawKafkaTemplate.template(),
-                (record, exception) -> new TopicPartition(record.topic() + deadLetterSuffix, record.partition())
+                (failedRecord, exception) -> new TopicPartition(failedRecord.topic() + deadLetterSuffix, failedRecord.partition())
         );
 
-        ConsumerRecordRecoverer recoverer = (record, exception) -> {
+        ConsumerRecordRecoverer recoverer = (consumerRecord, exception) -> {
             Throwable cause = exception.getCause() == null ? exception : exception.getCause();
             log.error("Failed to process notification, moving to DLT: topic={} partition={} offset={} key={} reason={}",
-                    record.topic(), record.partition(), record.offset(), MaskType.mask(MaskType.FULL, String.valueOf(record.key())),
+                    consumerRecord.topic(), consumerRecord.partition(), consumerRecord.offset(), MaskType.mask(MaskType.FULL, String.valueOf(consumerRecord.key())),
                     cause.getClass().getSimpleName(), exception);
             meterRegistry.counter("notification.dead_letter",
-                    "topic", record.topic(),
+                    "topic", consumerRecord.topic(),
                     "reason", cause.getClass().getSimpleName()).increment();
-            deadLetterRecoverer.accept(record, exception);
+            deadLetterRecoverer.accept(consumerRecord, exception);
         };
 
         NotificationProperties.Kafka.Retry retry = properties.kafka().retry();

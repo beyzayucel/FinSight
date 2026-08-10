@@ -20,8 +20,7 @@ import java.util.regex.Pattern;
 @RequiredArgsConstructor
 public class NotificationRenderer {
 
-    private static final Pattern UNRESOLVED_PLACEHOLDER = Pattern.compile("\\{[a-zA-Z][a-zA-Z0-9_]*}");
-
+    private static final Pattern UNRESOLVED_PLACEHOLDER = Pattern.compile("\\{[A-Za-z]\\w*}");
     private final MessageSource messageSource;
     private final NotificationProperties properties;
 

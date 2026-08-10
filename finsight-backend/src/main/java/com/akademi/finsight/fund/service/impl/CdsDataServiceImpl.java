@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Objects;
 import java.util.concurrent.ConcurrentSkipListMap;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -24,7 +25,8 @@ public class CdsDataServiceImpl implements CdsDataService {
 
     private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("dd.MM.yyyy");
     private static final String CSV_FILE_PATH = "data/TRGV5YUSAC=R.csv";
-
+    private static final Pattern CSV_DELIMITER_OUTSIDE_QUOTES =
+            Pattern.compile(",(?=(?:[^\"]*+\"[^\"]*+\")*+[^\"]*+$)");
     private final NavigableMap<LocalDate, BigDecimal> cdsSpreadMap = new ConcurrentSkipListMap<>();
 
     @PostConstruct
@@ -70,7 +72,7 @@ public class CdsDataServiceImpl implements CdsDataService {
     private void parseAndStoreLine(String line) {
         try {
             //sadece çift tırnakların dışında kalan virgüllerden böl
-            String[] tokens = line.split(",(?=(?:[^\"]*\"[^\"]*\")*[^\"]*$)");
+            String[] tokens = line.split(CSV_DELIMITER_OUTSIDE_QUOTES.pattern());
             if (tokens.length < 2) {
                 return;
             }

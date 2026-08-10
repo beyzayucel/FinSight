@@ -12,7 +12,6 @@ import com.akademi.finsight.fund.exception.FundValidationException;
 import com.akademi.finsight.fund.mapper.ManualScenarioMapper;
 import com.akademi.finsight.fund.performancecomparison.service.PortfolioSimulationCalculationService;
 import com.akademi.finsight.fund.repository.FundRepository;
-import com.akademi.finsight.fund.repository.FundStockAllocationRepository;
 import com.akademi.finsight.fund.repository.ManualScenarioRepository;
 import com.akademi.finsight.fund.service.FundDistributionService;
 import com.akademi.finsight.fund.service.ManualScenarioService;

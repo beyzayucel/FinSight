@@ -127,6 +127,27 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
   // Calculate sum of weights
   const totalWeight = categories.reduce((sum, cat) => sum + getParsedWeightForCat(cat), 0)
 
+  // Check if any category or stock weight has been changed from current
+  const hasCategoryChanges = useMemo(() => {
+    return categories.some((cat) => {
+      const current = fund.weights?.[cat] ?? 0
+      const target = getParsedWeightForCat(cat)
+      return Math.abs(target - current) > 0.001
+    })
+  }, [weights, fund?.weights])
+
+  const hasStockChanges = useMemo(() => {
+    return stocks.some((stock) => {
+      const isReadOnly = stock.assetCode === 'Others' || stock.assetCode === '+ Diğer'
+      if (isReadOnly) return false
+      const current = stockBaseline[stock.assetCode] ?? stock.defaultWeight
+      const target = getParsedWeightForStock(stock.assetCode)
+      return Math.abs(target - current) > 0.001
+    })
+  }, [stocks, stockInputs, stockBaseline])
+
+  const hasChanges = hasCategoryChanges || hasStockChanges
+
   // Validate values dynamically
   useEffect(() => {
     const newErrors: string[] = []
@@ -655,7 +676,7 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
         <div className="flex items-center justify-start space-x-3 pt-1">
           <button
             type="button"
-            disabled={submitting || errors.length > 0}
+            disabled={submitting || errors.length > 0 || !hasChanges}
             onClick={handleSubmit}
             className="px-5 py-2.5 rounded-xl bg-[#c89834] text-white font-extrabold text-xs tracking-wider uppercase hover:bg-[#b08226] shadow-sm hover:shadow disabled:opacity-50 disabled:cursor-not-allowed transition-all select-none cursor-pointer"
           >
@@ -663,8 +684,9 @@ export default function ManualScenarioTab({ fund, onScenarioApplied }: ManualSce
           </button>
           <button
             type="button"
+            disabled={!hasChanges}
             onClick={handleReset}
-            className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white font-extrabold text-xs tracking-wider uppercase hover:bg-slate-50 select-none cursor-pointer"
+            className="px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 bg-white font-extrabold text-xs tracking-wider uppercase hover:bg-slate-50 disabled:opacity-40 disabled:cursor-not-allowed select-none cursor-pointer"
           >
             {t.manualReset}
           </button>

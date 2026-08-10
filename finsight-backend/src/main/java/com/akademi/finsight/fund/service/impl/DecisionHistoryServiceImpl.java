@@ -175,7 +175,8 @@ public class DecisionHistoryServiceImpl implements DecisionHistoryService {
                 metrics.getBenchmarkDiffPct(),
                 metrics.getMaxDrawdownPct(),
                 metrics.getDailyVolatilityPct(),
-                metrics.getAnalysisWindowDays()
+                metrics.getAnalysisWindowDays(),
+                metrics.getDataDate()
         );
     }
 }

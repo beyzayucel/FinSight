@@ -19,6 +19,23 @@ export function formatDate(date: Date, lang: 'tr' | 'en'): string {
   })
 }
 
+export function formatTime(date: Date, lang: 'tr' | 'en'): string {
+  return date.toLocaleTimeString(lang === 'tr' ? 'tr-TR' : 'en-GB', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+/**
+ * "2026-07-31" gibi bir ISO tarihini yerel saat diliminde Date'e çevirir. `new Date(iso)`
+ * kullanılmıyor: o değeri UTC gece yarısı sayar ve negatif offsetli saat dilimlerinde
+ * tarihi bir gün geri kaydırır.
+ */
+export function isoToLocalDate(iso: string): Date {
+  const [year, month, day] = iso.split('-').map(Number)
+  return new Date(year, month - 1, day)
+}
+
 export function formatDateTime(date: Date): string {
   return date.toLocaleString('tr-TR', {
     day: '2-digit',

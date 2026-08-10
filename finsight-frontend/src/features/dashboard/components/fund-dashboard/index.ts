@@ -4,3 +4,4 @@ export { default as PortfolioDistributionCard } from './PortfolioDistributionCar
 export { default as BenchmarkComparisonCard } from './BenchmarkComparisonCard'
 export { default as LatestAiSuggestionCard } from './LatestAiSuggestionCard'
 export { default as StockBreakdownModal } from './StockBreakdownModal'
+export { default as FundChatWidget } from './FundChatWidget'

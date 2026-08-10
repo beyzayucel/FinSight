@@ -53,12 +53,12 @@ public class KafkaConfiguration {
             NotificationProperties properties
     ) {
         String deadLetterSuffix = properties.kafka().deadLetterSuffix();
-        var deadLetterRecover = new DeadLetterPublishingRecoverer(
+        var deadLetterRecoverer = new DeadLetterPublishingRecoverer(
                 rawKafkaTemplate.template(),
                 (failedRecord, exception) -> new TopicPartition(failedRecord.topic() + deadLetterSuffix, failedRecord.partition())
         );
 
-        ConsumerRecordRecoverer recover = (consumerRecord, exception) -> {
+        ConsumerRecordRecoverer recoverer = (consumerRecord, exception) -> {
             Throwable cause = exception.getCause() == null ? exception : exception.getCause();
             log.error("Failed to process notification, moving to DLT: topic={} partition={} offset={} key={} reason={}",
                     consumerRecord.topic(), consumerRecord.partition(), consumerRecord.offset(), MaskType.mask(MaskType.FULL, String.valueOf(consumerRecord.key())),
@@ -66,7 +66,7 @@ public class KafkaConfiguration {
             meterRegistry.counter("notification.dead_letter",
                     "topic", consumerRecord.topic(),
                     "reason", cause.getClass().getSimpleName()).increment();
-            deadLetterRecover.accept(consumerRecord, exception);
+            deadLetterRecoverer.accept(consumerRecord, exception);
         };
 
         NotificationProperties.Kafka.Retry retry = properties.kafka().retry();
@@ -75,7 +75,7 @@ public class KafkaConfiguration {
         backOff.setMultiplier(retry.multiplier());
         backOff.setMaxInterval(retry.maxInterval().toMillis());
 
-        DefaultErrorHandler handler = new DefaultErrorHandler(recover, backOff);
+        DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, backOff);
         handler.addNotRetryableExceptions(InvalidNotificationException.class, SerializationException.class);
         return handler;
     }

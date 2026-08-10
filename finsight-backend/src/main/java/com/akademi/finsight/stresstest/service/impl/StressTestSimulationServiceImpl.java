@@ -19,7 +19,7 @@ import com.akademi.finsight.stresstest.exception.StressTestException;
 import com.akademi.finsight.stresstest.mapper.StressTestMapper;
 import com.akademi.finsight.stresstest.repository.StressTestResultRepository;
 import com.akademi.finsight.stresstest.service.StressTestSimulationService;
-import com.akademi.finsight.stresstest.service.halper.PortfolioDataBuilder;
+import com.akademi.finsight.stresstest.service.helper.PortfolioDataBuilder;
 import com.akademi.finsight.stresstest.util.StressTestPeriodParser;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.exception.UserErrorType;

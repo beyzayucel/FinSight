@@ -3,6 +3,7 @@ package com.akademi.finsight.fund.performancecomparison.service.impl;
 import com.akademi.finsight.fund.converter.AssetCategoryConverter;
 import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
 import com.akademi.finsight.fund.dto.response.FundPeriodMetricResponse;
+import com.akademi.finsight.fund.constant.FundStockAllocationConstants;
 import com.akademi.finsight.fund.entity.AssetCategory;
 import com.akademi.finsight.fund.entity.FundBenchmarkPoint;
 import com.akademi.finsight.fund.entity.MetricsHolder;
@@ -15,6 +16,8 @@ import com.akademi.finsight.fund.performancecomparison.util.PortfolioCalculation
 import com.akademi.finsight.fund.repository.FundBenchmarkPointRepository;
 import com.akademi.finsight.fund.service.FundDistributionService;
 import com.akademi.finsight.fund.service.FundPeriodMetricService;
+import com.akademi.finsight.fund.stockprice.entity.StockPriceHistory;
+import com.akademi.finsight.fund.stockprice.service.StockPriceService;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundDailyReturnResponse;
 import com.akademi.finsight.integration.infina.service.InfinaService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +31,8 @@ import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -47,25 +52,23 @@ public class PortfolioSimulationCalculationServiceImpl implements PortfolioSimul
     private final FundPeriodMetricService fundPeriodMetricService;
     private final FundDistributionService fundDistributionService;
     private final FundBenchmarkPointRepository fundBenchmarkPointRepository;
+    private final StockPriceService stockPriceService;
     private final InfinaService infinaService;
 
     @Override
     public PortfolioCurve calculateSimulation(String fundCode, int analysisWindow,
-                                              Map<AssetCategory, BigDecimal> simulationWeights) {
+                                              Map<AssetCategory, BigDecimal> simulationWeights,
+                                              Map<String, BigDecimal> simulationStockWeights) {
         String period = PERIOD_PREFIX + analysisWindow + PERIOD_SUFFIX;
         FundPeriodMetricResponse metric = fundPeriodMetricService.getLatestByFundCodeAndPeriod(fundCode, period);
 
         List<BigDecimal> fundDailyYields = fetchDailyYields(fundCode, analysisWindow, metric.dataDate());
 
-        // TODO: Infina kategori bazlı getiri API'si gelince stockWeight çözümlemesi gereksiz kalacak.
         Optional<BigDecimal> stockWeightOpt = resolveCurrentStockWeight(fundCode);
         if (stockWeightOpt.isEmpty()) {
             log.warn("No STOCK weight found for fund {}. Cannot compute simulation.", fundCode);
             return null;
         }
-
-        List<BigDecimal> simulationDailyYields = PortfolioCalculationUtil
-                .deriveSimulationDailyReturns(fundDailyYields, stockWeightOpt.get(), simulationWeights);
 
         LocalDate startDate = metric.dataDate().minusDays(analysisWindow);
         List<LocalDate> dates = fundBenchmarkPointRepository
@@ -73,11 +76,57 @@ public class PortfolioSimulationCalculationServiceImpl implements PortfolioSimul
                 .map(FundBenchmarkPoint::getDataDate)
                 .toList();
 
+        Map<String, BigDecimal> topNStockWeights = filterTopNWeights(simulationStockWeights);
+
+        List<BigDecimal> simulationDailyYields;
+        if (topNStockWeights.isEmpty()) {
+
+            simulationDailyYields = PortfolioCalculationUtil
+                    .deriveSimulationDailyReturns(fundDailyYields, stockWeightOpt.get(), simulationWeights);
+        } else {
+            List<LocalDate> alignedDates = alignDatesToYields(dates, fundDailyYields.size());
+            Map<String, Map<LocalDate, BigDecimal>> stockReturnsByAssetCode =
+                    fetchTopNStockReturns(topNStockWeights.keySet(), startDate, metric.dataDate());
+
+            simulationDailyYields = PortfolioCalculationUtil.deriveSimulationDailyReturnsFromStockPrices(
+                    fundDailyYields, alignedDates, stockReturnsByAssetCode, topNStockWeights,
+                    stockWeightOpt.get(), simulationWeights);
+        }
+
         List<CurvePoint> curve = buildSimulationCurve(simulationDailyYields, dates);
         PortfolioMetrics metrics = PortfolioCalculationUtil
                 .buildMetricsFromYields(simulationDailyYields, metric.totalValue());
 
         return new PortfolioCurve(curve, metrics);
+    }
+
+    private Map<String, BigDecimal> filterTopNWeights(Map<String, BigDecimal> simulationStockWeights) {
+        if (simulationStockWeights == null || simulationStockWeights.isEmpty()) {
+            return Map.of();
+        }
+        Map<String, BigDecimal> filtered = new LinkedHashMap<>();
+        simulationStockWeights.forEach((assetCode, weight) -> {
+            if (!FundStockAllocationConstants.OTHERS_ASSET_CODE.equals(assetCode) && weight.signum() != 0) {
+                filtered.put(assetCode, weight);
+            }
+        });
+        return filtered;
+    }
+
+
+    private List<LocalDate> alignDatesToYields(List<LocalDate> dates, int yieldsSize) {
+        int offset = dates.size() - yieldsSize;
+        return offset > 0 ? dates.subList(offset, dates.size()) : dates;
+    }
+
+    private Map<String, Map<LocalDate, BigDecimal>> fetchTopNStockReturns(Iterable<String> assetCodes,
+                                                                          LocalDate fromDate, LocalDate toDate) {
+        Map<String, Map<LocalDate, BigDecimal>> result = new HashMap<>();
+        for (String assetCode : assetCodes) {
+            List<StockPriceHistory> priceHistory = stockPriceService.getWindow(assetCode, fromDate, toDate);
+            result.put(assetCode, PortfolioCalculationUtil.deriveStockDailyReturns(priceHistory));
+        }
+        return result;
     }
 
     private List<BigDecimal> fetchDailyYields(String fundCode, int analysisWindow, LocalDate dataDate) {
@@ -89,9 +138,9 @@ public class PortfolioSimulationCalculationServiceImpl implements PortfolioSimul
 
     @Override
     public void attachSnapshot(MetricsHolder holder, String fundCode, int analysisWindow,
-                               Map<AssetCategory, BigDecimal> weights) {
+                               Map<AssetCategory, BigDecimal> weights, Map<String, BigDecimal> stockWeights) {
         try {
-            PortfolioCurve simulationCurve = calculateSimulation(fundCode, analysisWindow, weights);
+            PortfolioCurve simulationCurve = calculateSimulation(fundCode, analysisWindow, weights, stockWeights);
             if (simulationCurve != null) {
                 if (holder.getMetrics() == null) {
                     holder.setMetrics(new PerformanceMetrics());
@@ -139,7 +188,6 @@ public class PortfolioSimulationCalculationServiceImpl implements PortfolioSimul
 
         int dateOffset = dates.size() - dailyYields.size();
 
-        // Mevcut/benchmark eğrileri rebase ile 0'dan başlıyor — simülasyon da aynı tarihte başlasın.
         if (dateOffset > 0 && !dates.isEmpty()) {
             points.add(new CurvePoint(dates.getFirst(), BigDecimal.ZERO));
         }

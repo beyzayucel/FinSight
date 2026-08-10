@@ -5,6 +5,7 @@ import com.akademi.finsight.integration.infina.dto.response.fund.*;
 import com.akademi.finsight.integration.infina.dto.response.fx.FxPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.index.IndexPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.economic.EconomicPriceResponse;
+import com.akademi.finsight.integration.infina.dto.response.stock.StockPriceResponse;
 
 import java.util.List;
 
@@ -32,4 +33,6 @@ public interface InfinaService {
 	FundDailyReturnResponse getFundDailyReturn(String fundCode, String dates);
 
 	List<FundPriceResponse> getFundPrices(String fundCode, String dataDate);
+
+	List<StockPriceResponse> getStockPrices(String assetCode, String dataDate);
 }

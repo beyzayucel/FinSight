@@ -196,6 +196,13 @@ market:
     cron: ${MARKET_SYNC_CRON:0 0 8-17 * * *}
     zone: ${MARKET_SYNC_ZONE:Europe/Istanbul}
 
+stockprice:
+  refresh:
+    cron: ${STOCK_PRICE_REFRESH_CRON:0 30 8-17 * * *}
+    zone: ${STOCK_PRICE_REFRESH_ZONE:Europe/Istanbul}
+  history:
+    window-days: ${STOCK_PRICE_HISTORY_WINDOW_DAYS:90}
+
 infina:
   api:
     base-url: ${INFINA_API_URL}

@@ -6,6 +6,7 @@ import com.akademi.finsight.integration.infina.client.dto.fund.*;
 import com.akademi.finsight.integration.infina.client.dto.fx.FxPriceData;
 import com.akademi.finsight.integration.infina.client.dto.index.IndexPriceData;
 import com.akademi.finsight.integration.infina.client.dto.economic.EconomicPriceData;
+import com.akademi.finsight.integration.infina.client.dto.stock.StockPriceData;
 import com.akademi.finsight.integration.infina.constant.InfinaEndpoints;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.service.annotation.GetExchange;
@@ -61,6 +62,12 @@ public interface InfinaServicesClient {
 	@GetExchange(InfinaEndpoints.FUND_PRICE)
 	InfinaResponse<FundPriceData> getFundPrices(
 			@RequestParam(value = "fund_code", required = false) String fundCode,
+			@RequestParam(value = "data_date", required = false) String dataDate
+	);
+
+	@GetExchange(InfinaEndpoints.STOCK_PRICE)
+	InfinaResponse<StockPriceData> getStockPrices(
+			@RequestParam(value = "asset_code", required = false) String assetCode,
 			@RequestParam(value = "data_date", required = false) String dataDate
 	);
 }

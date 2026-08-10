@@ -4,6 +4,7 @@ import com.akademi.finsight.fund.dto.request.FundStockAllocationRequest;
 import com.akademi.finsight.fund.dto.response.FundStockAllocationResponse;
 import com.akademi.finsight.fund.dto.response.FundStockBreakdownResponse;
 import com.akademi.finsight.fund.dto.response.FundStockWeightResponse;
+import com.akademi.finsight.fund.constant.FundStockAllocationConstants;
 import com.akademi.finsight.fund.entity.Fund;
 import com.akademi.finsight.fund.entity.FundStockAllocation;
 import com.akademi.finsight.fund.exception.FundNotFoundException;
@@ -33,7 +34,6 @@ import java.util.stream.Collectors;
 @Transactional
 public class FundStockAllocationServiceImpl implements FundStockAllocationService {
 
-    private static final String OTHERS_ASSET_CODE = "Others";
     private static final int STOCK_BREAKDOWN_LIMIT = 10;
 
     private final FundStockAllocationRepository fundStockAllocationRepository;
@@ -110,7 +110,7 @@ public class FundStockAllocationServiceImpl implements FundStockAllocationServic
                     .map(FundStockAllocation::getWeight)
                     .reduce(BigDecimal.ZERO, BigDecimal::add);
 
-            items.add(new FundStockWeightResponse(OTHERS_ASSET_CODE, othersWeight));
+            items.add(new FundStockWeightResponse(FundStockAllocationConstants.OTHERS_ASSET_CODE, othersWeight));
         }
 
         return new FundStockBreakdownResponse(resolvedPeriod, items);

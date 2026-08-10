@@ -27,24 +27,9 @@ public class ScenarioResolver {
     private final ManualScenarioRepository manualScenarioRepository;
     private final AiRecommendationRepository aiRecommendationRepository;
 
-    public record ResolvedScenario(Map<AssetCategory, BigDecimal> weights, ScenarioSource source) {}
+    public record ResolvedScenario(Map<AssetCategory, BigDecimal> weights, Map<String, BigDecimal> stockWeights,
+                                   ScenarioSource source) {}
 
-    public Optional<ResolvedScenario> resolve(String fundCode) {
-        String email = null;
-        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.isAuthenticated() && auth.getName() != null && !auth.getName().equalsIgnoreCase("anonymousUser")) {
-            email = auth.getName();
-        }
-
-        if (email != null) {
-            try {
-                return resolve(email, fundCode);
-            } catch (Exception ignored) {
-            }
-        }
-
-        return Optional.empty();
-    }
 
     public Optional<ResolvedScenario> resolve(String email, String fundCode) {
         UUID fundId = fundRepository.findByCode(fundCode)
@@ -65,11 +50,12 @@ public class ScenarioResolver {
         Instant aiAt = aiOpt.map(AiRecommendation::getUpdatedAt).orElse(Instant.MIN);
 
         if (manualAt.isAfter(aiAt) && manualOpt.isPresent()) {
+            ManualScenario manual = manualOpt.get();
             return Optional.of(new ResolvedScenario(
-                    manualOpt.get().getSimulationWeights(), ScenarioSource.MANUAL));
+                    manual.getSimulationWeights(), manual.getSimulationStockWeights(), ScenarioSource.MANUAL));
         }
 
         return aiOpt.map(ai -> new ResolvedScenario(
-                ai.getSimulationWeights(), ScenarioSource.AI));
+                ai.getSimulationWeights(), ai.getSimulationStockWeights(), ScenarioSource.AI));
     }
 }

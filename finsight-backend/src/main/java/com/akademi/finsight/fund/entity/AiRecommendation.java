@@ -81,4 +81,11 @@ public class AiRecommendation extends SoftDeletableEntity implements ScenarioWei
         weights.forEach((cat, w) -> result.put(cat, w.getRecommendedWeight()));
         return result;
     }
+
+    @Override
+    public Map<String, BigDecimal> getSimulationStockWeights() {
+        Map<String, BigDecimal> result = new HashMap<>();
+        stockWeights.forEach((assetCode, w) -> result.put(assetCode, w.getRecommendedWeight()));
+        return result;
+    }
 }

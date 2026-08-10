@@ -6,11 +6,13 @@ import com.akademi.finsight.integration.infina.client.dto.fund.*;
 import com.akademi.finsight.integration.infina.client.dto.fx.FxPriceRow;
 import com.akademi.finsight.integration.infina.client.dto.index.IndexPriceRow;
 import com.akademi.finsight.integration.infina.client.dto.economic.EconomicPriceRow;
+import com.akademi.finsight.integration.infina.client.dto.stock.StockPriceRow;
 import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.*;
 import com.akademi.finsight.integration.infina.dto.response.fx.FxPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.index.IndexPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.economic.EconomicPriceResponse;
+import com.akademi.finsight.integration.infina.dto.response.stock.StockPriceResponse;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.NullValueMappingStrategy;
@@ -55,6 +57,8 @@ public interface InfinaMapper {
 	List<FundPriceResponse> toFundPriceResponseList(List<FundPriceRow> rows);
 
 	List<CumulativeReturnEntryResponse> toCumulativeReturnEntryResponseList(List<CumulativeReturnEntry> entries);
+
+	List<StockPriceResponse> toStockPriceResponseList(List<StockPriceRow> rows);
 
 	default List<FundReturnResponse> toFundReturns(FundInfoData fundInfoData) {
 		List<String> periods = fundInfoData.periods();

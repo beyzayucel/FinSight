@@ -69,4 +69,11 @@ public class ManualScenario extends SoftDeletableEntity implements ScenarioWeigh
         weights.forEach((cat, w) -> result.put(cat, w.getTargetWeight()));
         return result;
     }
+
+    @Override
+    public Map<String, BigDecimal> getSimulationStockWeights() {
+        Map<String, BigDecimal> result = new HashMap<>();
+        stockWeights.forEach((assetCode, w) -> result.put(assetCode, w.getTargetWeight()));
+        return result;
+    }
 }

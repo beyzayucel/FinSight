@@ -21,7 +21,7 @@ import com.akademi.finsight.stresstest.enums.ExecutionStrategyType;
 import com.akademi.finsight.stresstest.enums.SimulationType;
 import com.akademi.finsight.stresstest.mapper.StressTestResponseAssembler;
 import com.akademi.finsight.stresstest.repository.StressTestResultRepository;
-import com.akademi.finsight.stresstest.service.halper.PortfolioDataBuilder;
+import com.akademi.finsight.stresstest.service.helper.PortfolioDataBuilder;
 import com.akademi.finsight.stresstest.service.impl.StressTestSimulationServiceImpl;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.repository.UserRepository;
@@ -90,7 +90,7 @@ class StressTestSimulationServiceImplTest {
                 AssetCategory.STOCK, BigDecimal.valueOf(50),
                 AssetCategory.FUND, BigDecimal.valueOf(50)
         );
-        ResolvedScenario mockScenario = new ResolvedScenario(mockWeights, ScenarioSource.AI);
+        ResolvedScenario mockScenario = new ResolvedScenario(mockWeights, Map.of(), ScenarioSource.AI);
         when(scenarioResolver.resolve(anyString(), anyString())).thenReturn(Optional.of(mockScenario));
 
         // FundPeriodMetricService Mock
@@ -118,7 +118,7 @@ class StressTestSimulationServiceImplTest {
         PortfolioCurve mockCurve = new PortfolioCurve(
                 List.of(), new PortfolioMetrics(BigDecimal.valueOf(105000), BigDecimal.valueOf(5.0), BigDecimal.ZERO, BigDecimal.ZERO)
         );
-        when(simulationCalculationService.calculateSimulation(anyString(), anyInt(), any())).thenReturn(mockCurve);
+        when(simulationCalculationService.calculateSimulation(anyString(), anyInt(), any(), any())).thenReturn(mockCurve);
 
         // PortfolioDataBuilder Mock
         PortfolioDataDto simulationPortfolio = PortfolioDataDto.builder()
@@ -164,6 +164,6 @@ class StressTestSimulationServiceImplTest {
         // Then
         assertNotNull(response);
         verify(stressTestResultRepository, times(1)).save(any(StressTestResult.class));
-        verify(simulationCalculationService, times(1)).calculateSimulation(eq("TIE"), eq(30), any());
+        verify(simulationCalculationService, times(1)).calculateSimulation(eq("TIE"), eq(30), any(), any());
     }
 }

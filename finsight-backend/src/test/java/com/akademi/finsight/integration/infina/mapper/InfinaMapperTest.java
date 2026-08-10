@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 import static com.akademi.finsight.integration.infina.support.InfinaFixtures.*;
@@ -144,8 +145,8 @@ class InfinaMapperTest {
             assertEquals(TOTAL_MV, response.totalMarketPrice());
             assertEquals(INVESTOR_COUNT, response.investorCount());
 
-            assertEquals(LocalDate.of(2026, 7, 31), response.date());
-            assertEquals(LocalDate.of(2026, 7, 30), response.fundDate());
+            assertEquals(LocalDate.of(2026, Month.JULY, 31), response.date());
+            assertEquals(LocalDate.of(2026, Month.JULY, 30), response.fundDate());
 
             assertEquals(1, response.assetDistribution().size());
             assertEquals("Hisse", response.assetDistribution().getFirst().shortDesc());
@@ -160,7 +161,7 @@ class InfinaMapperTest {
             assertNull(response.name());
             assertNull(response.totalMarketPrice());
             assertNull(response.investorCount());
-            assertEquals(LocalDate.of(2026, 7, 31), response.date());
+            assertEquals(LocalDate.of(2026, Month.JULY, 31), response.date());
         }
 
         @Test
@@ -180,14 +181,14 @@ class InfinaMapperTest {
             List<FundReturnResponse> returns = mapper.toFundReturns(fundInfoData(
                     List.of("P10D", "P30D"),
                     List.of(new BigDecimal("-6.16"), new BigDecimal("-7.57")),
-                    List.of(LocalDate.of(2026, 7, 21), LocalDate.of(2026, 7, 1)),
+                    List.of(LocalDate.of(2026, Month.JULY, 21), LocalDate.of(2026, Month.JULY, 1)),
                     List.of(new BigDecimal("-4.82"), new BigDecimal("-6.20"))));
 
             assertEquals(2, returns.size());
             assertEquals(new FundReturnResponse("P10D", new BigDecimal("-6.16"),
-                    LocalDate.of(2026, 7, 21), new BigDecimal("-4.82")), returns.get(0));
+                    LocalDate.of(2026, Month.JULY, 21), new BigDecimal("-4.82")), returns.get(0));
             assertEquals(new FundReturnResponse("P30D", new BigDecimal("-7.57"),
-                    LocalDate.of(2026, 7, 1), new BigDecimal("-6.20")), returns.get(1));
+                    LocalDate.of(2026, Month.JULY, 1), new BigDecimal("-6.20")), returns.get(1));
         }
 
         @Test
@@ -233,11 +234,11 @@ class InfinaMapperTest {
             List<FundReturnResponse> returns = mapper.toFundReturns(fundInfoData(
                     List.of("P10D", "P30D"),
                     List.of(new BigDecimal("-6.16"), new BigDecimal("-7.57")),
-                    List.of(LocalDate.of(2026, 7, 21)),
+                    List.of(LocalDate.of(2026, Month.JULY, 21)),
                     List.of(new BigDecimal("-4.82"))));
 
             assertEquals(2, returns.size());
-            assertEquals(LocalDate.of(2026, 7, 21), returns.get(0).beginDate());
+            assertEquals(LocalDate.of(2026, Month.JULY, 21), returns.get(0).beginDate());
             assertEquals(new BigDecimal("-4.82"), returns.get(0).benchmarkReturn());
             assertNull(returns.get(1).beginDate());
             assertNull(returns.get(1).benchmarkReturn());

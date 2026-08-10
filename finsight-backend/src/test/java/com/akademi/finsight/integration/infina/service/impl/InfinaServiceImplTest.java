@@ -24,6 +24,7 @@ import org.springframework.web.client.RestClientResponseException;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 import static com.akademi.finsight.integration.infina.support.InfinaFixtures.*;
@@ -110,7 +111,7 @@ class InfinaServiceImplTest {
         void shouldReturnMappedResponse() {
             FundInfoData raw = fundInfoData();
             FundInfoResponse expected = new FundInfoResponse(
-                    FUND_NAME, LocalDate.of(2026, 7, 31), LocalDate.of(2026, 7, 30),
+                    FUND_NAME, LocalDate.of(2026, Month.JULY, 31), LocalDate.of(2026, Month.JULY, 30),
                     List.of(), TOTAL_MV, List.of(), INVESTOR_COUNT);
 
             when(infinaServicesClient.getFundInfo(FUND_CODE, DATE, PERIODS)).thenReturn(success(raw));

@@ -9,6 +9,7 @@ import com.akademi.finsight.integration.infina.client.dto.fund.FundPortfolioAllo
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 public final class InfinaFixtures {
@@ -63,9 +64,9 @@ public final class InfinaFixtures {
 
     public static BenchmarkInfo benchmarkInfo(String definition, BigDecimal bmYield, BigDecimal fundYield) {
         return new BenchmarkInfo(
-                LocalDate.of(2026, 1, 1), definition,
-                LocalDate.of(2026, 7, 1), LocalDate.of(2026, 7, 31), bmYield,
-                LocalDate.of(2026, 7, 1), LocalDate.of(2026, 7, 31), fundYield);
+                LocalDate.of(2026, Month.JANUARY, 1), definition,
+                LocalDate.of(2026, Month.JULY, 1), LocalDate.of(2026, Month.JULY, 31), bmYield,
+                LocalDate.of(2026, Month.JULY, 1), LocalDate.of(2026, Month.JULY, 31), fundYield);
     }
 
     // --- FundPortfolioAllocation -------------------------------------------------
@@ -102,7 +103,7 @@ public final class InfinaFixtures {
                                             List<LocalDate> fundBeginDates,
                                             List<BigDecimal> fundBenchmark) {
         return new FundInfoData(
-                FUND_CODE, LocalDate.of(2026, 7, 31), LocalDate.of(2026, 7, 30), null,
+                FUND_CODE, LocalDate.of(2026, Month.JULY, 31), LocalDate.of(2026, Month.JULY, 30), null,
                 periods, fundBeginDates, null, null, null, fundDetail(),
                 fundReturn, null, null, fundBenchmark, null, null, null, null, null,
                 List.of(assetDistribution()));
@@ -110,7 +111,7 @@ public final class InfinaFixtures {
 
     public static FundInfoData fundInfoDataWithoutDetail() {
         return new FundInfoData(
-                FUND_CODE, LocalDate.of(2026, 7, 31), null, null,
+                FUND_CODE, LocalDate.of(2026, Month.JULY, 31), null, null,
                 null, null, null, null, null, null,
                 null, null, null, null, null, null, null, null, null, null);
     }

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import {
   BenchmarkComparisonCard,
+  FundChatWidget,
   FundMetricCard,
   LatestAiSuggestionCard,
   PortfolioDistributionCard,
@@ -13,6 +14,7 @@ import { getLatestDecisionState } from '../../lib/decisionHistoryApi'
 import type { LatestDecisionState } from '../../lib/decisionHistoryApi'
 import { formatBps, nominalDays } from '../../lib/fund-dashboard/fundDashboardFormatters'
 import { formatSignedPercent } from '../../lib/formatters'
+import { getApiError } from '@/lib/api/apiError'
 import { getTranslations } from '@/i18n/translations'
 
 type FundDashboardPageProps = {
@@ -34,28 +36,41 @@ export default function FundDashboardPage({
   const [error, setError] = useState<string | null>(null)
   const [breakdownOpen, setBreakdownOpen] = useState(false)
   const [decisionState, setDecisionState] = useState<LatestDecisionState | null>(null)
+  const [reloadKey, setReloadKey] = useState(0)
 
-  const loadData = useCallback(async () => {
-    try {
-      setLoading(true)
-      setError(null)
-      const dashboard = await getFundDashboard('TIE')
-      setData(dashboard)
-      onAssetClassCountChange(dashboard.distribution.length)
-    } catch (err: any) {
-      setError(
-        err?.response?.status === 404
-          ? t.fundNotSynced
-          : err?.message || t.fundDashboardLoadError
-      )
-    } finally {
-      setLoading(false)
-    }
-  }, [onAssetClassCountChange, t.fundDashboardLoadError, t.fundNotSynced])
+  function retry() {
+    setLoading(true)
+    setError(null)
+    setReloadKey((key) => key + 1)
+  }
 
   useEffect(() => {
-    loadData()
-  }, [loadData])
+    let cancelled = false
+    getFundDashboard('TIE')
+      .then((dashboard) => {
+        if (cancelled) return
+        setData(dashboard)
+        setError(null)
+        onAssetClassCountChange(dashboard.distribution.length)
+      })
+      .catch((err) => {
+        if (cancelled) return
+        const apiError = getApiError(err)
+        setError(
+          apiError.status === 404
+            ? t.fundNotSynced
+            : apiError.status === 0
+              ? t.fundDashboardLoadError
+              : apiError.message
+        )
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false)
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [reloadKey, onAssetClassCountChange, t.fundDashboardLoadError, t.fundNotSynced])
 
   useEffect(() => {
     let cancelled = false
@@ -89,7 +104,7 @@ export default function FundDashboardPage({
           {error || t.fundDashboardEmpty}
         </p>
         <button
-          onClick={loadData}
+          onClick={retry}
           className="px-5 py-2.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold uppercase select-none transition-all shadow-sm"
         >
           {t.retry}
@@ -105,9 +120,12 @@ export default function FundDashboardPage({
 
   return (
     <div className="space-y-5 animate-fade-in">
-      <h2 className="text-3xl font-bold font-mono text-slate-800 select-none tracking-tight">
-        {t.fundDashboardTitle}
-      </h2>
+      <div className="flex items-center justify-between gap-4">
+        <h2 className="text-3xl font-bold font-mono text-slate-800 select-none tracking-tight">
+          {t.fundDashboardTitle}
+        </h2>
+        <FundChatWidget fundCode={data.fund.code} />
+      </div>
 
       {/* ---------- KPI KARTLARI ---------- */}
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">

@@ -170,4 +170,16 @@ _(Bu bölümü kendin doldurabilirsin.)_
 
 ## Beyzanur Yücel
 
-_(Bu bölümü kendin doldurabilirsin.)_
+Yapay Zeka (AI) Karar Destek Sayfası, Manuel Senaryo Yönetim Arayüzü, Haberler Bileşeni, Karar KPI paneli ve E-posta Doğrulama arayüzlerini geliştirdim.
+
+### Portföy Karar & AI Öneri Arayüzleri (`features/dashboard`)
+- **`AiDecisionPage` & `DashboardShell`** — Kullanıcıların AI tabanlı önerileri ve manuel senaryoları yönetebileceği ana Portföy Karar ekranının tasarımı ve entegrasyonu.
+- **`AIRecommendationTab`** — ONNX modelinden dönen makroekonomik girdi parametreleri (enflasyon, faiz, altın, CDS vb.) ve önerilen varlık/hisse dağılımlarının, hisse alt kategorileri (subcategories) kırılımıyla birlikte grafiksel ve tablosal gösterimi.
+- **`ManualScenarioTab`** — Kullanıcıların kendi portföy ağırlıklarını ve hisse dağılımlarını girebildiği, anlık doğrulama kurallarının işletildiği (toplam ağırlık doğrulaması, veri girilmediğinde butonun deaktive edilmesi) etkileşimli form ekranı.
+- **`dashboardApi.ts`** — Backend AI öneri, manuel senaryo kaydetme ve geçmiş simülasyonları çekme API uçlarının RTK Query entegrasyonları.
+
+### Haber Entegrasyonu & Bileşeni (`features/news`)
+- **`NewsHighlights` & `newsService`** — Backend haber servisinden en güncel finans/piyasa haberlerini çeken, giriş ekranında ve pano üzerinde dinamik haber filtreleme ve listeleme sağlayan arayüz.
+
+
+

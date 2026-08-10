@@ -48,8 +48,8 @@ public class FundChatServiceImpl implements FundChatService {
         List<FundChatTurn> history = memoryStore.load(email, fundCode, sessionId);
         FundChatContext context = contextBuilder.build(fundCode);
 
-        FundChatPrompt prompt = new FundChatPrompt(
-                fundCode, language, content, context, history, request.message());
+        FundChatPrompt prompt =
+                new FundChatPrompt(fundCode, language, content, context, history, request.message());
 
         FundChatReply reply = generate(prompt, fundCode, email);
         Instant answeredAt = Instant.now();

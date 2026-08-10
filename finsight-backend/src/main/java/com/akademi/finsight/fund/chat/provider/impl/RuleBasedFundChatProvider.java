@@ -12,7 +12,6 @@ import com.akademi.finsight.fund.chat.provider.FundChatProvider;
 import com.akademi.finsight.fund.dto.response.FundDashboardResponse;
 import com.akademi.finsight.fund.dto.response.FundStockWeightResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -28,7 +27,6 @@ import java.util.stream.Collectors;
 
 @Slf4j
 @Component
-@ConditionalOnProperty(prefix = "fund-chat", name = "provider", havingValue = "rule", matchIfMissing = true)
 public class RuleBasedFundChatProvider implements FundChatProvider {
 
     private static final Locale TURKISH = Locale.of("tr");

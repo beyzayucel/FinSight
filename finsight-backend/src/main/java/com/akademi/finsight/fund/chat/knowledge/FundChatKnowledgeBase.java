@@ -13,7 +13,6 @@ import tools.jackson.databind.ObjectMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
@@ -23,8 +22,6 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class FundChatKnowledgeBase {
 
-    private static final String SYSTEM_PROMPT_FILE = "system-prompt.md";
-    private static final String GLOSSARY_FILE = "glossary.md";
     private static final String FAQ_FILE = "faq.json";
     private static final String INTENTS_FILE = "intents.json";
     private static final String PLACEHOLDER = "%s";
@@ -73,15 +70,11 @@ public class FundChatKnowledgeBase {
         validateFaq(language, faq);
         validateIntents(language, intents);
 
-        return new FundChatContent(
-                readText(language, SYSTEM_PROMPT_FILE),
-                readText(language, GLOSSARY_FILE),
-                faq,
-                intents);
+        return new FundChatContent(faq, intents);
     }
 
     private void validateFaq(SupportedLanguage language, FundChatFaq faq) {
-        if (faq.fallback() == null || faq.entries() == null) {
+        if (faq.fallback() == null || faq.fallback().isBlank() || faq.entries() == null) {
             log.error("Fund chat FAQ is missing a fallback or an entry list: language={}", language);
             throw new FundChatException(FundChatErrorType.FUND_CHAT_KNOWLEDGE_UNAVAILABLE);
         }
@@ -127,18 +120,7 @@ public class FundChatKnowledgeBase {
             return -1;
         }
 
-        String withoutEscapedPercent = template.replace(ESCAPED_PERCENT, "");
-        return withoutEscapedPercent.split(PLACEHOLDER, -1).length - 1;
-    }
-
-    private String readText(SupportedLanguage language, String fileName) {
-        try (InputStream stream = resource(language, fileName).getInputStream()) {
-            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
-        } catch (IOException exception) {
-            log.error("Fund chat knowledge file could not be read: language={}, file={}",
-                    language, fileName, exception);
-            throw new FundChatException(FundChatErrorType.FUND_CHAT_KNOWLEDGE_UNAVAILABLE, exception);
-        }
+        return template.replace(ESCAPED_PERCENT, "").split(PLACEHOLDER, -1).length - 1;
     }
 
     private <T> T readJson(SupportedLanguage language, String fileName, Class<T> type) {

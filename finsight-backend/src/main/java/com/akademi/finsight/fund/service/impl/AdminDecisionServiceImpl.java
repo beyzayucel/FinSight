@@ -1,14 +1,14 @@
 package com.akademi.finsight.fund.service.impl;
 
 import com.akademi.finsight.fund.dto.response.AdminDecisionRecordResponse;
-import com.akademi.finsight.fund.entity.AiRecommendation;
+import com.akademi.finsight.fund.decision.entity.AiRecommendation;
 import com.akademi.finsight.fund.entity.DecisionType;
-import com.akademi.finsight.fund.entity.ManualScenario;
-import com.akademi.finsight.fund.entity.RecommendationStatus;
-import com.akademi.finsight.fund.repository.AiRecommendationRepository;
-import com.akademi.finsight.fund.repository.AiRecommendationSpecification;
-import com.akademi.finsight.fund.repository.ManualScenarioRepository;
-import com.akademi.finsight.fund.repository.ManualScenarioSpecification;
+import com.akademi.finsight.fund.decision.entity.ManualScenario;
+import com.akademi.finsight.fund.decision.entity.RecommendationStatus;
+import com.akademi.finsight.fund.decision.repository.AiRecommendationRepository;
+import com.akademi.finsight.fund.decision.repository.AiRecommendationSpecification;
+import com.akademi.finsight.fund.decision.repository.ManualScenarioRepository;
+import com.akademi.finsight.fund.decision.repository.ManualScenarioSpecification;
 import com.akademi.finsight.fund.service.AdminDecisionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

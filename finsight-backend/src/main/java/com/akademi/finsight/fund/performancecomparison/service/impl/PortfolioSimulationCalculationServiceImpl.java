@@ -1,10 +1,10 @@
 package com.akademi.finsight.fund.performancecomparison.service.impl;
 
-import com.akademi.finsight.fund.converter.AssetCategoryConverter;
+import com.akademi.finsight.fund.decision.converter.AssetCategoryConverter;
 import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
 import com.akademi.finsight.fund.dto.response.FundPeriodMetricResponse;
 import com.akademi.finsight.fund.constant.FundStockAllocationConstants;
-import com.akademi.finsight.fund.entity.AssetCategory;
+import com.akademi.finsight.fund.decision.entity.AssetCategory;
 import com.akademi.finsight.fund.entity.FundBenchmarkPoint;
 import com.akademi.finsight.fund.entity.MetricsHolder;
 import com.akademi.finsight.fund.entity.PerformanceMetrics;

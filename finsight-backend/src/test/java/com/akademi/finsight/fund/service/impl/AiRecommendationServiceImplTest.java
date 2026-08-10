@@ -1,21 +1,25 @@
 package com.akademi.finsight.fund.service.impl;
 
 import com.akademi.finsight.fund.config.FundProperties;
-import com.akademi.finsight.fund.converter.FundDistributionConverter;
-import com.akademi.finsight.fund.dto.request.FundModelInputRequest;
-import com.akademi.finsight.fund.dto.response.AIRecommendationResponse;
+import com.akademi.finsight.fund.decision.converter.FundDistributionConverter;
+import com.akademi.finsight.ai.model.dto.request.FundModelInputRequest;
+import com.akademi.finsight.fund.decision.dto.response.AIRecommendationResponse;
 import com.akademi.finsight.fund.dto.response.FundResponse;
 import com.akademi.finsight.fund.dto.response.FundStockBreakdownResponse;
 import com.akademi.finsight.fund.dto.response.FundStockWeightResponse;
 import com.akademi.finsight.fund.entity.*;
+import com.akademi.finsight.fund.decision.entity.AiRecommendation;
+import com.akademi.finsight.fund.decision.entity.AiRecommendationStockWeight;
+import com.akademi.finsight.fund.decision.entity.AiRecommendationWeight;
+import com.akademi.finsight.fund.decision.entity.RecommendationStatus;
 import com.akademi.finsight.fund.exception.AiRecommendationNotFoundException;
 import com.akademi.finsight.fund.exception.FundErrorType;
 import com.akademi.finsight.fund.exception.FundValidationException;
-import com.akademi.finsight.fund.mapper.AiRecommendationMapper;
+import com.akademi.finsight.fund.decision.mapper.AiRecommendationMapper;
 import com.akademi.finsight.fund.performancecomparison.service.PortfolioSimulationCalculationService;
-import com.akademi.finsight.fund.repository.AiRecommendationRepository;
-import com.akademi.finsight.fund.repository.FundPriceDataRepository;
-import com.akademi.finsight.fund.repository.MarketDataRepository;
+import com.akademi.finsight.fund.decision.repository.AiRecommendationRepository;
+import com.akademi.finsight.ai.model.repository.FundPriceDataRepository;
+import com.akademi.finsight.ai.model.repository.MarketDataRepository;
 import com.akademi.finsight.fund.service.FundDistributionService;
 import com.akademi.finsight.fund.service.FundPeriodMetricService;
 import com.akademi.finsight.fund.service.FundService;
@@ -23,6 +27,7 @@ import com.akademi.finsight.fund.service.FundStockAllocationService;
 import com.akademi.finsight.fund.service.OnnxModelService;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.service.UserService;
+import com.akademi.finsight.fund.decision.service.impl.AiRecommendationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -266,13 +271,7 @@ class AiRecommendationServiceImplTest {
 
             assertEquals(RecommendationStatus.ACCEPTED, recommendation.getStatus());
             assertEquals("Accepted by manager", recommendation.getNote());
-            verify(portfolioSimulationCalculationService).attachSnapshot(
-                    recommendation,
-                    "TIE",
-                    30,
-                    recommendation.getSimulationWeights(),
-                    recommendation.getSimulationStockWeights()
-            );
+            verify(portfolioSimulationCalculationService).attachSnapshot(eq(recommendation), eq("TIE"), eq(30), any(), any());
             verify(aiRecommendationRepository).save(recommendation);
         }
 

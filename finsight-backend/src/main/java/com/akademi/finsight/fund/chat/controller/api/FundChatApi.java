@@ -7,7 +7,6 @@ import com.akademi.finsight.fund.chat.dto.response.FundChatResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
@@ -32,13 +31,11 @@ public interface FundChatApi {
                     editable content under resources/ai/fund-chat. Independent of the ONNX recommendation
                     flow. Omit sessionId to start a conversation; reuse the returned id to continue it.
                     History lives in Redis and expires after the configured idle window.""")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Answer produced"),
-            @ApiResponse(responseCode = "400", description = "Invalid message or session id"),
-            @ApiResponse(responseCode = "401", description = "Not authenticated"),
-            @ApiResponse(responseCode = "404", description = "Fund not found or not synced yet"),
-            @ApiResponse(responseCode = "502", description = "Answer provider failed")
-    })
+    @ApiResponse(responseCode = "200", description = "Answer produced")
+    @ApiResponse(responseCode = "400", description = "Invalid message or session id")
+    @ApiResponse(responseCode = "401", description = "Not authenticated")
+    @ApiResponse(responseCode = "404", description = "Fund not found or not synced yet")
+    @ApiResponse(responseCode = "502", description = "Answer provider failed")
     @PostMapping(FundChatEndpoints.CHAT)
     ResponseEntity<ApiStandardResponse<FundChatResponse>> ask(
             @Parameter(description = "Fund code", example = "TIE")
@@ -49,10 +46,8 @@ public interface FundChatApi {
     @Operation(
             summary = "Clear a chat session",
             description = "Drops the stored conversation so the next question starts from scratch.")
-    @ApiResponses({
-            @ApiResponse(responseCode = "204", description = "Session cleared"),
-            @ApiResponse(responseCode = "401", description = "Not authenticated")
-    })
+    @ApiResponse(responseCode = "204", description = "Session cleared")
+    @ApiResponse(responseCode = "401", description = "Not authenticated")
     @DeleteMapping(FundChatEndpoints.CHAT_SESSION)
     ResponseEntity<Void> reset(
             @Parameter(description = "Fund code", example = "TIE")

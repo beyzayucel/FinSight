@@ -14,6 +14,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -22,11 +24,12 @@ import org.mockito.quality.Strictness;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.time.Month;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -34,7 +37,7 @@ import static org.mockito.Mockito.lenient;
 class RuleBasedFundChatProviderTest {
 
     private static final String FUND_CODE = "TIE";
-    private static final LocalDate DATA_DATE = LocalDate.of(2026, 7, 31);
+    private static final LocalDate DATA_DATE = LocalDate.of(2026, Month.JULY, 31);
     private static final String FALLBACK = "Bu soruyu cevaplayacak veriye sahip değilim.";
 
     @Mock
@@ -45,8 +48,8 @@ class RuleBasedFundChatProviderTest {
 
     @BeforeEach
     void setUp() {
-        lenient().when(knowledgeBase.fallbackAnswer()).thenReturn(FALLBACK);
-        lenient().when(knowledgeBase.faqEntries()).thenReturn(List.of(
+        when(knowledgeBase.fallbackAnswer()).thenReturn(FALLBACK);
+        when(knowledgeBase.faqEntries()).thenReturn(List.of(
                 new FundChatFaqEntry("bps-explained",
                         List.of("baz puan nedir", "bps nedir"),
                         "Baz puan, yüzdenin yüzde biridir."),
@@ -100,143 +103,47 @@ class RuleBasedFundChatProviderTest {
     @DisplayName("dashboard-backed answers")
     class DataAnswers {
 
-        @Test
-        @DisplayName("should answer the daily return from live data")
-        void shouldAnswerDailyReturn() {
-            FundChatReply reply = ask("Günlük getiri ne kadar?");
+        @DisplayName("should answer from live dashboard data")
+        @ParameterizedTest(name = "\"{0}\" mentions {1}")
+        @CsvSource(delimiter = '|', textBlock = """
+                Günlük getiri ne kadar?           | 0.15
+                GÜNLÜK GETİRİ NE KADAR?           | 0.15
+                Son 30 günlük getirisi ne oldu?   | P30D
+                Son 30 günlük getirisi ne oldu?   | 5.67
+                Bu fon ne kadar kazandırdı?       | P10D
+                Benchmark ile arasındaki fark ne? | üzerinde
+                Hangi hisseler var?               | ASELS
+                Veri tarihi hangi gün?            | 2026-07-31
+                Portföy dağılımı nasıl?           | Hisse Senedi
+                Toplam değer nedir?               | 1056679
+                """)
+        void shouldAnswerFromData(String question, String expectedFragment) {
+            FundChatReply reply = ask(question);
 
             assertEquals(FundChatSource.RULE, reply.source());
-            assertTrue(reply.text().contains("0.15"), reply.text());
-        }
-
-        @Test
-        @DisplayName("should pick the period named in the question instead of the daily return")
-        void shouldPreferNamedPeriodOverDailyReturn() {
-            FundChatReply reply = ask("Son 30 günlük getirisi ne oldu?");
-
-            assertEquals(FundChatSource.RULE, reply.source());
-            assertTrue(reply.text().contains("P30D"), reply.text());
-            assertTrue(reply.text().contains("5.67"), reply.text());
-        }
-
-        @Test
-        @DisplayName("should fall back to the first period when no day count is given")
-        void shouldUseFirstPeriodWithoutDayCount() {
-            FundChatReply reply = ask("Bu fon ne kadar kazandırdı?");
-
-            assertEquals(FundChatSource.RULE, reply.source());
-            assertTrue(reply.text().contains("P10D"), reply.text());
-        }
-
-        @Test
-        @DisplayName("should report the benchmark gap with a direction")
-        void shouldAnswerBenchmark() {
-            FundChatReply reply = ask("Benchmark ile arasındaki fark ne?");
-
-            assertEquals(FundChatSource.RULE, reply.source());
-            assertTrue(reply.text().contains("üzerinde"), reply.text());
-        }
-
-        @Test
-        @DisplayName("should list the heaviest stocks")
-        void shouldAnswerStocks() {
-            FundChatReply reply = ask("Hangi hisseler var?");
-
-            assertEquals(FundChatSource.RULE, reply.source());
-            assertTrue(reply.text().contains("ASELS"), reply.text());
-        }
-
-        @Test
-        @DisplayName("should explain the data date")
-        void shouldAnswerDataDate() {
-            FundChatReply reply = ask("Veri tarihi hangi gün?");
-
-            assertEquals(FundChatSource.RULE, reply.source());
-            assertTrue(reply.text().contains("2026-07-31"), reply.text());
-        }
-
-        @Test
-        @DisplayName("should match keywords regardless of Turkish casing")
-        void shouldNormalizeTurkishCasing() {
-            FundChatReply reply = ask("GÜNLÜK GETİRİ NE KADAR?");
-
-            assertEquals(FundChatSource.RULE, reply.source());
-            assertTrue(reply.text().contains("0.15"), reply.text());
+            assertTrue(reply.text().contains(expectedFragment), reply.text());
         }
     }
 
     @Nested
-    @DisplayName("knowledge and fallback")
+    @DisplayName("knowledge, redirects and fallback")
     class KnowledgeAnswers {
 
-        @Test
-        @DisplayName("should answer definition questions from the FAQ file")
-        void shouldAnswerFromFaq() {
-            FundChatReply reply = ask("Baz puan nedir?");
+        @DisplayName("should answer from the FAQ file instead of the data intents")
+        @ParameterizedTest(name = "\"{0}\" mentions {1}")
+        @CsvSource(delimiter = '|', textBlock = """
+                Baz puan nedir?                | yüzdenin yüzde biridir
+                bps nedir?                     | yüzdenin yüzde biridir
+                Benchmark nedir?               | referans endekstir
+                Kümülatif getiri nedir?        | biriken toplam
+                Sence ne önerirsin, alayım mı? | AI Önerisi & Karar
+                Dağılımı değiştirebilir miyim? | AI Önerisi & Karar
+                """)
+        void shouldAnswerFromKnowledge(String question, String expectedFragment) {
+            FundChatReply reply = ask(question);
 
             assertEquals(FundChatSource.KNOWLEDGE, reply.source());
-            assertTrue(reply.text().contains("yüzdenin yüzde biridir"), reply.text());
-        }
-
-        @Test
-        @DisplayName("should prefer the FAQ definition over the benchmark data intent")
-        void shouldPreferDefinitionOverBenchmarkIntent() {
-            FundChatReply reply = ask("Benchmark nedir?");
-
-            assertEquals(FundChatSource.KNOWLEDGE, reply.source());
-            assertTrue(reply.text().contains("referans endekstir"), reply.text());
-        }
-
-        @Test
-        @DisplayName("should prefer the FAQ definition over the period return intent")
-        void shouldPreferDefinitionOverPeriodIntent() {
-            FundChatReply reply = ask("Kümülatif getiri nedir?");
-
-            assertEquals(FundChatSource.KNOWLEDGE, reply.source());
-            assertTrue(reply.text().contains("biriken toplam"), reply.text());
-        }
-
-        @Test
-        @DisplayName("should answer bps definitions in both phrasings")
-        void shouldAnswerBpsInBothPhrasings() {
-            assertEquals(FundChatSource.KNOWLEDGE, ask("bps nedir?").source());
-            assertEquals(FundChatSource.KNOWLEDGE, ask("Baz puan nedir?").source());
-        }
-
-        @Test
-        @DisplayName("should fall through to data when a definition question has no FAQ entry")
-        void shouldFallThroughToDataForUnknownDefinition() {
-            FundChatReply reply = ask("Toplam değer nedir?");
-
-            assertEquals(FundChatSource.RULE, reply.source());
-            assertTrue(reply.text().contains("1056679"), reply.text());
-        }
-
-        @Test
-        @DisplayName("should redirect advice questions to the AI decision page")
-        void shouldRedirectAdviceQuestions() {
-            FundChatReply reply = ask("Sence ne önerirsin, alayım mı?");
-
-            assertEquals(FundChatSource.KNOWLEDGE, reply.source());
-            assertTrue(reply.text().contains("AI Önerisi & Karar"), reply.text());
-        }
-
-        @Test
-        @DisplayName("should redirect scenario questions instead of answering with the distribution")
-        void shouldRedirectScenarioQuestions() {
-            FundChatReply reply = ask("Dağılımı değiştirebilir miyim?");
-
-            assertEquals(FundChatSource.KNOWLEDGE, reply.source());
-            assertTrue(reply.text().contains("AI Önerisi & Karar"), reply.text());
-        }
-
-        @Test
-        @DisplayName("should still answer a plain distribution question with data")
-        void shouldKeepPlainDistributionOnData() {
-            FundChatReply reply = ask("Portföy dağılımı nasıl?");
-
-            assertEquals(FundChatSource.RULE, reply.source());
-            assertTrue(reply.text().contains("Hisse Senedi"), reply.text());
+            assertTrue(reply.text().contains(expectedFragment), reply.text());
         }
 
         @Test

@@ -62,6 +62,7 @@ application-prod.yml
 *.log
 logs/
 spring.log
+server-log*.txt
 
 ### Docker ###
 docker-data/

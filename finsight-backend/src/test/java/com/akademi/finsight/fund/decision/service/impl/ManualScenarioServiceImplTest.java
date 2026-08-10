@@ -1,4 +1,4 @@
-package com.akademi.finsight.fund.service.impl;
+package com.akademi.finsight.fund.decision.service.impl;
 
 import com.akademi.finsight.fund.decision.converter.FundDistributionConverter;
 import com.akademi.finsight.fund.decision.dto.request.ManualScenarioRequest;
@@ -6,8 +6,6 @@ import com.akademi.finsight.fund.decision.entity.AssetCategory;
 import com.akademi.finsight.fund.decision.entity.ManualScenario;
 import com.akademi.finsight.fund.decision.entity.ManualScenarioStockWeight;
 import com.akademi.finsight.fund.decision.entity.ManualScenarioWeight;
-import com.akademi.finsight.fund.decision.service.impl.ManualScenarioServiceImpl;
-import com.akademi.finsight.fund.decision.service.impl.ScenarioValidationService;
 import com.akademi.finsight.fund.dto.response.FundStockBreakdownResponse;
 import com.akademi.finsight.fund.dto.response.FundStockWeightResponse;
 import com.akademi.finsight.fund.decision.dto.response.ManualScenarioResponse;

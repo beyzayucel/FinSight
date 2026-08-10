@@ -1,4 +1,4 @@
-package com.akademi.finsight.fund.service.impl;
+package com.akademi.finsight.fund.decision.service.impl;
 
 import com.akademi.finsight.fund.config.FundProperties;
 import com.akademi.finsight.fund.decision.converter.FundDistributionConverter;
@@ -27,7 +27,6 @@ import com.akademi.finsight.fund.service.FundStockAllocationService;
 import com.akademi.finsight.fund.service.OnnxModelService;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.service.UserService;
-import com.akademi.finsight.fund.decision.service.impl.AiRecommendationServiceImpl;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

@@ -101,6 +101,7 @@ public class InfinaServiceImpl implements InfinaService {
 		return infinaMapper.toFundPortfolioAllocationResponseList(data.allocations());
 	}
 
+	//TODO: Consider refactoring this method
 	private <T> T callInfina(Supplier<InfinaResponse<T>> call, String fundCode) {
 		InfinaResponse<T> response;
 		try {

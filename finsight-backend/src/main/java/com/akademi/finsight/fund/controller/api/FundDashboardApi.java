@@ -6,6 +6,7 @@ import com.akademi.finsight.fund.dto.response.FundDashboardResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,24 +20,15 @@ import org.springframework.web.bind.annotation.RequestMapping;
 )
 public interface FundDashboardApi {
 
-    @Operation(
-            summary = "Get fund dashboard",
+    @Operation(summary = "Get fund dashboard",
             description = """
-                Returns the fund dashboard for the most recent synced data date,
-                including every analysis period, the asset distribution, and the
-                stock breakdown. Switching the analysis period and displaying the
-                total value are handled client-side because all required data is
-                included in the response.
-                """
-    )
-    @ApiResponse(
-            responseCode = "200",
-            description = "Fund dashboard retrieved successfully"
-    )
-    @ApiResponse(
-            responseCode = "404",
-            description = "Fund not found or not synced yet"
-    )
+                    Returns the fund dashboard for the most recent synced data date: every analysis period,
+                    the asset distribution and the stock breakdown. Switching the analysis period and
+                    flipping the total value card are both client-side, as all of it is in this payload.""")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Fund dashboard retrieved successfully"),
+            @ApiResponse(responseCode = "404", description = "Fund not found or not synced yet")
+    })
     @GetMapping(ApiEndpoints.Funds.DASHBOARD)
     ResponseEntity<ApiStandardResponse<FundDashboardResponse>> getDashboard(
             @Parameter(description = "Fund code", example = "TIE")

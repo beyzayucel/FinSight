@@ -5,6 +5,7 @@ import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.fund.dto.response.FundSyncResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -17,27 +18,16 @@ import org.springframework.web.bind.annotation.RequestMapping;
 )
 public interface FundSyncApi {
 
-    @Operation(
-            summary = "Sync fund data from Infina",
+    @Operation(summary = "Sync fund data from Infina",
             description = """
-                Fetches the tracked fund (configured via 'fund.code', TIE by default)
-                from Infina and upserts its period metrics, asset distribution, and
-                stock allocations. Running it twice for the same data date overwrites
-                the existing rows instead of duplicating them.
-                """
-    )
-    @ApiResponse(
-            responseCode = "200",
-            description = "Fund data synced successfully"
-    )
-    @ApiResponse(
-            responseCode = "502",
-            description = "Infina returned an error or incomplete response"
-    )
-    @ApiResponse(
-            responseCode = "503",
-            description = "Infina service is currently unavailable"
-    )
+                    Fetches the tracked fund (configured via 'fund.code', TIE by default) from Infina and
+                    upserts its period metrics, asset distribution and stock allocations. Running it twice
+                    for the same data date overwrites the existing rows instead of duplicating them.""")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Fund data synced successfully"),
+            @ApiResponse(responseCode = "502", description = "Infina returned an error or incomplete response"),
+            @ApiResponse(responseCode = "503", description = "Infina service is currently unavailable")
+    })
     @PostMapping(ApiEndpoints.Funds.SYNC)
     ResponseEntity<ApiStandardResponse<FundSyncResponse>> sync();
 }

@@ -1,5 +1,6 @@
 package com.akademi.finsight.fund.dto.response;
 
+import lombok.RequiredArgsConstructor;
 
 import java.math.BigDecimal;
 import java.time.Instant;

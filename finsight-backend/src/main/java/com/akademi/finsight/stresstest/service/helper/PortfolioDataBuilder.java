@@ -1,4 +1,4 @@
-package com.akademi.finsight.stresstest.service.halper;
+package com.akademi.finsight.stresstest.service.helper;
 
 import com.akademi.finsight.fund.dto.response.FundPeriodMetricResponse;
 import com.akademi.finsight.fund.performancecomparison.dto.response.PerformanceComparisonResponse;
@@ -48,7 +48,7 @@ public class PortfolioDataBuilder {
 
             if (scenario != null && scenario.weights() != null && !scenario.weights().isEmpty()) {
                 PerformanceComparisonResponse.PortfolioCurve simulationCurve = simulationCalculationService
-                        .calculateSimulation(fundCode, analysisWindow, scenario.weights());
+                        .calculateSimulation(fundCode, analysisWindow, scenario.weights(), scenario.stockWeights());
 
                 BigDecimal simulatedValue = (simulationCurve != null && simulationCurve.metrics() != null)
                         ? simulationCurve.metrics().currentValue()

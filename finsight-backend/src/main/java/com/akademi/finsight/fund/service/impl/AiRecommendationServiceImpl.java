@@ -307,7 +307,8 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
         if (status == RecommendationStatus.ACCEPTED) {
             portfolioSimulationCalculationService.attachSnapshot(
-                    recommendation, recommendation.getFund().getCode(), 30, recommendation.getSimulationWeights());
+                    recommendation, recommendation.getFund().getCode(), 30,
+                    recommendation.getSimulationWeights(), recommendation.getSimulationStockWeights());
         }
 
         aiRecommendationRepository.save(recommendation);

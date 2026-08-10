@@ -67,7 +67,8 @@ public class PerformanceComparisonServiceImpl implements PerformanceComparisonSe
 
         ResolvedScenario scenario = scenarioResolver.resolve(email, fundCode).orElse(null);
         PortfolioCurve simulationPortfolio = scenario != null
-                ? simulationCalculationService.calculateSimulation(fundCode, analysisWindow, scenario.weights())
+                ? simulationCalculationService.calculateSimulation(
+                        fundCode, analysisWindow, scenario.weights(), scenario.stockWeights())
                 : null;
 
         BigDecimal benchmarkCurrentValue = calculateBenchmarkValue(

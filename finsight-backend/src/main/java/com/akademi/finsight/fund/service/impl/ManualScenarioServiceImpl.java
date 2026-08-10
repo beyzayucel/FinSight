@@ -95,7 +95,8 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
             }
         }
 
-        portfolioSimulationCalculationService.attachSnapshot(scenario, fund.getCode(), 30, targetWeights);
+        portfolioSimulationCalculationService.attachSnapshot(
+                scenario, fund.getCode(), 30, targetWeights, scenario.getSimulationStockWeights());
 
         manualScenarioRepository.save(scenario);
         log.info("Manual scenario applied and saved successfully. Scenario ID: {}", scenario.getId());

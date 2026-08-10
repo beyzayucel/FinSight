@@ -6,4 +6,7 @@ import java.util.Map;
 public interface ScenarioWeightSource {
 
     Map<AssetCategory, BigDecimal> getSimulationWeights();
+
+    /** Top-N hisse icin kullanicinin/onerinin hedef agirliklari (assetCode -> weight, sleeve-relative, 0-100). */
+    Map<String, BigDecimal> getSimulationStockWeights();
 }

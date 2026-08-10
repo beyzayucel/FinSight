@@ -10,6 +10,7 @@ import com.akademi.finsight.integration.infina.client.dto.fund.FundPriceData;
 import com.akademi.finsight.integration.infina.client.dto.fx.FxPriceData;
 import com.akademi.finsight.integration.infina.client.dto.index.IndexPriceData;
 import com.akademi.finsight.integration.infina.client.dto.economic.EconomicPriceData;
+import com.akademi.finsight.integration.infina.client.dto.stock.StockPriceData;
 import com.akademi.finsight.integration.infina.dto.response.benchmark.BenchmarkInfoResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundDailyReturnResponse;
 import com.akademi.finsight.integration.infina.dto.response.fund.FundInfoResponse;
@@ -18,6 +19,7 @@ import com.akademi.finsight.integration.infina.dto.response.fund.FundPriceRespon
 import com.akademi.finsight.integration.infina.dto.response.fx.FxPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.index.IndexPriceResponse;
 import com.akademi.finsight.integration.infina.dto.response.economic.EconomicPriceResponse;
+import com.akademi.finsight.integration.infina.dto.response.stock.StockPriceResponse;
 import com.akademi.finsight.integration.infina.exception.InfinaErrorType;
 import com.akademi.finsight.integration.infina.exception.InfinaIntegrationException;
 import com.akademi.finsight.integration.infina.mapper.InfinaMapper;
@@ -150,6 +152,15 @@ public class InfinaServiceImpl implements InfinaService {
 				fundCode != null ? fundCode : "ALL");
 
 		return infinaMapper.toFundPriceResponseList(data.fundPrices());
+	}
+
+	@Override
+	public List<StockPriceResponse> getStockPrices(String assetCode, String dataDate) {
+		StockPriceData data = callInfina(
+				() -> infinaServicesClient.getStockPrices(assetCode, dataDate),
+				assetCode != null ? assetCode : "ALL");
+
+		return infinaMapper.toStockPriceResponseList(data.stockPrices());
 	}
 
 }

@@ -14,4 +14,5 @@ public final class InfinaEndpoints {
 	public static final String ECONOMIC_PRICE = "/EkonomikFiyat";
 	public static final String FUND_PRICE = "/FonFiyat";
 	public static final String FUND_DAILY_RETURN = "/FonGunlukGetiri";
+	public static final String STOCK_PRICE = "/HisseFiyat";
 }

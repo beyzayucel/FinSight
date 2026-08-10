@@ -150,12 +150,24 @@ public class PortfolioSimulationCalculationServiceImpl implements PortfolioSimul
                 holder.getMetrics().setMaxDrawdownPct(simulationCurve.metrics().maxDrawdownPct());
                 holder.getMetrics().setDailyVolatilityPct(simulationCurve.metrics().dailyVolatilityPct());
                 holder.getMetrics().setAnalysisWindowDays(analysisWindow);
+                holder.getMetrics().setDataDate(resolveDataDate(fundCode, analysisWindow));
                 holder.getMetrics().setBenchmarkDiffPct(calculateBenchmarkDiffPct(
                         fundCode, analysisWindow, simulationCurve.metrics().totalReturnPct()));
             }
         } catch (Exception e) {
             log.warn("Simulation snapshot failed. Reason: {}", e.getMessage());
         }
+    }
+
+    /**
+     * Simülasyonun dayandığı veri tarihi — {@link #calculateSimulation} penceresi
+     * {@code [dataDate - analysisWindow, dataDate]} aralığında kurulduğu için kararın
+     * alındığı günden değil bu tarihten geriye sayılır (T-8 veri gecikmesi, bkz.
+     * {@code fund.sync.data-lag-days}). Karar Geçmişi analiz dönemini bununla gösterir.
+     */
+    private LocalDate resolveDataDate(String fundCode, int analysisWindow) {
+        String period = PERIOD_PREFIX + analysisWindow + PERIOD_SUFFIX;
+        return fundPeriodMetricService.getLatestByFundCodeAndPeriod(fundCode, period).dataDate();
     }
 
     /**

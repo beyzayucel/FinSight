@@ -4,7 +4,13 @@ import { MdInfoOutline } from 'react-icons/md'
 import { getTranslations } from '@/i18n/translations'
 import { getLang } from '@/lib/authStore'
 import { useDecision } from '@/features/dashboard/context/decisionStore'
-import { formatCurrency, formatDate, formatSignedPercent, formatUnsignedPercent } from '@/features/dashboard/lib/formatters'
+import {
+  formatCurrency,
+  formatDate,
+  formatSignedPercent,
+  formatUnsignedPercent,
+  isoToLocalDate,
+} from '@/features/dashboard/lib/formatters'
 import {
   getPerformanceComparison,
   mergeToChartPoints,
@@ -108,7 +114,7 @@ export default function PerformanceComparisonPage({ onGoToStressTest }: Props) {
             <h2 className="text-lg font-bold text-ink">{t.pcChartTitle}</h2>
             <p className="mt-1 text-sm text-muted">
               {t.pcPeriodLabel(
-                formatDate(new Date(), lang),
+                formatDate(isoToLocalDate(state.data.dataDate), lang),
                 analysisWindow,
                 state.data.scenarioSource === 'MANUAL' ? t.pcSourceManual : t.pcSourceAi,
                 t.pcStatusAccepted

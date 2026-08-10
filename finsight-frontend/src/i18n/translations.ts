@@ -357,6 +357,10 @@ export const translations = {
     historyStressTest: 'Stres Testi',
     historyStressAttached: 'Bu karara bir stres testi sonucu iliştirilmiş',
     historyDuration: (days: number) => `Süre: ${days} gün`,
+    historyTransactionTime: (time: string) => `İşlem Saati: ${time}`,
+    historyAnalysisPeriod: (from: string, to: string) => `Analiz dönemi: ${from} – ${to}`,
+    historyAnalysisPeriodHint:
+      'Simülasyon, veri gecikmesi nedeniyle karar tarihine kadar değil bu tarihe kadar olan verilerle hesaplandı.',
     historySimulationReturn: 'Simülasyon getirisi',
     historyBenchmarkDifference: 'Benchmark farkı',
     historyAiRationale: 'AI Gerekçesi',
@@ -416,8 +420,10 @@ export const translations = {
     pcLegendMevcut: 'Mevcut Portföy',
     pcLegendSimulasyon: 'Simülasyon Portföyü',
     pcLegendBenchmark: 'Benchmark',
-    pcPeriodLabel: (today: string, days: number, source: string, status: string) =>
-      `Bugün: ${today} · Son ${days} gün · Kaynak: ${source} (${status})`,
+    // Pencere bugüne değil, verinin bittiği tarihe kadar uzanır (T-8 veri gecikmesi) —
+    // Karar Geçmişi'ndeki tarihle aynı şeyi gösterir.
+    pcPeriodLabel: (dataDate: string, days: number, source: string, status: string) =>
+      `Veri tarihi: ${dataDate} · Son ${days} gün · Kaynak: ${source} (${status})`,
     pcSourceAi: 'AI Önerisi',
     pcSourceManual: 'Manuel Senaryo',
     pcStatusAccepted: 'Kabul Edildi',
@@ -805,6 +811,10 @@ export const translations = {
     historyStressTest: 'Stress Test',
     historyStressAttached: 'A stress test result is attached to this decision',
     historyDuration: (days: number) => `Period: ${days} days`,
+    historyTransactionTime: (time: string) => `Transaction time: ${time}`,
+    historyAnalysisPeriod: (from: string, to: string) => `Analysis period: ${from} – ${to}`,
+    historyAnalysisPeriodHint:
+      'Because of the data lag, the simulation was calculated with data up to this date, not up to the decision date.',
     historySimulationReturn: 'Simulation return',
     historyBenchmarkDifference: 'Benchmark difference',
     historyAiRationale: 'AI Rationale',
@@ -864,8 +874,8 @@ export const translations = {
     pcLegendMevcut: 'Current Portfolio',
     pcLegendSimulasyon: 'Simulated Portfolio',
     pcLegendBenchmark: 'Benchmark',
-    pcPeriodLabel: (today: string, days: number, source: string, status: string) =>
-      `Today: ${today} · Last ${days} days · Source: ${source} (${status})`,
+    pcPeriodLabel: (dataDate: string, days: number, source: string, status: string) =>
+      `Data date: ${dataDate} · Last ${days} days · Source: ${source} (${status})`,
     pcSourceAi: 'AI Recommendation',
     pcSourceManual: 'Manual Scenario',
     pcStatusAccepted: 'Accepted',

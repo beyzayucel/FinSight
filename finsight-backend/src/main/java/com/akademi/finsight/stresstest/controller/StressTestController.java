@@ -8,6 +8,10 @@ import com.akademi.finsight.stresstest.dto.request.SaveStressTestDecisionRequest
 import com.akademi.finsight.stresstest.dto.response.StressTestInferenceResponseDto;
 import com.akademi.finsight.stresstest.enums.SimulationType;
 import com.akademi.finsight.stresstest.service.StressTestSimulationService;
+import io.swagger.v3.oas.annotations.media.Content;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -66,6 +70,24 @@ public class StressTestController extends BaseController implements StressTestAp
                 .orElseGet(() -> ResponseEntity.noContent().build());
     }
 
+    @ApiResponse(
+            responseCode = "200",
+            description = "Stress test result attached to the latest decision."
+    )
+    @ApiResponse(
+            responseCode = "403",
+            description = "Stress test result does not belong to this user/fund.",
+            content = @Content(
+                    schema = @Schema(implementation = ApiStandardResponse.class)
+            )
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Stress test result not found, or no decision exists to attach it to.",
+            content = @Content(
+                    schema = @Schema(implementation = ApiStandardResponse.class)
+            )
+    )
     @Override
     public ResponseEntity<ApiStandardResponse<Void>> saveDecisionRecord(
             String userEmail,

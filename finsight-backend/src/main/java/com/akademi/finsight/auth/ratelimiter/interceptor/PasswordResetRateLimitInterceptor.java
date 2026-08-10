@@ -45,7 +45,7 @@ public class PasswordResetRateLimitInterceptor implements HandlerInterceptor {
                 throw new RateLimitException(RateLimitErrorType.IDENTIFIER_MISSING);
             }
 
-            return emailNode.asText();
+            return emailNode.asString();
         } catch (RateLimitException exception) {
             throw exception;
         } catch (Exception exception) {

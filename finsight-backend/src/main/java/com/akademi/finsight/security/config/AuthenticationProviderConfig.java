@@ -21,7 +21,11 @@ public class AuthenticationProviderConfig {
     }
 
     @Bean
-    AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
-        return config.getAuthenticationManager();
+    AuthenticationManager authenticationManager(AuthenticationConfiguration config) {
+        try {
+            return config.getAuthenticationManager();
+        } catch (Exception e) {
+            throw new IllegalStateException("Failed to get AuthenticationManager", e);
+        }
     }
 }

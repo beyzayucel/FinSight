@@ -6,7 +6,6 @@ import com.akademi.finsight.fund.performancecomparison.dto.response.PerformanceC
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -22,15 +21,22 @@ import org.springframework.web.bind.annotation.RequestParam;
 )
 public interface PerformanceComparisonApi {
 
-    @Operation(summary = "Compare portfolio performance",
+    @Operation(
+            summary = "Compare portfolio performance",
             description = """
-                    Returns cumulative return curves and performance summary metrics
-                    (current value, total return, max drawdown, daily volatility)
-                    for the given fund and analysis window (10, 20, 30 or 90 days).""")
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Performance comparison retrieved successfully"),
-            @ApiResponse(responseCode = "404", description = "Fund not found or no metric for requested period")
-    })
+                Returns cumulative return curves and performance summary metrics
+                (current value, total return, max drawdown, daily volatility)
+                for the given fund and analysis window (10, 20, 30 or 90 days).
+                """
+    )
+    @ApiResponse(
+            responseCode = "200",
+            description = "Performance comparison retrieved successfully"
+    )
+    @ApiResponse(
+            responseCode = "404",
+            description = "Fund not found or no metric for requested period"
+    )
     @GetMapping(ApiEndpoints.PerformanceComparison.COMPARE)
     ResponseEntity<ApiStandardResponse<PerformanceComparisonResponse>> compare(
             @AuthenticationPrincipal String email,

@@ -266,7 +266,13 @@ class AiRecommendationServiceImplTest {
 
             assertEquals(RecommendationStatus.ACCEPTED, recommendation.getStatus());
             assertEquals("Accepted by manager", recommendation.getNote());
-            verify(portfolioSimulationCalculationService).attachSnapshot(eq(recommendation), eq("TIE"), eq(30), any());
+            verify(portfolioSimulationCalculationService).attachSnapshot(
+                    recommendation,
+                    "TIE",
+                    30,
+                    recommendation.getSimulationWeights(),
+                    recommendation.getSimulationStockWeights()
+            );
             verify(aiRecommendationRepository).save(recommendation);
         }
 

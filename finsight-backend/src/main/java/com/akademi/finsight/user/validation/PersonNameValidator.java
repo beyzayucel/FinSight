@@ -9,7 +9,7 @@ public class PersonNameValidator implements ConstraintValidator<PersonName, Stri
 
     private static final int MAX_LENGTH = 50;
     private static final Pattern NAME_PATTERN =
-            Pattern.compile("^[\\p{L}]+(?:[ '\\-][\\p{L}]+)*$");
+            Pattern.compile("^\\p{L}++(?:[ '\\-]\\p{L}++)*+$");
 
     @Override
     public boolean isValid(String value, ConstraintValidatorContext context) {

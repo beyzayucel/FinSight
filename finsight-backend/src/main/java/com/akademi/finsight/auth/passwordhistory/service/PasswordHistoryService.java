@@ -8,5 +8,5 @@ public interface PasswordHistoryService {
     void assertNotRecentlyUsed(User user, String rawPassword);
 
     /** Yeni sifreyi gecmise yazar ve sinirin disinda kalan eski kayitlari siler. */
-    void record(User user, String encodedPassword);
+    void updatePasswordHistory(User user, String encodedPassword);
 }

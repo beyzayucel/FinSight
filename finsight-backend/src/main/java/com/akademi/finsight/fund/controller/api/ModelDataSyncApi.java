@@ -5,7 +5,6 @@ import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.fund.dto.response.ModelDataSyncResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
-import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -20,13 +19,24 @@ public interface ModelDataSyncApi {
 
     @Operation(
             summary = "Sync AI model input data from Infina",
-            description = "Fetches macro indicators (FX, Gold, Brent, Bond, Inflation) and fund price metrics (active value, portfolio value, cash, investor count) from Infina."
+            description = """
+                Fetches macro indicators (FX, Gold, Brent, Bond, Inflation)
+                and fund price metrics (active value, portfolio value, cash,
+                investor count) from Infina.
+                """
     )
-    @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "Model data synced successfully"),
-            @ApiResponse(responseCode = "502", description = "Infina returned an error or incomplete response"),
-            @ApiResponse(responseCode = "503", description = "Infina service is currently unavailable")
-    })
+    @ApiResponse(
+            responseCode = "200",
+            description = "Model data synced successfully"
+    )
+    @ApiResponse(
+            responseCode = "502",
+            description = "Infina returned an error or incomplete response"
+    )
+    @ApiResponse(
+            responseCode = "503",
+            description = "Infina service is currently unavailable"
+    )
     @PostMapping(ApiEndpoints.ModelData.SYNC)
     ResponseEntity<ApiStandardResponse<ModelDataSyncResponse>> sync();
 }

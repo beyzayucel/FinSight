@@ -42,7 +42,7 @@ public class PasswordHistoryServiceImpl implements PasswordHistoryService {
     }
 
     @Override
-    public void record(User user, String encodedPassword) {
+    public void updatePasswordHistory(User user, String encodedPassword) {
         repository.save(PasswordHistory.builder()
                 .user(user)
                 .passwordHash(encodedPassword)

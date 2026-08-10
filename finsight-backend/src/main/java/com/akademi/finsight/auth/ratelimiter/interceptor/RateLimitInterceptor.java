@@ -4,7 +4,6 @@ import com.akademi.finsight.auth.ratelimiter.exception.RateLimitErrorType;
 import com.akademi.finsight.auth.ratelimiter.exception.RateLimitException;
 import com.akademi.finsight.auth.ratelimiter.filter.CachedBodyHttpServletRequest;
 import com.akademi.finsight.auth.ratelimiter.service.LoginRateLimitService;
-import com.fasterxml.jackson.core.JacksonException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -14,7 +13,6 @@ import org.springframework.web.util.WebUtils;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 
 @Component
@@ -51,7 +49,7 @@ public class RateLimitInterceptor implements HandlerInterceptor {
                 throw new RateLimitException(RateLimitErrorType.IDENTIFIER_MISSING);
             }
 
-            return identifierNode.asText();
+            return identifierNode.asString();
 
         }catch (RateLimitException e){
             throw e;

@@ -4,7 +4,6 @@ import com.akademi.finsight.stresstest.client.FastApiClient;
 import com.akademi.finsight.stresstest.dto.request.PortfolioDataDto;
 import com.akademi.finsight.stresstest.dto.response.ModelInferenceResult;
 import com.akademi.finsight.stresstest.engine.StressTestCalculationEngine;
-import com.akademi.finsight.stresstest.engine.StressTestStrategyFactory;
 import com.akademi.finsight.stresstest.enums.ExecutionStrategyType;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

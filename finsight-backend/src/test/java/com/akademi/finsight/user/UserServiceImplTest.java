@@ -178,19 +178,22 @@ class UserServiceImplTest {
         @DisplayName("should update fields and return response")
         void shouldUpdateAndReturn() {
             UUID userId = UUID.randomUUID();
-            UpdateUserRequest request = new UpdateUserRequest("Veli", "Yilmaz", "+905559876543");
             User user = createUserWithId(userId);
-            UserResponse response = createUserResponse(user);
+            UpdateUserRequest request = new UpdateUserRequest("Veli", "Yilmaz", "+905559876543");
+            UserResponse expectedResponse = createUserResponse(user);
 
             when(userRepository.findById(userId)).thenReturn(Optional.of(user));
             when(userRepository.existsByPhoneNumberAndIdNot("+905559876543", userId)).thenReturn(false);
             when(userRepository.save(user)).thenReturn(user);
-            when(userMapper.toResponse(user)).thenReturn(response);
+            when(userMapper.toResponse(user)).thenReturn(expectedResponse);
 
             UserResponse result = userService.updateUser(userId, request);
 
             assertEquals("Veli", user.getFirstName());
             assertEquals("Yilmaz", user.getLastName());
+            assertEquals("+905559876543", user.getPhoneNumber());
+            assertEquals(expectedResponse, result);
+            verify(userRepository).save(user);
             verify(auditLogService).createAuditLogForAdmin(AuditActionType.USER_UPDATED, user);
         }
 

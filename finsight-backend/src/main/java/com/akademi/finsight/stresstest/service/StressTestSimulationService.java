@@ -6,7 +6,6 @@ import com.akademi.finsight.stresstest.dto.response.StressTestInferenceResponseD
 import com.akademi.finsight.stresstest.enums.SimulationType;
 
 import java.util.Optional;
-import java.util.UUID;
 
 public interface StressTestSimulationService {
     StressTestInferenceResponseDto runSimulation(String userEmail, String fundId, SimulationType simulationType, PortfolioDataDto currentPortfolio, int analysisWindow);

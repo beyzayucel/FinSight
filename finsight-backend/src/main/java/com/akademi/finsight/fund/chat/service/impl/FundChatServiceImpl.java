@@ -42,7 +42,7 @@ public class FundChatServiceImpl implements FundChatService {
                 ? UUID.randomUUID().toString()
                 : request.sessionId();
 
-        SupportedLanguage language = resolveLanguage();
+        SupportedLanguage language = resolveLanguage(request.language());
         FundChatContent content = knowledgeBase.content(language);
 
         List<FundChatTurn> history = memoryStore.load(email, fundCode, sessionId);
@@ -72,9 +72,12 @@ public class FundChatServiceImpl implements FundChatService {
                 fundCode, MaskType.EMAIL.mask(email), sessionId);
     }
 
-    private SupportedLanguage resolveLanguage() {
-        String requested = LocaleContextHolder.getLocale().getLanguage();
-        return SupportedLanguage.TR.getCode().equals(requested)
+    private SupportedLanguage resolveLanguage(String requested) {
+        String candidate = requested == null || requested.isBlank()
+                ? LocaleContextHolder.getLocale().getLanguage()
+                : requested;
+
+        return SupportedLanguage.TR.getCode().equalsIgnoreCase(candidate)
                 ? SupportedLanguage.TR
                 : SupportedLanguage.EN;
     }

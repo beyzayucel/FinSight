@@ -1,5 +1,7 @@
 package com.akademi.finsight.fund.entity;
 
+import com.akademi.finsight.fund.decision.entity.AssetCategory;
+
 import java.math.BigDecimal;
 import java.util.Map;
 

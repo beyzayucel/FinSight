@@ -1,5 +1,7 @@
 package com.akademi.finsight.fund.dto.response;
 
+import com.akademi.finsight.fund.decision.dto.response.ManualScenarioStockWeightResponse;
+import com.akademi.finsight.fund.decision.dto.response.ManualScenarioWeightResponse;
 import com.akademi.finsight.stresstest.dto.response.StressTestInferenceResponseDto;
 
 import java.time.Instant;

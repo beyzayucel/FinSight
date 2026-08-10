@@ -1,6 +1,6 @@
 package com.akademi.finsight.fund.performancecomparison.util;
 
-import com.akademi.finsight.fund.entity.AssetCategory;
+import com.akademi.finsight.fund.decision.entity.AssetCategory;
 import com.akademi.finsight.fund.performancecomparison.dto.response.PerformanceComparisonResponse.PortfolioMetrics;
 import com.akademi.finsight.fund.stockprice.entity.StockPriceHistory;
 import lombok.AccessLevel;

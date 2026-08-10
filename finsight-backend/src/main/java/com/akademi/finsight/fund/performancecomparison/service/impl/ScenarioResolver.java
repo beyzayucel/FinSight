@@ -1,13 +1,13 @@
 package com.akademi.finsight.fund.performancecomparison.service.impl;
 
-import com.akademi.finsight.fund.entity.AiRecommendation;
-import com.akademi.finsight.fund.entity.AssetCategory;
-import com.akademi.finsight.fund.entity.ManualScenario;
-import com.akademi.finsight.fund.entity.RecommendationStatus;
+import com.akademi.finsight.fund.decision.entity.AiRecommendation;
+import com.akademi.finsight.fund.decision.entity.AssetCategory;
+import com.akademi.finsight.fund.decision.entity.ManualScenario;
+import com.akademi.finsight.fund.decision.entity.RecommendationStatus;
 import com.akademi.finsight.fund.performancecomparison.dto.response.ScenarioSource;
-import com.akademi.finsight.fund.repository.AiRecommendationRepository;
+import com.akademi.finsight.fund.decision.repository.AiRecommendationRepository;
 import com.akademi.finsight.fund.repository.FundRepository;
-import com.akademi.finsight.fund.repository.ManualScenarioRepository;
+import com.akademi.finsight.fund.decision.repository.ManualScenarioRepository;
 import com.akademi.finsight.user.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;

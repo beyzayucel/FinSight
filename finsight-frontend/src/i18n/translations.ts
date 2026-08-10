@@ -204,7 +204,7 @@ export const translations = {
     adminPanelInfoNote:
       'Bu panel yalnızca gözlem amaçlıdır. Kararları onaylama, reddetme veya düzenleme yetkisi bulunmaz — her karar, alındığı anda kullanıcı tarafından tamamlanmış sayılır.',
     adminPanelLoadError: 'Karar verileri yüklenirken bir hata oluştu',
-    navAnalysisWindowOption: (days: number) => `Son ${days} İşlem Günü`,
+    navAnalysisWindowOption: (days: number) => `Son ${days} Gün`,
     fundInfoLoadingText: 'Fon verileri yükleniyor...',
     fundInfoErrorTitle: 'Fon verisi alınamadı',
     showPassword: 'Şifreyi göster',
@@ -356,7 +356,7 @@ export const translations = {
     historyManualSource: 'Manuel',
     historyStressTest: 'Stres Testi',
     historyStressAttached: 'Bu karara bir stres testi sonucu iliştirilmiş',
-    historyDuration: (days: number) => `Süre: ${days} işlem günü`,
+    historyDuration: (days: number) => `Süre: ${days} gün`,
     historySimulationReturn: 'Simülasyon getirisi',
     historyBenchmarkDifference: 'Benchmark farkı',
     historyAiRationale: 'AI Gerekçesi',
@@ -417,7 +417,7 @@ export const translations = {
     pcLegendSimulasyon: 'Simülasyon Portföyü',
     pcLegendBenchmark: 'Benchmark',
     pcPeriodLabel: (today: string, days: number, source: string, status: string) =>
-      `Bugün: ${today} · Son ${days} işlem günü · Kaynak: ${source} (${status})`,
+      `Bugün: ${today} · Son ${days} gün · Kaynak: ${source} (${status})`,
     pcSourceAi: 'AI Önerisi',
     pcSourceManual: 'Manuel Senaryo',
     pcStatusAccepted: 'Kabul Edildi',
@@ -652,7 +652,7 @@ export const translations = {
     adminPanelInfoNote:
       "This panel is for observation purposes only. It has no authority to approve, reject, or edit decisions — each decision is considered final the moment the user makes it.",
     adminPanelLoadError: 'Failed to load decision data',
-    navAnalysisWindowOption: (days: number) => `Last ${days} Trading Days`,
+    navAnalysisWindowOption: (days: number) => `Last ${days} Day`,
     fundInfoLoadingText: 'Loading fund data...',
     fundInfoErrorTitle: 'Fund data unavailable',
     showPassword: 'Show password',
@@ -804,7 +804,7 @@ export const translations = {
     historyManualSource: 'Manual',
     historyStressTest: 'Stress Test',
     historyStressAttached: 'A stress test result is attached to this decision',
-    historyDuration: (days: number) => `Period: ${days} trading days`,
+    historyDuration: (days: number) => `Period: ${days} days`,
     historySimulationReturn: 'Simulation return',
     historyBenchmarkDifference: 'Benchmark difference',
     historyAiRationale: 'AI Rationale',
@@ -865,7 +865,7 @@ export const translations = {
     pcLegendSimulasyon: 'Simulated Portfolio',
     pcLegendBenchmark: 'Benchmark',
     pcPeriodLabel: (today: string, days: number, source: string, status: string) =>
-      `Today: ${today} · Last ${days} trading days · Source: ${source} (${status})`,
+      `Today: ${today} · Last ${days} days · Source: ${source} (${status})`,
     pcSourceAi: 'AI Recommendation',
     pcSourceManual: 'Manual Scenario',
     pcStatusAccepted: 'Accepted',

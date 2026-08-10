@@ -1,0 +1,50 @@
+{
+  "fallback": "I don't have the data to answer that. You can ask me about the fund's total value, its daily and period returns, the benchmark gap, the asset allocation and the stock breakdown.",
+  "entries": [
+    {
+      "id": "greeting",
+      "keywords": ["hello", "hi there", "good morning", "good afternoon", "how are you"],
+      "answer": "Hello! I can answer questions about the figures on this dashboard: total value, daily and period returns, benchmark comparison, asset allocation and stock breakdown."
+    },
+    {
+      "id": "capabilities",
+      "keywords": ["what can you do", "what can i ask", "help", "how do i use"],
+      "answer": "You can ask about the fund's total portfolio value, its daily return, the cumulative return for the period you selected, the gap against the benchmark, the asset allocation, the heaviest stock positions, and which date the figures belong to."
+    },
+    {
+      "id": "bps-explained",
+      "keywords": ["what is a basis point", "what is bps", "basis point meaning"],
+      "answer": "A basis point (bps) is one hundredth of a percent, so 100 bps equals 1%. We show the benchmark gap in basis points because it states small differences precisely."
+    },
+    {
+      "id": "benchmark-explained",
+      "keywords": ["what is a benchmark", "what is the benchmark", "what is an index"],
+      "answer": "The benchmark is the reference index the fund's performance is measured against. When the fund's return is above the benchmark, it outperformed its reference over that period."
+    },
+    {
+      "id": "cumulative-explained",
+      "keywords": ["what is cumulative return", "cumulative return meaning"],
+      "answer": "Cumulative return is the total percentage return built up from the start of the period to the data date. It is not the plain sum of daily returns; it includes compounding."
+    },
+    {
+      "id": "stock-period",
+      "keywords": ["why is the stock breakdown old", "when is stock data updated", "portfolio disclosure"],
+      "answer": "The stock breakdown comes from the fund's portfolio disclosure period and is updated monthly, so it can belong to an older period than the other figures."
+    },
+    {
+      "id": "no-advice",
+      "keywords": ["should i buy", "should i sell", "should i invest", "advice", "what do you recommend"],
+      "answer": "I can't give investment advice; I only explain the figures on this dashboard. If you want to review allocation recommendations or simulate your own scenario, open the \"AI Recommendation & Decision\" page from the menu."
+    },
+    {
+      "id": "future-forecast",
+      "keywords": ["future", "forecast", "will it go up", "will it go down", "what will happen"],
+      "answer": "I don't forecast future returns, I can only explain past and current data. You can review forward-looking allocation scenarios on the \"AI Recommendation & Decision\" page."
+    },
+    {
+      "id": "scenario-redirect",
+      "keywords": ["scenario", "simulation", "change the allocation", "change the weights", "what if"],
+      "answer": "Building scenarios and changing weights is outside this chat. Use the \"AI Recommendation & Decision\" page from the menu to simulate your own allocation and to accept or reject the AI's recommendation."
+    }
+  ]
+}

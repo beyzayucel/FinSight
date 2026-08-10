@@ -1,0 +1,51 @@
+{
+  "knowledgeFirstMarkers": [
+    "what is", "what are", "what does", "explain", "meaning of",
+    "change", "simulate", "scenario", "advice", "recommend", "should i"
+  ],
+  "vocabulary": {
+    "positive": "positive",
+    "negative": "negative",
+    "unchanged": "no change",
+    "aboveBenchmark": "above",
+    "belowBenchmark": "below",
+    "unknownValue": "-"
+  },
+  "entries": [
+    {
+      "id": "data-date",
+      "keywords": ["data date", "which date", "how current", "how up to date", "as of when"],
+      "template": "The %s figures on this dashboard are from %s. Fund data reaches us from Infina with a delay, so this is the provider's latest valuation day rather than the most recent business day."
+    },
+    {
+      "id": "benchmark",
+      "keywords": ["benchmark", "index", "comparison", "bps", "basis point"],
+      "template": "Over %s the fund returned %%%s and the benchmark %%%s. The fund is %s bps %s the benchmark."
+    },
+    {
+      "id": "daily-return",
+      "keywords": ["daily return", "daily change", "return today", "today's return"],
+      "template": "The daily return of %s on %s was %%%s (%s)."
+    },
+    {
+      "id": "total-value",
+      "keywords": ["total value", "portfolio value", "fund size", "how large", "total size"],
+      "template": "The total portfolio value of %s on %s is %s TRY."
+    },
+    {
+      "id": "stocks",
+      "keywords": ["which stock", "stocks", "holdings", "stock weight", "largest position"],
+      "template": "Heaviest stock positions as of %s: %s."
+    },
+    {
+      "id": "distribution",
+      "keywords": ["allocation", "asset allocation", "portfolio allocation", "breakdown", "invested in"],
+      "template": "The asset allocation of %s on %s: %s."
+    },
+    {
+      "id": "period-return",
+      "keywords": ["return", "cumulative", "performance", "gain", "how much did it make"],
+      "template": "The cumulative return of %s over %s is %%%s (from %s to %s, %s)."
+    }
+  ]
+}

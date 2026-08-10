@@ -5,7 +5,7 @@ import com.akademi.finsight.notification.model.NotificationType;
 
 import java.util.Map;
 
-/** Ic motor: EmailService bu arayuzun uzerine ince bir cephedir, Kafka detayi disari sizmaz. */
+/** Is katmaninin tek bildirim giris noktasi; Kafka ve kanal detaylari disari sizmaz. */
 public interface NotificationService {
     void notify(NotificationCommand command);
 

@@ -117,8 +117,9 @@ diğerleri ilgili kişilerce doldurulacak.
 | Feature | Sahip |
 |---------|-------|
 | `features/dashboard` (fon panosu, chatbot widget, grafikler, routing) | Melis Kara |
-| `features/auth` | _(boş)_ |
-| `features/admin` | _(boş)_ |
+| `features/dashboard` (karar geçmişi, performans karşılaştırma, karar context'i) | Mehmet Çavdar |
+| `features/auth` (şifremi unuttum / şifre sıfırlama) | Mehmet Çavdar |
+| `features/admin` (karar raporu sekmesi) | Mehmet Çavdar |
 | `features/stresstest` | _(boş)_ |
 | `features/news` | _(boş)_ |
 
@@ -166,7 +167,63 @@ _(Bu bölümü kendin doldurabilirsin.)_
 
 ## Mehmet Çavdar
 
-_(Bu bölümü kendin doldurabilirsin.)_
+Karar Geçmişi ekranını, Performans Karşılaştırma ekranının frontend'ini ve karar veri katmanını,
+Yönetim Paneli'ndeki Karar Raporu sekmesini, Şifremi Unuttum / Şifre Sıfırlama ekranlarını ve
+uygulama genelindeki i18n & responsive düzeltmelerini geliştirdim.
+
+### Karar Geçmişi Ekranı (`features/dashboard/pages/DecisionHistoryPage.tsx`)
+- Ekranın **canlı backend'e bağlanması** (`decisionHistoryApi.ts`) — AI ve manuel kararlar tek
+  listede, en yeniden eskiye.
+- Satır açıldığında gelen **detay paneli**: karar anındaki performans metrikleri, varlık dağılımı ve
+  **hisse bazlı kırılım** (hem AI hem manuel kararlar için).
+- **Veri tarihi** — satır tarihi olarak metriklerin dayandığı veri tarihi, altında işlem zamanı;
+  detayda metriklerin hesaplandığı analiz dönemi.
+- AI kararlarında kullanıcının kendi notu ile modelin gerekçesinin ayrı ayrı render edilmesi.
+
+### Performans Karşılaştırma Ekranı (`features/dashboard/pages/PerformanceComparisonPage.tsx`)
+Ekranın **frontend tarafını** ben yazdım (backend'i başka bir arkadaşımda; grafik katmanı da
+sonradan Ali Rıza tarafından genişletildi).
+- **`PerformanceComparisonPage`** — ekranın ilk sürümü: Mevcut Portföy / Benchmark / AI önerisi /
+  manuel senaryo karşılaştırması, performans metrikleri ve henüz karar verilmemişken gösterilen
+  **kilitli (locked) durum**.
+- Sayfanın `/fund/performance` altına **routed** hâle getirilmesi (`PerformanceComparisonRoute`) ve
+  `DashboardPage`'in `DecisionProvider` ile sarılması.
+- **Manuel senaryo uygulandığında** kullanıcının sonucu görmesi için Performans Karşılaştırma'ya
+  otomatik yönlendirme.
+- **`simulation.ts`** — karşılaştırma serilerinin hesaplandığı katman; ağırlık tipleri
+  (`AssetClass` / `Weights`), benchmark ve senaryo ağırlıkları, `MIN_HISSE_WEIGHT` /
+  `MAX_MANUAL_DELTA` gibi iş kuralı sabitleri. Mevcut portföy ağırlıkları ve başlangıç tutarı
+  sabit değil, gerçek fon verisinden `DecisionContext` üzerinden geçiliyor.
+- Tarih etiketinin bugünün tarihi yerine yanıttaki `dataDate` ile gösterilmesi; böylece karar
+  geçmişi ekranıyla aynı tarihi söylüyor.
+
+### Karar Veri Katmanı (`features/dashboard`)
+- **`DecisionContext` / `decisionStore`** — aktif fon ve karar durumunun ekranlar arası paylaşıldığı
+  context; aktif fonun sayfa başına tekrar tekrar değil **tek sefer** çekilmesi.
+- **`fundApi.ts`, `formatters.ts`, `mockDecisionBridge.ts`** — fon API istemcisi, ortak
+  sayı/tarih/yüzde formatlayıcıları ve backend hazır olmadan ekranı sürdürebilmek için kullanılan
+  geçici karar köprüsü.
+
+### Yönetim Paneli — Karar Raporu (`features/admin`)
+- **`AdminPanelPage`** ve admin rotalarının (`/admin/panel`) `routes.ts` üzerinden tanımlanıp
+  sidebar navigasyonunun gerçek linklere bağlanması.
+- **`DecisionKpiCards`** — toplam karar, AI onay/ret ve manuel senaryo sayıları.
+- **`DecisionsTable`** — birleşik AI + manuel karar listesi.
+- **`DecisionFilters`** — kullanıcı, karar tipi ve son *n* gün filtreleri.
+- **`DecisionDistributionChart`** — karar tipi dağılımı grafiği.
+- **`adminDecisionApi.ts`** — ADMIN'e özel `/admin/decisions` ucunun istemcisi.
+
+### Şifremi Unuttum / Şifre Sıfırlama (`features/auth`)
+- **`ForgotPasswordPage` + `ForgotPasswordForm`** ve **`ResetPasswordPage`** ekranları;
+  `authApi.ts` üzerinden backend akışına bağlı.
+- Backend'den gelen **alan bazlı doğrulama hatalarının** forma yansıtılması ve ağ hatası için
+  yerelleştirilmiş mesaj (`lib/api/apiError.ts`).
+- `PasswordField` bileşeni ve `routes.ts` içindeki auth rotaları.
+
+### i18n & Responsive Düzeltmeleri
+- `i18n/translations.ts` üzerinde eksik TR/EN metinlerin tamamlanması — özellikle pano, karar
+  geçmişi ve admin ekranlarında kalan hardcode metinlerin çevirilere taşınması.
+- Pano, karar geçmişi ve performans ekranlarında dar ekran (responsive) yerleşim düzeltmeleri.
 
 ## Beyzanur Yücel
 

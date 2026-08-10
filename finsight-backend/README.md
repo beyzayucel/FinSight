@@ -138,7 +138,9 @@ diğerleri ilgili kişilerce doldurulacak.
 | `fund` (AI öneri, manuel senaryo) | _(boş)_ |
 | `fund` (performans karşılaştırma) | _(boş)_ |
 | `stresstest`, makro/market verisi | _(boş)_ |
-| `notification` | _(boş)_ |
+| `fund` (karar geçmişi, admin karar raporu) | Mehmet Çavdar |
+| `notification` | Mehmet Çavdar |
+| `auth/passwordreset`, `auth/passwordhistory`, `auth/ratelimiter` | Mehmet Çavdar |
 
 ---
 
@@ -216,7 +218,83 @@ _(Bu bölümü kendin doldurabilirsin — ör. stres testi motoru, makro/market 
 
 ## Mehmet Çavdar
 
-_(Bu bölümü kendin doldurabilirsin — ör. karar raporu/karar geçmişi, admin uçları, notification.)_
+Karar geçmişi (decision history) hattını, admin karar raporunu, Kafka tabanlı bildirim/e-posta
+altyapısını ve şifre sıfırlama ile birlikte gelen auth sertleştirmelerini geliştirdim.
+
+### Karar Geçmişi (`fund` — `DecisionHistoryServiceImpl`)
+- **Birleşik karar geçmişi** — AI önerileri (`AiRecommendation`) ile manuel senaryoları
+  (`ManualScenario`) tek bir `DecisionRecordResponse` akışında birleştirip tarihe göre tersten
+  sıralayan servis; `GET /funds/{fundId}/decisions` ucu. AI tarafında henüz karara bağlanmamış
+  (`PENDING`) kayıtlar geçmişe düşmez.
+- **Performans anlık görüntüsü (snapshot)** — karar anındaki `PerformanceMetrics` kaydı; getiri,
+  volatilite ve **benchmark farkı (bps)** alanları karar satırıyla birlikte döner.
+- **Hisse kırılımı** — hem AI hem manuel kararlar için ağırlıkların hisse bazlı kırılımı; eksik
+  varlık kategorileri sıfıra düşürülerek (`weights` map'i) grafiklerin boşluk görmemesi sağlandı.
+- **Veri tarihi** — metriklerin hesaplandığı `dataDate` artık `ManualScenario` ve
+  `AiRecommendation` üzerinde saklanıyor; karar satırında veri tarihi, altında işlem zamanı, detay
+  panelinde ise metriklerin hesaplandığı analiz dönemi gösteriliyor.
+
+### Admin Karar Raporu (`fund` — `AdminDecisionServiceImpl`)
+- **ADMIN rolüne özel** `GET /admin/decisions` ucu; AI ve manuel kararları tek raporda birleştirir.
+- **JPA Specification tabanlı filtreleme** — `AiRecommendationSpecification` /
+  `ManualScenarioSpecification` ile kullanıcı, karar tipi (`DecisionType`: `AI_APPROVED`,
+  `AI_REJECTED`, `MANUAL`) ve son *n* gün filtreleri; filtre eşleşmediğinde ilgili repository'ye hiç
+  gidilmez (`Stream.empty()`).
+- `RecommendationStatus` → `DecisionType` eşlemesi ve tüm kayıtların `createdAt`'e göre tek sıralı
+  akışta birleştirilmesi.
+
+### Bildirim & E-posta Altyapısı (`notification`)
+Kafka üzerinden asenkron çalışan, şablonlu ve **idempotent** bildirim hattını kurdum.
+- **`NotificationEventPublisher` / `KafkaNotificationPublisher`** — uygulama içi bildirim
+  komutlarını (`NotificationCommand`) `NotificationRequestedEvent`'e çevirip Kafka'ya basar.
+- **`NotificationKafkaListener` → `NotificationDispatcher`** — olayı tüketir, render eder ve
+  gönderime verir.
+- **`NotificationRenderer`** — `notification.<tip>.<subject|body>` anahtar düzeniyle
+  `MessageSource` üzerinden **TR/EN şablon** çözümlemesi; locale bulunamazsa varsayılan locale'e
+  düşer, çözülememiş `{placeholder}` kalırsa bildirim geçersiz sayılır.
+- **`RedisIdempotencyStore`** — `eventId` bazlı idempotency; Kafka'nın at-least-once teslimi
+  nedeniyle aynı e-postanın iki kez gitmesi engellenir.
+- **`EmailNotificationSender`** — SMTP gönderimi (dev'de Mailpit), `MailProperties` ile
+  yapılandırılır.
+- **Kayıt akışına entegrasyon** — e-posta doğrulama bildirimi kayıt (register) akışına bağlandı.
+- Modülün ilk hâlinden sonra yaptığım düzenlemeler: hardcode Kafka yapılandırmasının
+  `NotificationProperties`/`KafkaConfiguration` ile dışarı alınması, `BaseException` + `ErrorType`
+  desenine geçiş (`NotificationErrorType`), Lombok ile constructor injection, paket yapısının
+  sadeleştirilmesi ve kullanılmayan `EmailService` facade'ının kaldırılması.
+
+### Şifre Sıfırlama & Auth Sertleştirme (`auth`, `security`)
+- **Şifremi unuttum / şifre sıfırlama akışı (`auth/passwordreset`)** — tek kullanımlık token
+  üretimi, **hash'lenmiş** saklama, son kullanma süresi ve `PasswordResetTokenScheduler` ile süresi
+  dolmuş tokenların periyodik temizliği. Uçlar: `POST /auth/forgot-password`,
+  `POST /auth/reset-password`.
+- **Şifre geçmişi (`auth/passwordhistory`)** — son *n* şifrenin hash'i saklanarak **tekrar
+  kullanım engellenir**; sınır `PasswordHistoryProperties` ile yapılandırılabilir.
+- **Oturum geçersizleştirme (`security/jwt`)** — `RedisTokenInvalidationService`; şifre
+  değişiminden **önce** üretilmiş access token'lar `JwtAuthenticationFilter` seviyesinde reddedilir,
+  böylece sıfırlama sonrası eski oturumlar düşer.
+- **Rate limiting (`auth/ratelimiter`)** — şifre sıfırlama istek ve gönderim uçları için Redis
+  tabanlı sayaçlar (`PasswordResetRateLimitInterceptor`, `...SubmitRateLimitInterceptor`),
+  `CachedBodyFilter` ile gövdenin bir kez okunup tekrar kullanılabilmesi. Ayrıca hatalı giriş
+  denemesinde login sayacının artmaması hatası düzeltildi ve identifier hash'leme sorumluluğu
+  `LoginRateLimitService`'e taşındı. Aynı kullanıcının **cooldown süresi içinde arka arkaya sıfırlama
+  isteği** göndermesi engellendi; IP bazlı limit ise ortak NAT arkasındaki kullanıcıları yanlışlıkla
+  kilitlediği için bu akıştan kaldırıldı.
+- Şifre değişiminde kullanıcıya bilgilendirme e-postası (yukarıdaki bildirim hattı üzerinden).
+
+### Ortak / Altyapı
+- Bilinmeyen uçlar için **500 yerine 404** dönülmesi (`GlobalExceptionHandler`).
+- `ApiEndpoints` sabitlerinin ve TR/EN `messages*.properties` bildirim şablonlarının genişletilmesi.
+
+### Testler
+- `notification` — `NotificationRenderer`, `NotificationDispatcher`, `KafkaNotificationPublisher`,
+  `EmailNotificationSender`, `RedisIdempotencyStore` ve `NotificationServiceImpl` için birim
+  testleri; ortak veri üretimi `NotificationFixtures` altında.
+- `auth` — `PasswordResetTokenServiceImpl`, `PasswordResetTokenScheduler`,
+  `PasswordHistoryServiceImpl`, `PasswordResetRateLimitServiceImpl` ve
+  `RedisTokenInvalidationService` testleri.
+- `fund` — `DecisionHistoryServiceImpl`, `AdminDecisionServiceImpl` ile karar filtreleme
+  specification'larının (`AiRecommendationSpecificationTest`, `ManualScenarioSpecificationTest`)
+  birim testleri.
 
 ## Beyzanur Yücel
 

@@ -9,6 +9,7 @@ import lombok.Setter;
 import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 // Karar Geçmişi'nde her karar için gösterilen performans özeti — hesaplama
 // frontend'deki simülasyon motorunda yapılır (mock/sentetik), backend sadece
@@ -35,9 +36,15 @@ public class PerformanceMetrics {
     private BigDecimal dailyVolatilityPct;
 
     // Metriklerin hesaplandığı andaki analiz penceresi (10/20/30/90 gün) —
-    // Karar Geçmişi özet satırındaki "Süre: X işlem günü" için.
+    // Karar Geçmişi özet satırındaki "Süre: X gün" için.
     @Column(name = "analysis_window_days")
     private Integer analysisWindowDays;
+
+    // Pencerenin bittiği veri tarihi (T-8) — kararın alındığı gün değil. Simülasyon
+    // fund_period_metric.data_date'e dayandığı için karar tarihinden birkaç gün geridedir;
+    // Karar Geçmişi analiz dönemini bu tarihten geriye sayarak gösterir.
+    @Column(name = "data_date")
+    private LocalDate dataDate;
 
     @Column(name = "simulated_portfolio_value", precision = 18, scale = 2)
     private BigDecimal simulatedPortfolioValue;

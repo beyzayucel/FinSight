@@ -7,7 +7,7 @@ import { getAssetCategoryLabel } from '../dashboardApi'
 import type { AssetCategory } from '../dashboardApi'
 import { useDashboardOutlet } from '../DashboardShell'
 import { getDecisionHistory, type DecisionRecord } from '../lib/decisionHistoryApi'
-import { formatCurrency, formatDate } from '../lib/formatters'
+import { formatCurrency, formatDate, formatTime, isoToLocalDate } from '../lib/formatters'
 import { getScenarioTitle, type PortfolioResultDto } from '@/features/stresstest/types'
 import { getTranslations, translations, type Translations } from '@/i18n/translations'
 
@@ -50,6 +50,27 @@ function formatSignedPct(value: number, lang: 'tr' | 'en'): string {
 function formatUnsignedPct(value: number, lang: 'tr' | 'en'): string {
   const formatted = lang === 'tr' ? Math.abs(value).toFixed(2).replace('.', ',') : Math.abs(value).toFixed(2)
   return `${formatted}%`
+}
+
+/**
+ * Metriklerin dayandığı analiz dönemini "gg.aa.yyyy – gg.aa.yyyy" olarak verir.
+ * Bitiş, kararın alındığı gün değil metriğin veri tarihidir (T-8 veri gecikmesi); başlangıç
+ * backend'deki `dataDate.minusDays(analysisWindow)` ile aynı şekilde takvim günü sayılarak
+ * bulunur. `dataDate` alanı eklenmeden önceki kararlarda null döner.
+ */
+function analysisPeriod(
+  metrics: NonNullable<DecisionRecord['metrics']>,
+  lang: 'tr' | 'en'
+): { from: string; to: string } | null {
+  if (!metrics.dataDate || metrics.analysisWindowDays == null) return null
+
+  const to = isoToLocalDate(metrics.dataDate)
+  if (Number.isNaN(to.getTime())) return null
+
+  const from = new Date(to)
+  from.setDate(from.getDate() - metrics.analysisWindowDays)
+
+  return { from: formatDate(from, lang), to: formatDate(to, lang) }
 }
 
 function statusLabel(record: DecisionRecord, t: Translations): { text: string; sourceTag: string } {
@@ -147,6 +168,9 @@ export default function DecisionHistoryPage() {
             const isStocksOpen = openStocksId === record.id
             const canReapply = record.status === 'ACCEPTED' && hasWeights
             const m = record.metrics
+            const period = m ? analysisPeriod(m, lang) : null
+            // AI kararlarında gerekçe AI'a, not kullanıcıya ait — ikisi ayrı ayrı gösterilir.
+            const aiNote = record.source === 'AI' ? record.note : null
             const rawSummary = record.note || record.rationale
             const localizedSummary =
               lang === 'en' && rawSummary === translations.tr.aiDefaultRationale ? t.aiDefaultRationale : rawSummary
@@ -191,9 +215,25 @@ export default function DecisionHistoryPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-3 flex-shrink-0">
-                    <span className="text-[10.5px] text-slate-400 font-semibold whitespace-nowrap">
-                      {formatDate(new Date(record.createdAt), lang)}
-                    </span>
+                    {/* Üstte metriklerin dayandığı veri tarihi (T-8), altında kararın işlendiği saat.
+                        Veri tarihi yoksa (bu alan eklenmeden önceki kararlar) karar tarihine düşülür. */}
+                    <div className="flex flex-col items-end gap-1">
+                      <span
+                        className="text-[10.5px] text-slate-400 font-semibold whitespace-nowrap"
+                        title={m?.dataDate ? t.historyAnalysisPeriodHint : undefined}
+                      >
+                        {formatDate(
+                          m?.dataDate ? isoToLocalDate(m.dataDate) : new Date(record.createdAt),
+                          lang
+                        )}
+                      </span>
+                      <span
+                        className="inline-block text-[9px] font-semibold font-mono rounded-md px-1.5 py-0.5 text-slate-600 bg-slate-100 whitespace-nowrap"
+                        title={formatDate(new Date(record.createdAt), lang)}
+                      >
+                        {t.historyTransactionTime(formatTime(new Date(record.createdAt), lang))}
+                      </span>
+                    </div>
                     {isOpen ? (
                       <IoChevronUpOutline className="text-slate-400" size={14} />
                     ) : (
@@ -216,6 +256,16 @@ export default function DecisionHistoryPage() {
                           : record.note) || t.historyNoNote}
                       </p>
                     </div>
+
+                    {/* AI kararına kullanıcının eklediği senaryo notu — gerekçeden ayrı tutulur. */}
+                    {aiNote && (
+                      <div className="rounded-xl bg-slate-50 border border-slate-100 p-3.5">
+                        <p className="text-[9.5px] font-bold tracking-wider text-slate-400 uppercase mb-1">
+                          {t.historyDecisionNote}
+                        </p>
+                        <p className="text-xs text-slate-600 leading-relaxed">{aiNote}</p>
+                      </div>
+                    )}
 
                     {hasWeights ? (
                       <div className="overflow-x-auto border border-slate-100 rounded-xl">
@@ -314,6 +364,15 @@ export default function DecisionHistoryPage() {
                           </div>
                         )}
                       </div>
+                    )}
+
+                    {period && (
+                      <p
+                        className="text-[11px] font-semibold text-slate-500"
+                        title={t.historyAnalysisPeriodHint}
+                      >
+                        {t.historyAnalysisPeriod(period.from, period.to)}
+                      </p>
                     )}
 
                     {m && (

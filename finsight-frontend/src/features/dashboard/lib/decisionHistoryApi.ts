@@ -22,6 +22,12 @@ export type DecisionRecordMetrics = {
   maxDrawdownPct: number | null
   dailyVolatilityPct: number | null
   analysisWindowDays: number | null
+  /**
+   * Pencerenin bittiği veri tarihi (ISO, "2026-08-02") — kararın alındığı gün değil.
+   * Simülasyon T-8 veri gecikmesiyle çalıştığından karar tarihinden birkaç gün geridedir.
+   * Bu alan eklenmeden önce alınmış kararlarda null.
+   */
+  dataDate: string | null
 } | null
 
 export type DecisionRecord = {

@@ -11,6 +11,7 @@ import com.akademi.finsight.auth.dto.password.ForgotPasswordRequest;
 import com.akademi.finsight.auth.dto.password.ResetPasswordRequest;
 import com.akademi.finsight.auth.exception.AuthErrorType;
 import com.akademi.finsight.auth.exception.AuthException;
+import com.akademi.finsight.auth.exception.LoginLimitException;
 import com.akademi.finsight.auth.otp.service.OtpService;
 import com.akademi.finsight.auth.passwordhistory.service.PasswordHistoryService;
 import com.akademi.finsight.auth.passwordreset.service.PasswordResetTokenService;
@@ -25,6 +26,7 @@ import com.akademi.finsight.auth.service.impl.AuthServiceImpl;
 import com.akademi.finsight.monitoring.AppMetrics;
 import com.akademi.finsight.security.jwt.service.TokenInvalidationService;
 import com.akademi.finsight.auth.verificationtoken.service.VerificationTokenService;
+import com.akademi.finsight.notification.model.NotificationType;
 import com.akademi.finsight.notification.service.NotificationService;
 import com.akademi.finsight.security.jwt.service.JwtService;
 import com.akademi.finsight.user.entity.User;
@@ -200,10 +202,11 @@ class AuthServiceImplTest {
             when(userService.findByIdentifier(request.identifier())).thenReturn(user);
             when(loginRateLimitProperties.getMaxAttempts()).thenReturn(5);
             when(loginRateLimitProperties.getBlockDuration()).thenReturn(Duration.ofMinutes(15));
+            when(passwordResetTokenService.createResetUrl(user)).thenReturn("http://localhost/reset?token=abc");
 
-            assertThrows(BadCredentialsException.class, () -> authService.login(request));
+            assertThrows(LoginLimitException.class, () -> authService.login(request));
 
-            verify(notificationService).notify(any());
+            verify(notificationService).notify(eq(NotificationType.ACCOUNT_LOCKED_EMAIL), eq("ali@test.com"), any());
             verifyNoInteractions(jwtService, refreshTokenService, otpService);
         }
 

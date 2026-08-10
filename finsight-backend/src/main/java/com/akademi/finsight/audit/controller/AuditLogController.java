@@ -8,13 +8,9 @@ import com.akademi.finsight.common.controller.BaseController;
 import com.akademi.finsight.common.response.ApiStandardResponse;
 import com.akademi.finsight.common.response.PageResponse;
 import lombok.RequiredArgsConstructor;
-import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
@@ -26,9 +22,9 @@ public class AuditLogController extends BaseController implements AuditLogApi {
     @Override
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<ApiStandardResponse<PageResponse<AuditLogResponse>>> getAuditLogs(
-            @RequestParam(defaultValue = "ALL") AuditLogScope scope,
-            @RequestParam(required = false) String search,
-            @ParameterObject @PageableDefault(sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+            AuditLogScope scope,
+            String search,
+            Pageable pageable
     ) {
         return ok(PageResponse.of(
                 auditLogService.getAuditLogs(scope, search, pageable)

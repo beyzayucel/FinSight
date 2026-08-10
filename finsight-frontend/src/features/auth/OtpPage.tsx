@@ -28,7 +28,14 @@ export default function OtpPage() {
   const [remainingAttempts, setRemainingAttempts] = useState<number | null>(null)
 
   useEffect(() => {
-    if (shouldRedirect) clearOtpSession()
+    if (shouldRedirect) {
+      clearOtpSession()
+      return
+    }
+
+    return () => {
+      clearOtpSession()
+    }
   }, [shouldRedirect])
 
   useEffect(() => {
@@ -64,7 +71,7 @@ export default function OtpPage() {
 
       if (apiErr.status === 429) {
         clearOtpSession()
-        navigate(ROUTES.LOGIN, { state: { error: apiErr.message }, replace: true })
+        navigate(ROUTES.LOGIN, { state: { error: apiErr.message, errorCode: apiErr.code }, replace: true })
       } else {
         setError(apiErr.message || t.otpFallbackError)
         if (apiErr.remainingAttempts != null) {
@@ -109,15 +116,16 @@ export default function OtpPage() {
           />
 
           {error && (
-            <p className="text-sm text-red-500">{error}</p>
-          )}
-
-          {remainingAttempts != null && (
-            <p className="text-sm text-amber-600">
-              {t.otpRemainingAttempts
-                .replace('{remaining}', String(remainingAttempts))
-                .replace('{max}', '5')}
-            </p>
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
+              <p className="text-sm font-medium text-red-700">{error}</p>
+              {remainingAttempts != null && (
+                <p className="mt-1 text-xs text-red-500">
+                  {t.otpRemainingAttempts
+                    .replace('{remaining}', String(remainingAttempts))
+                    .replace('{max}', '5')}
+                </p>
+              )}
+            </div>
           )}
 
           <Button type="submit" disabled={loading || code.length !== 6}>

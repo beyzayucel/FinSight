@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { getApiError } from '@/lib/api/apiError'
 import type { UserResponse, UpdateUserRequest } from '../adminApi'
 import type { Translations } from '@/i18n/translations'
+import PhoneInput, { parsePhoneNumber } from './PhoneInput'
 
 type EditUserModalProps = {
   user: UserResponse | null
@@ -11,11 +12,12 @@ type EditUserModalProps = {
 }
 
 export default function EditUserModal({ user, onClose, onSubmit, t }: EditUserModalProps) {
-  const [form, setForm] = useState<UpdateUserRequest>({
+  const [form, setForm] = useState({
     firstName: '',
     lastName: '',
-    phoneNumber: '',
   })
+  const [countryCode, setCountryCode] = useState('+90')
+  const [phoneLocal, setPhoneLocal] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -24,24 +26,36 @@ export default function EditUserModal({ user, onClose, onSubmit, t }: EditUserMo
       setForm({
         firstName: user.firstName,
         lastName: user.lastName,
-        phoneNumber: user.phoneNumber,
       })
+      const parsed = parsePhoneNumber(user.phoneNumber)
+      setCountryCode(parsed.countryCode)
+      setPhoneLocal(parsed.phoneLocal)
       setError('')
     }
   }, [user])
 
   if (!user) return null
 
-  function handleChange(field: keyof UpdateUserRequest, value: string) {
+  function handleChange(field: keyof typeof form, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }))
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError('')
+
+    if (!form.firstName.trim() || !form.lastName.trim() || !phoneLocal.trim()) {
+      setError(t.adminFieldsRequired)
+      return
+    }
+
     setLoading(true)
     try {
-      await onSubmit(user!.id, form)
+      const payload: UpdateUserRequest = {
+        ...form,
+        phoneNumber: countryCode + phoneLocal,
+      }
+      await onSubmit(user!.id, payload)
       onClose()
     } catch (err) {
       setError(getApiError(err).message)
@@ -58,9 +72,15 @@ export default function EditUserModal({ user, onClose, onSubmit, t }: EditUserMo
         <p className="text-xs text-admin-text-mute mb-5">{user.email}</p>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          <ModalField label={t.adminLabelFirstName} value={form.firstName} onChange={(v) => handleChange('firstName', v)} placeholder="Ali Rıza" />
+          <ModalField label={t.adminLabelFirstName} value={form.firstName} onChange={(v) => handleChange('firstName', v)} placeholder="Ali Riza" />
           <ModalField label={t.adminLabelLastName} value={form.lastName} onChange={(v) => handleChange('lastName', v)} placeholder="Kaygusuz" />
-          <ModalField label={t.adminLabelPhone} value={form.phoneNumber} onChange={(v) => handleChange('phoneNumber', v)} placeholder="+905551234567" type="tel" />
+          <PhoneInput
+            label={t.adminLabelPhone}
+            countryCode={countryCode}
+            phoneLocal={phoneLocal}
+            onCountryCodeChange={setCountryCode}
+            onPhoneLocalChange={setPhoneLocal}
+          />
 
           {error && (
             <div className="text-sm text-admin-red bg-admin-red-wash px-3 py-2 rounded-lg">{error}</div>
@@ -111,7 +131,6 @@ function ModalField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
-        required
         className="w-full bg-admin-ivory border border-admin-line rounded-[10px] py-[9px] px-3 text-[13px] font-ibm text-admin-text focus:outline-none focus:border-admin-gold-soft transition"
       />
     </div>

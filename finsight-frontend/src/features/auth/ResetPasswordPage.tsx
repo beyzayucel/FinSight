@@ -1,7 +1,7 @@
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useSearchParams } from 'react-router-dom'
-import { Button, PasswordField } from '@/components/ui'
+import { Button, PasswordField, Toast } from '@/components/ui'
 import { resetPassword } from '@/features/auth/authApi'
 import { getTranslations } from '@/i18n/translations'
 import { ROUTES } from '@/lib/routes'
@@ -33,6 +33,10 @@ export default function ResetPasswordPage() {
   const checks = getPasswordChecks(newPassword)
   const allChecksPassed = Object.values(checks).every(Boolean)
 
+  const handleToastClose = useCallback(() => {
+    navigate(ROUTES.LOGIN, { replace: true })
+  }, [navigate])
+
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError('')
@@ -51,7 +55,6 @@ export default function ResetPasswordPage() {
     try {
       await resetPassword({ token: token as string, newPassword })
       setSuccess(true)
-      setTimeout(() => navigate(ROUTES.LOGIN, { replace: true }), 2000)
     } catch (err) {
       const apiErr = getApiError(err)
       setError(apiErr.status === 0 ? t.rpFallbackError : apiErr.message || t.rpFallbackError)
@@ -131,7 +134,6 @@ export default function ResetPasswordPage() {
             <p className="text-sm text-red-500">{t.cpMismatch}</p>
           )}
 
-          {success && <p className="text-sm text-green-600">{t.rpSuccess}</p>}
           {error && !success && <p className="text-sm text-red-500">{error}</p>}
 
           <Button
@@ -148,6 +150,10 @@ export default function ResetPasswordPage() {
             {loading ? t.rpSubmitting : t.rpButton}
           </Button>
         </form>
+
+        {success && (
+          <Toast message={t.rpSuccess} variant="success" duration={2000} onClose={handleToastClose} />
+        )}
       </div>
     </div>
   )

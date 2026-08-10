@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import type { FormEvent } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { Button, Checkbox, PasswordField, TextField } from '@/components/ui'
@@ -25,17 +25,51 @@ export default function LoginForm({ t }: LoginFormProps) {
   const [password, setPassword] = useState('')
   const [remember, setRemember] = useState(savedId !== '')
   const [error, setError] = useState(location.state?.error ?? '')
-  const [errorCode, setErrorCode] = useState('')
+  const [errorCode, setErrorCode] = useState(location.state?.errorCode ?? '')
   const [loading, setLoading] = useState(false)
+  const cameFromPasswordChange = location.state?.passwordChanged === true
+
+  useEffect(() => {
+    const el = document.getElementById('password') as HTMLInputElement | null
+    const clearPassword = () => {
+      setPassword('')
+      if (el) el.value = ''
+    }
+    const delays = [50, 150, 300, 600]
+    const timers = delays.map((ms) => setTimeout(clearPassword, ms))
+
+    if (cameFromPasswordChange) {
+      setIdentifier('')
+      const idEl = document.getElementById('identifier') as HTMLInputElement | null
+      if (idEl) idEl.value = ''
+    }
+
+    return () => timers.forEach(clearTimeout)
+  }, [])
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     setError('')
     setErrorCode('')
+
+    const trimmedId = identifier.trim()
+
+    if (!trimmedId && !password) {
+      setError(t.identifierAndPasswordRequired)
+      return
+    }
+    if (!trimmedId) {
+      setError(t.identifierRequired)
+      return
+    }
+    if (!password) {
+      setError(t.passwordRequired)
+      return
+    }
+
     setLoading(true)
 
     try {
-      const trimmedId = identifier.trim()
       const response = await login({ identifier: trimmedId, password })
       const result = response.data.data
 
@@ -107,7 +141,14 @@ export default function LoginForm({ t }: LoginFormProps) {
         </div>
       )}
 
-      {error && errorCode !== 'EMAIL_NOT_VERIFIED' && (
+      {error && (errorCode === 'ACCOUNT_LOCKED' || errorCode === 'OTP_ABUSE_LOCKED') && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+          <p className="text-sm font-medium text-red-700">{error}</p>
+          <p className="mt-1 text-xs text-red-500">{t.accountLockedHint}</p>
+        </div>
+      )}
+
+      {error && errorCode !== 'EMAIL_NOT_VERIFIED' && errorCode !== 'ACCOUNT_LOCKED' && errorCode !== 'OTP_ABUSE_LOCKED' && (
         <p className="text-sm text-red-500">{error}</p>
       )}
 

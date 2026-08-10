@@ -220,4 +220,33 @@ _(Bu bölümü kendin doldurabilirsin — ör. karar raporu/karar geçmişi, adm
 
 ## Beyzanur Yücel
 
-_(Bu bölümü kendin doldurabilirsin — ör. AI öneri, manuel senaryo, sync/makro veri entegrasyonu.)_
+Yapay Zeka (AI) Fon Dağılım Önerisi, Kullanıcı Manuel Senaryoları, Makro/Piyasa Verileri Senkronizasyonu, CDS Entegrasyonu, Haber Çeviri/Yönetim Modülü ve E-posta Doğrulama Token altyapısını geliştirdim.
+
+### AI Öneri Entegrasyonu & Karar Katmanı (`fund/decision`)
+- **`AiRecommendationServiceImpl`** — ONNX formatındaki makine öğrenmesi modelinin (ONNX Runtime) sisteme entegrasyonu. Model girdisi olarak enflasyon, politika faizi, CDS, döviz kuru, altın ve Brent petrol gibi makroekonomik verileri toplayıp işleyen ve fon ağırlık dağılım önerileri üreten boru hattı.
+- Model çıktılarını (`AiRecommendation`, `AiRecommendationWeight` ve `AiRecommendationStockWeight`) veritabanına kaydetme, yönetme ve listeleme API uçları.
+
+### Manuel Senaryo & Doğrulama Katmanı
+- **`ManualScenarioServiceImpl`** — Kullanıcıların kendi belirledikleri ağırlıklara göre senaryo simülasyonları tasarlayabilmesi ve kaydedebilmesi.
+- **`ScenarioValidationService`** — Senaryo girişleri için iş kurallarının işletilmesi; toplam ağırlık kontrolü (%99.99 - %100.01), hisse senedi taban sınırı (min %80), ana varlık grubu sapma limiti (maks %10) ve hisse bazlı sapma limiti (maks %5) kontrolleri.
+- AI ve Manuel senaryolar için hisse alt kategorilerinin (subcategories) entegrasyonu.
+
+### Makro Veri Entegrasyonu & Senkronizasyonu (`ai/model`)
+- **`CdsDataServiceImpl`** — `data/TRGV5YUSAC=R.csv` dosyasından tarihsel Türkiye CDS spread verilerini parse ederek belleğe alan ve sorgulatan veri sağlayıcısı.
+- **`ModelDataSyncServiceImpl`** — Günlük USD/TRY, Altın, Brent petrol, ABD 10 Yıllık tahvil getirileri, enflasyon, politika faizi ve CDS spreadlerini senkronize eden; geçmişe dönük arama (backward search) desteği sunan senkronizasyon servisi.
+- **`ModelDataSyncScheduler`** — Belirtilen cron zonelarında saatlik olarak ve uygulama başlangıcında (startup) otomatik makro veri güncellemelerini tetikleyen mekanizma.
+
+### E-posta Doğrulama Token Yapısı (`auth/verificationtoken`)
+- **`VerificationTokenServiceImpl`** — Kullanıcı kaydı sırasında benzersiz e-posta doğrulama tokenları üreten, bunları şifreleyerek veritabanında saklayan ve doğrulama akışını (verify/resend) yöneten servis.
+- **`VerificationTokenScheduler`** — Süresi dolmuş doğrulama tokenlarını periyodik olarak temizleyen zamanlanmış arka plan görevi.
+
+### Haber Entegrasyonu & Çeviri Modülü (`news`)
+- **`NewsServiceImpl`** — Harici News API servisinden en güncel finans ve piyasa haberlerini çeken mekanizma.
+- **`TranslationServiceImpl` & `DeepLServiceImpl`** — İngilizce gelen haber başlıklarını ve içeriklerini DeepL API entegrasyonu üzerinden Türkçe'ye çeviren sistem.
+- **`NewsScheduler`** — En güncel haberleri belirli aralıklarla arka planda otomatik olarak güncelleyen ve veritabanına kaydeden zamanlayıcı.
+
+### Paket Refaktörü ve Testler
+- Karar destek (AI/Manuel) yapısı ile makro veri senkronizasyonu bileşenlerinin kod kalitesini artırmak üzere `com.akademi.finsight.fund.decision` ve `com.akademi.finsight.ai.model` bağımsız paketlerine refaktör edilmesi.
+- `AiRecommendationServiceImpl`, `ManualScenarioServiceImpl`, `ScenarioValidationService`, `CdsDataServiceImpl` ve `NewsServiceImpl` için unit test yazımı ve test kapsamının genişletilmesi.
+
+

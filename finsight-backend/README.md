@@ -386,6 +386,7 @@ OTP Doğrulama Servisi, Login Rate Limiter ve Stres Testi altyapısını gelişt
 - OtpProperties — Kod geçerlilik süresi (expireDuration), yeniden istek atma soğuma süresi (cooldownDuration), maksimum deneme hakkı (maxAttempts) ve ihlal pencereleri ile bloklama sürelerini (Abuse) application.yaml üzerinden esnekçe yapılandıran konfigürasyon sınıfı.
 
 - Özel Hata Yönetimi (OtpException & OtpErrorType) — Yanlış kod girişlerinde kalan deneme hakkını (remainingAttempts), soğuma süresi ihlallerinde bekleme süresini (retryAfterSeconds) veya kilit durumunu (OTP_ABUSE_LOCKED) ilgili HTTP durum kodlarıyla (401 UNAUTHORIZED, 429 TOO_MANY_REQUESTS) istemciye bildiren istisna mimarisi.
+
 ### Login Rate Limiter (`feature/login-rate-limiter`)
 - RateLimitInterceptor & PasswordResetRateLimitInterceptor — Giriş (/login) ve şifre sıfırlama (/forgot-password) isteklerini yakalayarak e-posta bazlı oran sınırlarını denetleyen interceptor yapısı.
 
@@ -420,8 +421,8 @@ OTP Doğrulama Servisi, Login Rate Limiter ve Stres Testi altyapısını gelişt
 - Zaman kısıtı ve entegrasyon riskleri nedeniyle çalışma ana dala (main) birleştirilmemiş; ilgili geliştirme ve model düzeltmeleri ileride tamamlanmak üzere feature/ai-integration dalında müstakil olarak muhafaza edilmiştir.
 
 ### Testler
-- `StressTestMapperTest`, `PortfolioDataBuilderTest`, `RuleBasedStressTestEngineImplTest`, `StressTestSimulationServiceImplTest` — stres testi simülasyon akışı (senaryo/benchmark portföy oluşturma, rule-based etki hesaplama, servis katmanı validasyon ve hata durumları) için Mockito tabanlı birim testleri.
-- `StockPriceServiceImplTest`, `PortfolioSimulationCalculationServiceImplTest`, `PerformanceComparisonServiceImplTest` — Mockito tabanlı birim testleri.
+- `StressTestMapperTest`,  `RuleBasedStressTestEngineImplTest`, `StressTestSimulationServiceImplTest` — stres testi simülasyon akışı (senaryo/benchmark portföy oluşturma, rule-based etki hesaplama, servis katmanı validasyon ve hata durumları) için Mockito tabanlı birim testleri.
+-  `PerformanceComparisonServiceImplTest` — Mockito tabanlı birim testleri.
   :
 ## Mehmet Çavdar
 

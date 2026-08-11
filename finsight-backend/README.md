@@ -372,9 +372,57 @@ mekanizmalarına da entegrasyon ve ek kontroller kattım:
   `UserServiceImplTest` — core servisler için birim testleri.
 
 ## Ece Nisa Uğur
+OTP Doğrulama Servisi, Login Rate Limiter ve Stres Testi altyapısını geliştirdim. Ayrıca AI entegrasyonu üzerinde çalıştım ancak zaman kısıtı nedeniyle bu kısmı ana dala (main) dahil edemedim.
 
-_(Bu bölümü kendin doldurabilirsin — ör. stres testi motoru, makro/market verisi.)_
+### OTP Doğrulama Servisi (`feature/otp-service`)
+- OtpServiceImpl — SecureRandom ile 6 haneli kriptografik olarak güvenli OTP kodları üreten, doğrulama akışlarını yürüten ve e-posta bildirimi (NotificationService) kanalıyla kullanıcıya ileten temel servis.
 
+- Güvenli Redis Önbellek Yönetimi — Üretilen OTP kodlarını (CODE_SUFFIX), yeniden kod isteme engellerini (COOLDOWN_SUFFIX), hatalı deneme sayaçlarını (ATTEMPTS_SUFFIX) ve kötüye kullanım döngülerini (ABUSE_SUFFIX) TTL (Time-To-Live) ile Redis üzerinde yöneten yapı.
+
+- Kötüye Kullanım (Abuse) Koruması & Otomatik Hesap Bloklama — Üst üste hatalı kod denemelerinde (maxAttempts) OTP'yi geçersiz kılan; belirli bir zaman penceresinde bu kuralı ihlal eden kullanıcıları kaba kuvvet (brute-force) engeliyle LoginBlocklistService üzerinden otomatik olarak bloklayan ve güvenli şifre sıfırlama bağlantılı e-posta gönderen dinamik mekanizma.
+
+- OtpKeyGenerator & IdentifierHasher — Veri gizliliği ve güvenliği için e-posta adreslerini küçük harfe dönüştürüp SHA-256 algoritmasıyla özetleyerek Redis anahtarlarını anonim biçimde oluşturan bileşen.
+
+- OtpProperties — Kod geçerlilik süresi (expireDuration), yeniden istek atma soğuma süresi (cooldownDuration), maksimum deneme hakkı (maxAttempts) ve ihlal pencereleri ile bloklama sürelerini (Abuse) application.yaml üzerinden esnekçe yapılandıran konfigürasyon sınıfı.
+
+- Özel Hata Yönetimi (OtpException & OtpErrorType) — Yanlış kod girişlerinde kalan deneme hakkını (remainingAttempts), soğuma süresi ihlallerinde bekleme süresini (retryAfterSeconds) veya kilit durumunu (OTP_ABUSE_LOCKED) ilgili HTTP durum kodlarıyla (401 UNAUTHORIZED, 429 TOO_MANY_REQUESTS) istemciye bildiren istisna mimarisi.
+### Login Rate Limiter (`feature/login-rate-limiter`)
+- RateLimitInterceptor & PasswordResetRateLimitInterceptor — Giriş (/login) ve şifre sıfırlama (/forgot-password) isteklerini yakalayarak e-posta bazlı oran sınırlarını denetleyen interceptor yapısı.
+
+- CachedBodyFilter & CachedBodyHttpServletRequest — Request body'nin (JSON) interceptor seviyesinde okunduktan sonra controller katmanında tekrar okunabilmesini sağlayan Request Wrapping mekanizması.
+
+- LoginRateLimitService & LoginBlocklistService — Başarısız giriş denemelerini sayan, eşik aşıldığında hesabı geçici olarak bloklayan ve başarılı girişte sayacı sıfırlayan servisler.
+
+- PasswordResetRateLimitService — Şifre sıfırlama isteklerinde e-posta bombardımanını engellemeye yönelik bağımsız limit ve soğuma süresi (cooldown) yönetimi.
+
+- IdentifierHasher & RateLimitKeyGenerator — E-posta adreslerini SHA-256 ile anonimleştirerek Redis anahtarlarını güvenli biçimde üreten yardımcı bileşenler.
+
+- LoginRateLimitProperties & PasswordResetRateLimitProperties — Deneme sayısı, kilit ve soğuma sürelerini application.yaml üzerinden merkezi yönetmeye yarayan konfigürasyon sınıfları.
+
+- RateLimitException & RateLimitErrorType — Limit aşımlarında kalan kilit süresi (remainingTime) ile birlikte 429 TOO_MANY_REQUESTS hatası dönen yapı.
+
+### Stres Testi (`feature/stress-test-core`)
+- StressTestServiceImpl & RuleBasedStressTestEngineImpl — Piyasa krizleri (faiz şoku ve hisse şoku) karşısında portföy ve fonların dayanıklılığını ölçen parametrik ve kural tabanlı (rule-based) stres testi çekirdek altyapısı.
+
+- Kayıp Hesaplama ve Risk Analizi — Belirlenen şok senaryoları altında portföy değer kayıplarını, Riske Maruz Değer (Value at Risk - VaR) değişimlerini ve varlık grubu bazlı (hisse, tahvil, emtia vb.) duyarlılıkları hesaplayan simülasyon motoru.
+
+### AI Entegrasyonu (`feature/ai-integration`)
+- AiRecommendationServiceImpl — ONNX formatındaki makine öğrenmesi modelinin  sisteme entegrasyonu ve makroekonomik veriler üzerinden fon dağılım önerileri üreten karar katmanı altyapısı geliştirildi.
+
+- Merge Edilmeme ve Devre Dışı Bırakılma Nedenleri:
+
+- Girdi/Değişken Uyumsuzluğu: Modelin ihtiyaç duyduğu 16 adet makroekonomik değişkenin, stres testi motorunun beklediği şok parametrelerini ve duyarlılık alanlarını tam olarak karşılayamaması.
+
+- Aksiyon Mantıksızlığı: Model tarafından üretilen karar aksiyonlarının (action outputs) stres testi kriz senaryoları ve piyasa simülasyon mantığıyla finansal açıdan tutarsızlık göstermesi.
+
+- Veri Bütünlüğü Sorunu: AI karar ekranına aktarılan fon ve varlık alt kırılımlarının servis dönüşlerinde null gelmesi ve frontend katmanında veri bütünlüğünü bozması.
+
+- Zaman kısıtı ve entegrasyon riskleri nedeniyle çalışma ana dala (main) birleştirilmemiş; ilgili geliştirme ve model düzeltmeleri ileride tamamlanmak üzere feature/ai-integration dalında müstakil olarak muhafaza edilmiştir.
+
+### Testler
+- `StressTestMapperTest`, `PortfolioDataBuilderTest`, `RuleBasedStressTestEngineImplTest`, `StressTestSimulationServiceImplTest` — stres testi simülasyon akışı (senaryo/benchmark portföy oluşturma, rule-based etki hesaplama, servis katmanı validasyon ve hata durumları) için Mockito tabanlı birim testleri.
+- `StockPriceServiceImplTest`, `PortfolioSimulationCalculationServiceImplTest`, `PerformanceComparisonServiceImplTest` — Mockito tabanlı birim testleri.
+  :
 ## Mehmet Çavdar
 
 Karar geçmişi (decision history) hattını, admin karar raporunu, Kafka tabanlı bildirim/e-posta

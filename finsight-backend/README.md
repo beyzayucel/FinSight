@@ -16,10 +16,13 @@ tasarlanmıştır — karar her zaman kullanıcıda kalır.
 | Veritabanı | Microsoft SQL Server | 2022 |
 | Şema migration | Flyway (SQL Server dialect) | (Boot ile yönetilir) |
 | Önbellek / Oturum | Redis | 7 |
+| Uygulama içi cache | Caffeine | (Boot ile yönetilir) |
+| Kimlik doğrulama (token) | JWT (jjwt) | 0.12.6 |
 | Mesajlaşma | Apache Kafka | 3.9.0 |
 | E-posta (dev) | Mailpit (SMTP) | latest |
 | API dokümantasyonu | springdoc-openapi (Swagger UI) | 3.0.2 |
 | Eşleme (mapping) | MapStruct | 1.6.3 |
+| Boilerplate azaltma | Lombok | (Boot ile yönetilir) |
 | ML runtime | ONNX Runtime | 1.28.0 |
 | İzleme | Prometheus + Grafana | latest |
 
@@ -131,16 +134,15 @@ Varsayılan adresler (dev):
 Modül başına birincil sahip (ilk kime sorulur). Şimdilik yalnızca aşağıdaki bölümler dolu;
 diğerleri ilgili kişilerce doldurulacak.
 
-| Modül | Sahip |
-|-------|-------|
-| `integration/infina` (temel entegrasyon, fon bilgisi & benchmark), `fund` (dashboard, sync), `fund/chat` | Melis Kara |
-| `auth`, `security`, `user`, `audit` | _(boş)_ |
-| `fund` (AI öneri, manuel senaryo) | _(boş)_ |
-| `fund` (performans karşılaştırma) | _(boş)_ |
-| `stresstest`, makro/market verisi | _(boş)_ |
-| `fund` (karar geçmişi, admin karar raporu) | Mehmet Çavdar |
-| `notification` | Mehmet Çavdar |
-| `auth/passwordreset`, `auth/passwordhistory`, `auth/ratelimiter` | Mehmet Çavdar |
+| Modül                                                                                                                                                                                                                                                                                                       | Sahip |
+|-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-------|
+| `integration/infina` (temel entegrasyon, fon bilgisi & benchmark), `fund` (dashboard, sync), `fund/chat`                                                                                                                                                                                                    | Melis Kara |
+| `common`<br>`auth` (orchestration ve auth ile ilgili servisler)<br>`auth/refreshtoken`<br>`auth/otp`, `auth/verificationtoken`, `auth/ratelimiter` (entegrasyonu sağlandı auth ile,otp-abuse-limiter)<br>`security`<br>`user`<br>`fund/performancecomparison`, `fund/stockprice`<br>`audit`<br>`monitoring` | Ali Rıza Kaygusuz |
+| `fund` (AI öneri, manuel senaryo)                                                                                                                                                                                                                                                                           | _(boş)_ |
+| `stresstest`, makro/market verisi                                                                                                                                                                                                                                                                           | _(boş)_ |
+| `fund` (karar geçmişi, admin karar raporu)                                                                                                                                                                                                                                                                  | Mehmet Çavdar |
+| `notification`                                                                                                                                                                                                                                                                                              | Mehmet Çavdar |
+| `auth/passwordreset`, `auth/passwordhistory`, `auth/ratelimiter` (password-reset rate-limit — `PasswordResetRateLimitService`, `PasswordResetRateLimitInterceptor`)                                                                                                                                         | Mehmet Çavdar |
 
 ---
 
@@ -210,7 +212,163 @@ Harici LLM yok: cevaplar deterministik, tamamen fonun kendi verisine dayalı ve 
 
 ## Ali Rıza Kaygusuz
 
-_(Bu bölümü kendin doldurabilirsin — ör. auth/security, rate limiter, performans karşılaştırma, audit.)_
+Projenin ortak (`common`) altyapısını kurdum; `auth` altındaki giriş/oturum akışlarının
+orchestration'ını, refresh token mekanizmasını ve OTP/giriş denemesi kötüye kullanım korumasını
+geliştirdim. Security katmanında JWT doğrulama ve ilk-giriş zorunluluğu akışlarını, kullanıcı
+yönetiminde tüm CRUD ve yaşam döngüsü işlemlerini yaptım. Fon tarafında performans karşılaştırma
+ve simülasyon motorunu (hisse fiyatları, cache dahil) baştan kurdum; ayrıca denetim (audit) log
+sistemini, izleme/metrik altyapısını (Prometheus/Grafana, dosya loglama) ve bildirim
+e-postalarındaki logo entegrasyonunu geliştirdim.
+
+### Ortak Altyapı (`common`)
+Projenin tüm servislerinin üzerine kurulduğu ortak katman:
+- **`ApiStandardResponse<T>`** — tüm API yanıtlarının tek tip zarfı (`success`, `data`, `message`,
+  `error`); başarı ve hata durumları için ayrı factory metodları (`of`, `message`, `error`).
+- **`GlobalExceptionHandler`** — tüm exception'ların tek merkezden, tutarlı bir `ErrorDetail` formatına
+  çevrildiği `@RestControllerAdvice`; validasyon hataları, bozuk JSON, desteklenmeyen HTTP metodu,
+  bilinmeyen endpoint (404), rate-limit/OTP/login limit exception'ları, veri bütünlüğü ihlali ve
+  beklenmeyen hatalar için ayrı handler'lar; her yanıta `requestId` (MDC üzerinden) eklenmesi.
+- **`BaseException` / `BaseErrorType` / `ErrorType`** — tüm modüllerin kendi typed exception'larını
+  üzerine kurduğu ortak hata sözleşmesi (HTTP status + error code + mesaj anahtarı).
+- **`BaseEntity` / `SoftDeletableEntity`** — id, `createdAt`/`updatedAt` ve soft-delete (`deleted`
+  bayrağı) gibi ortak alanları sağlayan JPA taban sınıfları; projedeki entity'lerin büyük kısmı
+  bunlardan türüyor.
+- **`MaskType`** — loglarda e-posta/telefon gibi hassas verilerin maskelenmesi (`MaskType.EMAIL.mask(...)`),
+  proje genelinde tutarlı bir gizlilik pratiği için.
+- **Config katmanı** — `JacksonConfig`, `I18nConfig` (TR/EN mesaj çözümleme), `OpenApiConfig`,
+  `AuditConfig`.
+- **`RequestIdFilter` / `WebMvcConfig`** — her isteğe benzersiz bir `requestId` atanması ve bunun
+  loglarla hata yanıtları arasında izlenebilirlik için MDC'ye yazılması.
+- **`BaseController`** — controller'lar arası ortak davranışların merkezileştirilmesi.
+
+### Auth Orchestration (`auth`)
+`AuthServiceImpl` üzerinden tüm giriş/oturum akışının orchestration'ı:
+- **Giriş (`login`)** — kimlik doğrulama (`AuthenticationManager`), e-posta doğrulanmamışsa
+  reddetme, ilk girişte OTP'siz doğrudan token üretimi, sonraki girişlerde 2FA için OTP gönderimi.
+  Hatalı denemede `LoginRateLimitService` sayacı artar; limit aşılırsa hesap kilitlenip
+  bildirim e-postası gönderilir (`LoginLimitException`, rollback'ten etkilenmez).
+- **OTP ile giriş (`otpLogin`)** — aktif OTP kontrolü, kod doğrulama, başarılıysa token üretimi ve
+  audit log kaydı.
+- **Token yenileme (`refreshTokens`)** — `RefreshTokenService` ile rotasyon, yeni access token üretimi.
+- **E-posta doğrulama (`verifyEmail`)** — `VerificationTokenService`'e delege.
+- Tüm akışlarda `AppMetrics` üzerinden başarı/başarısızlık sayaçlarının (login, OTP, token yenileme,
+  şifre sıfırlama, hesap kilitlenmesi) işlenmesi.
+
+### Refresh Token (`auth/refreshtoken`)
+**`RefreshTokenServiceImpl`** üzerinden tüm token yaşam döngüsü:
+- **Güvenli üretim ve saklama** — `SecureRandom` ile 32 byte'lık ham token üretilip Base64 URL-safe
+  encode edilir; DB'de token'ın kendisi değil SHA-256 hash'i tutulur, böylece veritabanı sızıntısında
+  ham token ele geçmez.
+- **Rotasyon (`rotateToken`)** — her yenilemede eski token geçersiz kılınıp (`revoked=true`) yeni bir
+  token üretilir; süresi dolmuş veya zaten iptal edilmiş bir token kullanılmaya çalışılırsa
+  (`REFRESH_TOKEN_EXPIRED`/`REFRESH_TOKEN_REVOKED`) reddedilir.
+- **Çalınmış token tespiti** — iptal edilmiş bir token tekrar kullanılmaya çalışılırsa
+  (`TOKEN_REUSE` event'i loglanır) bu, token'ın çalınmış olabileceğinin işareti olarak ele alınır.
+- **Logout (`revokeToken`)** — token'ı iptal eder ve audit log kaydı (`LOGOUT`) düşer.
+- **Toplu iptal (`revokeAllByUser`)** — şifre değişimi/sıfırlama ve kullanıcı silme akışlarında
+  kullanıcının tüm refresh token'larının tek seferde geçersiz kılınması.
+- **`RefreshTokenCleanupScheduler`** — her gece süresi dolmuş token'ları toplu iptal eden
+  (`revokeExpiredTokens`, 03:00) ve 7 günden eski iptal edilmiş kayıtları veritabanından temizleyen
+  (`deleteOldRevokedTokens`, 03:30) iki ayrı zamanlanmış görev.
+
+### OTP Kötüye Kullanım Koruması — entegrasyon ve ekstra kontroller (`auth/otp`, `auth/verificationtoken`, `auth/ratelimiter`)
+`auth` altındaki akışların orchestration'ını sağladım; `otp` ve `verificationtoken`
+mekanizmalarına da entegrasyon ve ek kontroller kattım:
+- **OTP abuse limiter** — başarısız deneme sonrası abuse döngüsü artırımı
+  (`handleFailedAttempt` → `incrementAbuseCycle`), limit aşıldığında hesabın geçici kilitlenmesi ve
+  bildirim gönderilmesi (`sendOtpAbuseNotification`), `OtpLimitException` ile typed hata.
+- **Giriş denemesi blocklist/rate-limit** (`auth/ratelimiter`) — `LoginRateLimitService` /
+  `LoginBlocklistService` ile engelleme (`blockUser`/`unblockUser`/`checkBlockedOrThrow`) ve
+  şifre sıfırlama sonrası tüm kısıtlamaların temizlenmesi (`clearAllRestrictions`);
+  `LoginLimitException` ile `GlobalExceptionHandler`'a yeni handler eklenmesi.
+- **Verification token mekanizmasına** ekstra kontroller eklendi.
+- `AuthServiceImpl` üzerinde limit aşıldığında `LoginLimitException` fırlatılması ve
+  `@Transactional(noRollbackFor = ...)` ile sayaç güncellemesinin rollback'ten etkilenmemesi.
+- Limit aşıldığında **hesap kilitlendi** bildirim e-postası (şifre sıfırlama linkiyle birlikte) ve
+  frontend OTP ekranında kalan hakkın gösterilmesi.
+
+### Security (`security`)
+- **`JwtService`** — access token üretimi (roller ve `firstLogin` claim'i ile), token doğrulama ve
+  claim çözümleme; `JwtErrorType`'a göre süresi dolmuş/imzası geçersiz/bozuk token'ların ayrı ayrı
+  ele alınması.
+- **`JwtAuthenticationFilter`** — her istekte token'ı doğrulayıp `SecurityContext`'e authentication
+  yazan filtre; `TokenInvalidationService` üzerinden şifre değişiminden önce üretilmiş token'ların
+  reddedilmesi.
+- **`FirstLoginInterceptor`** — ilk girişte (`firstLogin=true`) şifre değiştirmeden diğer uçlara
+  erişimi `403 PASSWORD_CHANGE_REQUIRED` ile engelleyen interceptor.
+- **`SecurityConfig`** — Spring Security filter chain yapılandırması, `JwtAuthenticationEntryPoint`/
+  `JwtAccessDeniedHandler` ile 401/403 yanıtlarının `ApiStandardResponse` formatına oturtulması.
+- `CustomUserDetailsService`, `PasswordEncoderConfig`, `AuthenticationProviderConfig`, `CorsProperties`.
+
+### Kullanıcı Yönetimi (`user`)
+**`UserServiceImpl`** üzerinden tüm kullanıcı yaşam döngüsü:
+- **Kullanıcı oluşturma** — e-posta normalize edilir (`EmailNormalizer`), e-posta/telefon çakışması
+  kontrol edilir, `CredentialsGenerator` ile benzersiz kullanıcı adı ve geçici şifre üretilir;
+  oluşturulan kullanıcıya doğrulama token'ı gönderilir (`VerificationTokenService`) ve audit log
+  kaydı düşülür.
+- **Profil güncelleme** — telefon numarası müsaitlik kontrolü, admin tarafından güncelleme.
+- **Aktif/pasif etme ve silme** — kendi kendine işlem yapmayı (`SELF_ACTION_NOT_ALLOWED`) ve
+  `ADMIN` rolündeki kullanıcıların değiştirilmesini (`ADMIN_PROTECTED`) engelleyen kontroller;
+  silme işleminde kullanıcının tüm refresh token'larının iptal edilmesi.
+- **Kimlik doğrulama akışı için sorgular** — e-posta veya kullanıcı adına göre bulma
+  (`findByIdentifier`), son giriş zamanı güncelleme, şifre güncelleme (`firstLogin` bayrağını
+  temizleyerek).
+- **İstatistikler** — toplam/aktif/pasif kullanıcı sayısı ve son 24 saatte giriş yapan kullanıcı
+  sayısı (`UserStatsResponse`).
+- **Doğrulamayı yeniden gönderme** — zaten doğrulanmış kullanıcıyı reddeden kontrol, yeni geçici
+  şifre üretimi ve audit log kaydı.
+- Tüm kritik işlemlerde (`USER_CREATED`, `USER_UPDATED`, `USER_ACTIVATED`/`USER_DEACTIVATED`,
+  `USER_DELETED`, `VERIFICATION_RESENT`) audit log entegrasyonu.
+
+### Performans Karşılaştırma & Simülasyon Motoru (`fund/performancecomparison`, `fund/stockprice`)
+- **`PerformanceComparisonServiceImpl`** — mevcut portföy, simülasyon portföyü ve benchmark için
+  güncel değer, toplam getiri, maksimum düşüş ve günlük oynaklık hesaplarını tek yanıtta birleştiren
+  `GET /funds/{code}/performance-comparison` ucu; sonradan Infina çağrısı kaldırılıp tamamen DB'den
+  beslenecek şekilde refactor edildi.
+- **`PortfolioSimulationCalculationServiceImpl`** — manuel senaryo/AI önerisi ağırlıklarından
+  simülasyon eğrisi türeten hesaplama servisi; kategori bazlı fallback formülü ile top-10 hisseye
+  ait gerçek fiyat verisiyle çalışan per-stock formülü ayrı yollar olarak destekler.
+- **`StockPriceServiceImpl`** — top-10 hisse için günlük fiyat geçmişinin arka planda çekilip
+  (`backfillIfMissing`, `refreshDay`) belirli bir pencere dışındaki eski verinin temizlenmesi
+  (`purgeBefore`).
+- **`PortfolioCalculationUtil`** — kümülatif getiriden günlük getiri türetme, max drawdown ve
+  günlük oynaklık hesap fonksiyonları; benchmark ve simülasyon eğrilerinin aynı gün üzerinden
+  başlaması için anchor noktası eklenmesi.
+- Simülasyon/benchmark eğrilerinin gerçek veriyle tutarlılığının 10 gün ve 90 gün pencerelerinde
+  doğrulanması.
+- **Önbellekleme** — Caffeine tabanlı in-memory cache entegrasyonu (`CaffeineCacheConfig`),
+  `FundProperties` üzerinden yapılandırılabilir TTL/boyut ayarları; `PerformanceComparisonServiceImpl`
+  için `@Cacheable`, `ManualScenarioServiceImpl`/`AiRecommendationServiceImpl` üzerinde senaryo
+  güncellendiğinde ilgili cache girdisini geçersiz kılan `@CacheEvict`.
+
+### Denetim Log Sistemi (`audit`)
+- `AuditLog` entity'si, `AuditActionType` / `AuditLogScope` sınıflandırmasıyla; `AuthServiceImpl`
+  ve `UserServiceImpl` üzerindeki kritik işlemlere (giriş, kayıt, şifre değişimi, rol güncelleme vb.)
+  audit log çağrılarının eklenmesi.
+- **`AuditLogArchiveScheduler`** — 90 günden eski kayıtları periyodik olarak arşivleyen zamanlanmış görev.
+- `GET /admin/audit-logs` ucu (`AuditLogController`), `AuditLogSpecification` ile filtreleme.
+- Admin panelindeki **ActivityTimeline** bileşeni (frontend) — 10 farklı action type için birbirinden
+  ayırt edilebilir renk paleti, kullanıcı tablosu ile profil panelinin genişlik/scroll uyumu.
+
+### İzleme & Metrikler (`monitoring`)
+- **`AppMetrics`** — Micrometer tabanlı özel metrikler; `AuthServiceImpl` içindeki login
+  başarı/başarısızlık gibi olayların sayaç olarak dışa açılması.
+- **Actuator**'ın projeye eklenmesi ve `application.yaml`'a Prometheus endpoint yapılandırması
+  (dev'de `show-details: always`).
+- `compose.yaml`'e Prometheus + Grafana servislerinin eklenmesi.
+- **`logback-spring.xml`** — console'a ek olarak dosyaya loglama (`logs/server-log.txt`); boyut ve
+  zaman bazlı rotasyon (`SizeAndTimeBasedRollingPolicy`, dosya başına 50MB), 90 günlük saklama ve
+  toplam 2GB disk sınırı; her log satırında `requestId`'nin (MDC) izlenebilirlik için basılması.
+
+### E-posta Şablonları
+- Tüm bildirim e-postalarına (TR/EN) gömülü (`cid:`) logo eklenmesi — `EmailNotificationSender`'ın
+  multipart MIME'a geçirilip `addInline()` ile logo görselinin gövdeye gömülmesi.
+
+### Testler
+- `StockPriceServiceImplTest`, `PortfolioSimulationCalculationServiceImplTest`,
+  `PerformanceComparisonServiceImplTest` — Mockito tabanlı birim testleri.
+- `AuditLogServiceImplTest`, `RefreshTokenServiceImplTest`, `AuthServiceImplTest`,
+  `UserServiceImplTest` — core servisler için birim testleri.
 
 ## Ece Nisa Uğur
 

@@ -113,7 +113,9 @@ public final class ApiEndpoints {
             News.BASE,
             "/swagger-ui/**",
             "/v3/api-docs/**",
-            "/actuator/**"
+            "/actuator/**",
+            "/test/**",
+            "/portfolio-decisions/**"
     };
 
     public static String[] getPublicEndpoints() {

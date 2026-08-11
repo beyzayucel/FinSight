@@ -5,7 +5,8 @@ spring:
   application:
     name: finsight
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
+    active: test-decision
+#    active: ${SPRING_PROFILES_ACTIVE:dev}
   config:
     import: optional:file:.env[.properties]
   lifecycle:
@@ -81,6 +82,13 @@ spring:
       key-prefix: "infina:"
       cache-null-values: false
 
+portfolio:
+  api:
+    base-url: http://localhost:8000
+    connect-timeout: 2s
+    read-timeout: 5s
+
+
 notification:
   default-locale: tr
   kafka:
@@ -115,7 +123,7 @@ app:
     password-reset:
       max-requests-per-email: ${PASSWORD_RESET_RATE_LIMIT_MAX_PER_EMAIL}
       duration: ${PASSWORD_RESET_RATE_LIMIT_DURATION}
-      cooldown-duration: ${PASSWORD_RESET_COOLDOWN_DURATION}
+      cooldown-duration: ${PASSWORD_RESET_COOLDOWN_DURATION:15m}
 
   otp:
     expire-duration: ${OTP_EXPIRE_DURATION}

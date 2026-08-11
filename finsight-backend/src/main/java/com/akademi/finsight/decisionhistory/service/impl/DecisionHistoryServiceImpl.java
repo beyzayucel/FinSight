@@ -1,31 +1,29 @@
-package com.akademi.finsight.fund.service.impl;
+package com.akademi.finsight.decisionhistory.service.impl;
 
-import com.akademi.finsight.fund.dto.request.AttachStressTestRequest;
-import com.akademi.finsight.fund.dto.response.DecisionRecordResponse;
-import com.akademi.finsight.fund.decision.dto.response.ManualScenarioResponse;
-import com.akademi.finsight.fund.decision.dto.response.ManualScenarioStockWeightResponse;
-import com.akademi.finsight.fund.decision.dto.response.ManualScenarioWeightResponse;
-import com.akademi.finsight.fund.dto.response.PerformanceMetricsResponse;
+import com.akademi.finsight.decisionhistory.dto.request.AttachStressTestRequest;
+import com.akademi.finsight.decisionhistory.dto.response.DecisionRecordResponse;
 import com.akademi.finsight.fund.decision.entity.AiRecommendation;
 import com.akademi.finsight.fund.decision.entity.ManualScenario;
-import com.akademi.finsight.fund.entity.PerformanceMetrics;
 import com.akademi.finsight.fund.decision.entity.RecommendationStatus;
+import com.akademi.finsight.decisionhistory.mapper.DecisionRecordAssembler;
 import com.akademi.finsight.fund.exception.FundErrorType;
 import com.akademi.finsight.fund.exception.FundValidationException;
 import com.akademi.finsight.fund.decision.repository.AiRecommendationRepository;
 import com.akademi.finsight.fund.decision.repository.ManualScenarioRepository;
-import com.akademi.finsight.fund.service.DecisionHistoryService;
+import com.akademi.finsight.decisionhistory.service.DecisionHistoryService;
+import com.akademi.finsight.fund.constant.CacheNames;
 import com.akademi.finsight.fund.decision.service.ManualScenarioService;
 import com.akademi.finsight.stresstest.entity.StressTestResult;
 import com.akademi.finsight.stresstest.exception.StressTestErrorType;
 import com.akademi.finsight.stresstest.exception.StressTestException;
-import com.akademi.finsight.stresstest.mapper.StressTestResponseAssembler;
 import com.akademi.finsight.stresstest.repository.StressTestResultRepository;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.service.UserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
@@ -44,22 +42,23 @@ public class DecisionHistoryServiceImpl implements DecisionHistoryService {
     private final ManualScenarioRepository manualScenarioRepository;
     private final AiRecommendationRepository aiRecommendationRepository;
     private final StressTestResultRepository stressTestResultRepository;
-    private final StressTestResponseAssembler stressTestResponseAssembler;
+    private final DecisionRecordAssembler decisionRecordAssembler;
     private final UserService userService;
 
     @Override
     @Transactional
+    @Cacheable(cacheManager = "caffeineCacheManager", cacheNames = CacheNames.DECISION_HISTORY)
     public List<DecisionRecordResponse> getHistory(String email, UUID fundId) {
         User user = userService.findByEmail(email);
 
         Stream<DecisionRecordResponse> manualRecords = manualScenarioService.getScenarioHistory(email, fundId)
                                                                              .stream()
-                                                                             .map(this::fromManualScenario);
+                                                                             .map(decisionRecordAssembler::fromManualScenario);
 
         Stream<DecisionRecordResponse> aiRecords = aiRecommendationRepository
                 .findByUserIdAndFundIdAndStatusNotOrderByCreatedAtDesc(user.getId(), fundId, RecommendationStatus.PENDING)
                 .stream()
-                .map(this::fromAiRecommendation);
+                .map(decisionRecordAssembler::fromAiRecommendation);
 
         return Stream.concat(manualRecords, aiRecords)
                      .sorted(Comparator.comparing(DecisionRecordResponse::createdAt).reversed())
@@ -68,6 +67,7 @@ public class DecisionHistoryServiceImpl implements DecisionHistoryService {
 
     @Override
     @Transactional
+    @CacheEvict(cacheManager = "caffeineCacheManager", cacheNames = CacheNames.DECISION_HISTORY, allEntries = true)
     public void attachStressTestResult(String email, AttachStressTestRequest request) {
         log.info("Attaching stress test result to latest decision. fundId: {}, stressTestResultId: {}",
                 request.fundId(), request.stressTestResultId());
@@ -121,62 +121,4 @@ public class DecisionHistoryServiceImpl implements DecisionHistoryService {
         }
     }
 
-    private DecisionRecordResponse fromManualScenario(ManualScenarioResponse response) {
-        return new DecisionRecordResponse(
-                response.id(),
-                "MANUAL",
-                "ACCEPTED",
-                null,
-                response.note(),
-                response.createdAt(),
-                response.weights(),
-                response.stockWeights(),
-                response.metrics(),
-                stressTestResponseAssembler.withLlmComment(response.stressTest())
-        );
-    }
-
-    private DecisionRecordResponse fromAiRecommendation(AiRecommendation recommendation) {
-        // K4: reddedilen kararda ağırlık gösterilmez, üretildiği anda kaydedilmiş olsa da.
-        List<ManualScenarioWeightResponse> weights = recommendation.getStatus() == RecommendationStatus.ACCEPTED
-                && recommendation.getWeights() != null
-                ? recommendation.getWeights().values().stream()
-                                .map(w -> new ManualScenarioWeightResponse(w.getCategory(), w.getRecommendedWeight(), w.getCurrentWeight()))
-                                .toList()
-                : List.of();
-
-        List<ManualScenarioStockWeightResponse> stockWeights =
-                recommendation.getStatus() == RecommendationStatus.ACCEPTED
-                        && recommendation.getStockWeights() != null
-                        ? recommendation.getStockWeights().values().stream()
-                                .map(w -> new ManualScenarioStockWeightResponse(
-                                        w.getAssetCode(), w.getRecommendedWeight(), w.getCurrentWeight()))
-                                .toList()
-                        : List.of();
-
-        return new DecisionRecordResponse(
-                recommendation.getId(),
-                "AI",
-                recommendation.getStatus().name(),
-                recommendation.getRationale(),
-                recommendation.getNote(),
-                recommendation.getCreatedAt(),
-                weights,
-                stockWeights,
-                toMetricsResponse(recommendation.getMetrics()),
-                stressTestResponseAssembler.toResponse(recommendation.getStressTestResult())
-        );
-    }
-
-    private PerformanceMetricsResponse toMetricsResponse(PerformanceMetrics metrics) {
-        if (metrics == null) return null;
-        return new PerformanceMetricsResponse(
-                metrics.getTotalReturnPct(),
-                metrics.getBenchmarkDiffPct(),
-                metrics.getMaxDrawdownPct(),
-                metrics.getDailyVolatilityPct(),
-                metrics.getAnalysisWindowDays(),
-                metrics.getDataDate()
-        );
-    }
 }

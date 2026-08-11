@@ -88,6 +88,7 @@ public final class ApiEndpoints {
     @NoArgsConstructor(access = AccessLevel.PRIVATE)
     public static final class AdminDecisions {
         public static final String BASE = API_V1 + "/admin/decisions";
+        public static final String BY_ID = "/{decisionId}";
     }
 
     @NoArgsConstructor(access = AccessLevel.PRIVATE)

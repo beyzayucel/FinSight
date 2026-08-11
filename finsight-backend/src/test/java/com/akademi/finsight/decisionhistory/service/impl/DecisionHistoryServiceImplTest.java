@@ -1,29 +1,21 @@
-package com.akademi.finsight.fund.service.impl;
+package com.akademi.finsight.decisionhistory.service.impl;
 
 import com.akademi.finsight.fund.decision.dto.response.ManualScenarioResponse;
-import com.akademi.finsight.fund.decision.dto.response.ManualScenarioStockWeightResponse;
-import com.akademi.finsight.fund.decision.dto.response.ManualScenarioWeightResponse;
 import com.akademi.finsight.fund.decision.entity.AiRecommendation;
-import com.akademi.finsight.fund.decision.entity.AiRecommendationStockWeight;
-import com.akademi.finsight.fund.decision.entity.AiRecommendationWeight;
-import com.akademi.finsight.fund.decision.entity.AssetCategory;
 import com.akademi.finsight.fund.decision.entity.ManualScenario;
 import com.akademi.finsight.fund.decision.entity.RecommendationStatus;
 import com.akademi.finsight.fund.decision.repository.AiRecommendationRepository;
 import com.akademi.finsight.fund.decision.repository.ManualScenarioRepository;
 import com.akademi.finsight.fund.decision.service.ManualScenarioService;
-import com.akademi.finsight.fund.dto.request.AttachStressTestRequest;
-import com.akademi.finsight.fund.dto.response.DecisionRecordResponse;
-import com.akademi.finsight.fund.dto.response.PerformanceMetricsResponse;
+import com.akademi.finsight.decisionhistory.dto.request.AttachStressTestRequest;
+import com.akademi.finsight.decisionhistory.dto.response.DecisionRecordResponse;
+import com.akademi.finsight.decisionhistory.mapper.DecisionRecordAssembler;
 import com.akademi.finsight.fund.entity.Fund;
-import com.akademi.finsight.fund.entity.PerformanceMetrics;
 import com.akademi.finsight.fund.exception.FundErrorType;
 import com.akademi.finsight.fund.exception.FundValidationException;
-import com.akademi.finsight.stresstest.dto.response.StressTestInferenceResponseDto;
 import com.akademi.finsight.stresstest.entity.StressTestResult;
 import com.akademi.finsight.stresstest.exception.StressTestErrorType;
 import com.akademi.finsight.stresstest.exception.StressTestException;
-import com.akademi.finsight.stresstest.mapper.StressTestResponseAssembler;
 import com.akademi.finsight.stresstest.repository.StressTestResultRepository;
 import com.akademi.finsight.user.entity.User;
 import com.akademi.finsight.user.service.UserService;
@@ -37,9 +29,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
-import java.math.BigDecimal;
 import java.time.Instant;
-import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
@@ -66,7 +56,7 @@ class DecisionHistoryServiceImplTest {
     private StressTestResultRepository stressTestResultRepository;
 
     @Mock
-    private StressTestResponseAssembler stressTestResponseAssembler;
+    private DecisionRecordAssembler decisionRecordAssembler;
 
     @Mock
     private UserService userService;
@@ -108,13 +98,15 @@ class DecisionHistoryServiceImplTest {
             Instant manualCreatedAt = now.minus(2, ChronoUnit.HOURS);
             Instant aiCreatedAt = now.minus(1, ChronoUnit.HOURS);
 
-            ManualScenarioResponse manual = manualScenarioResponse(manualCreatedAt, null);
+            ManualScenarioResponse manual = manualScenarioResponse(manualCreatedAt);
             AiRecommendation ai = aiRecommendation(RecommendationStatus.ACCEPTED, aiCreatedAt);
 
             when(userService.findByEmail(email)).thenReturn(user);
             when(manualScenarioService.getScenarioHistory(email, fundId)).thenReturn(List.of(manual));
             when(aiRecommendationRepository.findByUserIdAndFundIdAndStatusNotOrderByCreatedAtDesc(
                     user.getId(), fundId, RecommendationStatus.PENDING)).thenReturn(List.of(ai));
+            when(decisionRecordAssembler.fromManualScenario(manual)).thenReturn(decisionRecord("MANUAL", manualCreatedAt));
+            when(decisionRecordAssembler.fromAiRecommendation(ai)).thenReturn(decisionRecord("AI", aiCreatedAt));
 
             List<DecisionRecordResponse> history = decisionHistoryService.getHistory(email, fundId);
 
@@ -123,117 +115,6 @@ class DecisionHistoryServiceImplTest {
             assertEquals(aiCreatedAt, history.get(0).createdAt());
             assertEquals("MANUAL", history.get(1).source());
             assertEquals(manualCreatedAt, history.get(1).createdAt());
-        }
-
-        @Test
-        @DisplayName("should map manual scenario as an accepted MANUAL record without rationale")
-        void shouldMapManualScenario() {
-            StressTestInferenceResponseDto rawStressTest = StressTestInferenceResponseDto.builder()
-                                                                                        .id(UUID.randomUUID())
-                                                                                        .scenarioKey("INFLATION_SHOCK")
-                                                                                        .build();
-            StressTestInferenceResponseDto enrichedStressTest = rawStressTest.toBuilder()
-                                                                            .llmComment("Yorum")
-                                                                            .build();
-            ManualScenarioResponse manual = manualScenarioResponse(now, rawStressTest);
-
-            when(userService.findByEmail(email)).thenReturn(user);
-            when(manualScenarioService.getScenarioHistory(email, fundId)).thenReturn(List.of(manual));
-            when(aiRecommendationRepository.findByUserIdAndFundIdAndStatusNotOrderByCreatedAtDesc(
-                    user.getId(), fundId, RecommendationStatus.PENDING)).thenReturn(List.of());
-            when(stressTestResponseAssembler.withLlmComment(rawStressTest)).thenReturn(enrichedStressTest);
-
-            DecisionRecordResponse record = decisionHistoryService.getHistory(email, fundId).getFirst();
-
-            assertEquals(manual.id(), record.id());
-            assertEquals("MANUAL", record.source());
-            assertEquals("ACCEPTED", record.status());
-            assertNull(record.rationale());
-            assertEquals("Manuel senaryo notu", record.note());
-            assertSame(manual.weights(), record.weights());
-            assertSame(manual.stockWeights(), record.stockWeights());
-            assertSame(manual.metrics(), record.metrics());
-            assertSame(enrichedStressTest, record.stressTest());
-        }
-
-        @Test
-        @DisplayName("should expose weights, stock weights and metrics of an accepted AI decision")
-        void shouldMapAcceptedAiRecommendation() {
-            AiRecommendation ai = aiRecommendation(RecommendationStatus.ACCEPTED, now);
-            StressTestInferenceResponseDto stressTest = StressTestInferenceResponseDto.builder()
-                                                                                     .id(UUID.randomUUID())
-                                                                                     .scenarioKey("INFLATION_SHOCK")
-                                                                                     .llmComment("Yorum")
-                                                                                     .build();
-
-            when(userService.findByEmail(email)).thenReturn(user);
-            when(manualScenarioService.getScenarioHistory(email, fundId)).thenReturn(List.of());
-            when(aiRecommendationRepository.findByUserIdAndFundIdAndStatusNotOrderByCreatedAtDesc(
-                    user.getId(), fundId, RecommendationStatus.PENDING)).thenReturn(List.of(ai));
-            when(stressTestResponseAssembler.toResponse(ai.getStressTestResult())).thenReturn(stressTest);
-
-            DecisionRecordResponse record = decisionHistoryService.getHistory(email, fundId).getFirst();
-
-            assertEquals("AI", record.source());
-            assertEquals("ACCEPTED", record.status());
-            assertEquals("AI gerekçesi", record.rationale());
-            assertEquals("Kullanıcı notu", record.note());
-
-            ManualScenarioWeightResponse weight = record.weights().getFirst();
-            assertEquals(AssetCategory.STOCK, weight.category());
-            assertEquals(BigDecimal.valueOf(55), weight.targetWeight());
-            assertEquals(BigDecimal.valueOf(40), weight.currentWeight());
-
-            ManualScenarioStockWeightResponse stockWeight = record.stockWeights().getFirst();
-            assertEquals("THYAO", stockWeight.assetCode());
-            assertEquals(BigDecimal.valueOf(30), stockWeight.targetWeight());
-            assertEquals(BigDecimal.valueOf(25), stockWeight.currentWeight());
-
-            PerformanceMetricsResponse metrics = record.metrics();
-            assertNotNull(metrics);
-            assertEquals(BigDecimal.valueOf(12.5), metrics.totalReturnPct());
-            assertEquals(BigDecimal.valueOf(2.5), metrics.benchmarkDiffPct());
-            assertEquals(BigDecimal.valueOf(-4.2), metrics.maxDrawdownPct());
-            assertEquals(BigDecimal.valueOf(1.1), metrics.dailyVolatilityPct());
-            assertEquals(30, metrics.analysisWindowDays());
-            // T-8: metrikler karar tarihinden değil, Infina'nın veri tarihinden gelir.
-            assertEquals(LocalDate.of(2026, 8, 3), metrics.dataDate());
-
-            assertSame(stressTest, record.stressTest());
-        }
-
-        @Test
-        @DisplayName("should hide weights of a rejected AI decision but keep its rationale (K4)")
-        void shouldHideWeightsOfRejectedAiRecommendation() {
-            AiRecommendation ai = aiRecommendation(RecommendationStatus.REJECTED, now);
-
-            when(userService.findByEmail(email)).thenReturn(user);
-            when(manualScenarioService.getScenarioHistory(email, fundId)).thenReturn(List.of());
-            when(aiRecommendationRepository.findByUserIdAndFundIdAndStatusNotOrderByCreatedAtDesc(
-                    user.getId(), fundId, RecommendationStatus.PENDING)).thenReturn(List.of(ai));
-
-            DecisionRecordResponse record = decisionHistoryService.getHistory(email, fundId).getFirst();
-
-            assertEquals("REJECTED", record.status());
-            assertTrue(record.weights().isEmpty());
-            assertTrue(record.stockWeights().isEmpty());
-            assertEquals("AI gerekçesi", record.rationale());
-        }
-
-        @Test
-        @DisplayName("should return null metrics when the AI decision has no metrics stored")
-        void shouldReturnNullMetricsWhenAbsent() {
-            AiRecommendation ai = aiRecommendation(RecommendationStatus.ACCEPTED, now);
-            ai.setMetrics(null);
-
-            when(userService.findByEmail(email)).thenReturn(user);
-            when(manualScenarioService.getScenarioHistory(email, fundId)).thenReturn(List.of());
-            when(aiRecommendationRepository.findByUserIdAndFundIdAndStatusNotOrderByCreatedAtDesc(
-                    user.getId(), fundId, RecommendationStatus.PENDING)).thenReturn(List.of(ai));
-
-            DecisionRecordResponse record = decisionHistoryService.getHistory(email, fundId).getFirst();
-
-            assertNull(record.metrics());
         }
 
         @Test
@@ -393,17 +274,31 @@ class DecisionHistoryServiceImplTest {
         }
     }
 
-    private ManualScenarioResponse manualScenarioResponse(Instant createdAt, StressTestInferenceResponseDto stressTest) {
+    private ManualScenarioResponse manualScenarioResponse(Instant createdAt) {
         return new ManualScenarioResponse(
                 UUID.randomUUID(),
                 fundId,
                 "Manuel senaryo notu",
                 createdAt,
-                List.of(new ManualScenarioWeightResponse(AssetCategory.STOCK, BigDecimal.valueOf(50), BigDecimal.valueOf(45))),
-                List.of(new ManualScenarioStockWeightResponse("THYAO", BigDecimal.valueOf(20), BigDecimal.valueOf(18))),
-                new PerformanceMetricsResponse(BigDecimal.TEN, BigDecimal.ONE, BigDecimal.valueOf(-3),
-                        BigDecimal.valueOf(0.9), 30, LocalDate.of(2026, 8, 3)),
-                stressTest
+                List.of(),
+                List.of(),
+                null,
+                null
+        );
+    }
+
+    private DecisionRecordResponse decisionRecord(String source, Instant createdAt) {
+        return new DecisionRecordResponse(
+                UUID.randomUUID(),
+                source,
+                "ACCEPTED",
+                null,
+                null,
+                createdAt,
+                List.of(),
+                List.of(),
+                null,
+                null
         );
     }
 
@@ -423,30 +318,9 @@ class DecisionHistoryServiceImplTest {
                                                           .user(user)
                                                           .fund(fund)
                                                           .status(status)
-                                                          .rationale("AI gerekçesi")
-                                                          .note("Kullanıcı notu")
-                                                          .metrics(PerformanceMetrics.builder()
-                                                                                     .totalReturnPct(BigDecimal.valueOf(12.5))
-                                                                                     .benchmarkDiffPct(BigDecimal.valueOf(2.5))
-                                                                                     .maxDrawdownPct(BigDecimal.valueOf(-4.2))
-                                                                                     .dailyVolatilityPct(BigDecimal.valueOf(1.1))
-                                                                                     .analysisWindowDays(30)
-                                                                                     .dataDate(LocalDate.of(2026, 8, 3))
-                                                                                     .build())
                                                           .build();
         ReflectionTestUtils.setField(recommendation, "id", UUID.randomUUID());
         ReflectionTestUtils.setField(recommendation, "createdAt", createdAt);
-
-        recommendation.addWeight(AiRecommendationWeight.builder()
-                                                       .category(AssetCategory.STOCK)
-                                                       .recommendedWeight(BigDecimal.valueOf(55))
-                                                       .currentWeight(BigDecimal.valueOf(40))
-                                                       .build());
-        recommendation.addStockWeight(AiRecommendationStockWeight.builder()
-                                                                 .assetCode("THYAO")
-                                                                 .recommendedWeight(BigDecimal.valueOf(30))
-                                                                 .currentWeight(BigDecimal.valueOf(25))
-                                                                 .build());
         return recommendation;
     }
 }

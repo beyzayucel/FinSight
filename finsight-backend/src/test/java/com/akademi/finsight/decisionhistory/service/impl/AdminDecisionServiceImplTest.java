@@ -1,12 +1,12 @@
-package com.akademi.finsight.fund.service.impl;
+package com.akademi.finsight.decisionhistory.service.impl;
 
 import com.akademi.finsight.fund.decision.entity.AiRecommendation;
 import com.akademi.finsight.fund.decision.entity.ManualScenario;
 import com.akademi.finsight.fund.decision.entity.RecommendationStatus;
 import com.akademi.finsight.fund.decision.repository.AiRecommendationRepository;
 import com.akademi.finsight.fund.decision.repository.ManualScenarioRepository;
-import com.akademi.finsight.fund.dto.response.AdminDecisionRecordResponse;
-import com.akademi.finsight.fund.entity.DecisionType;
+import com.akademi.finsight.decisionhistory.dto.response.AdminDecisionRecordResponse;
+import com.akademi.finsight.decisionhistory.entity.DecisionType;
 import com.akademi.finsight.fund.entity.Fund;
 import com.akademi.finsight.user.entity.User;
 import org.junit.jupiter.api.BeforeEach;

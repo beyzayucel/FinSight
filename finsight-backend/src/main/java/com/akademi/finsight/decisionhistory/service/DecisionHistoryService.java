@@ -1,10 +1,10 @@
-package com.akademi.finsight.fund.service;
+package com.akademi.finsight.decisionhistory.service;
 
 import java.util.List;
 import java.util.UUID;
 
-import com.akademi.finsight.fund.dto.request.AttachStressTestRequest;
-import com.akademi.finsight.fund.dto.response.DecisionRecordResponse;
+import com.akademi.finsight.decisionhistory.dto.request.AttachStressTestRequest;
+import com.akademi.finsight.decisionhistory.dto.response.DecisionRecordResponse;
 
 public interface DecisionHistoryService {
 

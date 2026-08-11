@@ -1,4 +1,4 @@
-package com.akademi.finsight.fund.dto.request;
+package com.akademi.finsight.decisionhistory.dto.request;
 
 import jakarta.validation.constraints.NotNull;
 

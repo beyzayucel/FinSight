@@ -15,14 +15,23 @@ public class CaffeineCacheConfig {
 
     @Bean("caffeineCacheManager")
     public CacheManager caffeineCacheManager(FundProperties fundProperties) {
-        FundProperties.Cache.PerformanceComparison settings =
+        FundProperties.Cache.PerformanceComparison performanceComparison =
                 fundProperties.getCache().getPerformanceComparison();
+        FundProperties.Cache.DecisionHistory decisionHistory =
+                fundProperties.getCache().getDecisionHistory();
 
         CaffeineCacheManager manager = new CaffeineCacheManager(CacheNames.PERFORMANCE_COMPARISON);
-        manager.setCaffeine(Caffeine.newBuilder()
-                .maximumSize(settings.getMaxSize())
-                .expireAfterWrite(Duration.ofHours(settings.getExpireHours()))
-                .recordStats());
+        manager.setCaffeine(buildCache(performanceComparison.getMaxSize(), performanceComparison.getExpireHours()));
+        manager.registerCustomCache(
+                CacheNames.DECISION_HISTORY,
+                buildCache(decisionHistory.getMaxSize(), decisionHistory.getExpireHours()).build());
         return manager;
+    }
+
+    private Caffeine<Object, Object> buildCache(int maxSize, int expireHours) {
+        return Caffeine.newBuilder()
+                .maximumSize(maxSize)
+                .expireAfterWrite(Duration.ofHours(expireHours))
+                .recordStats();
     }
 }

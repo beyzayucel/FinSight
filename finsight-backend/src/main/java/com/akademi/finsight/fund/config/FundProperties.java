@@ -43,5 +43,14 @@ public class FundProperties {
             private int maxSize;
             private int expireHours;
         }
+
+        private final DecisionHistory decisionHistory = new DecisionHistory();
+
+        @Getter
+        @Setter
+        public static class DecisionHistory {
+            private int maxSize;
+            private int expireHours;
+        }
     }
 }

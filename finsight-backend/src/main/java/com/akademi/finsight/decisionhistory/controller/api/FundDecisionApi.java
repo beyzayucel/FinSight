@@ -1,9 +1,9 @@
-package com.akademi.finsight.fund.controller.api;
+package com.akademi.finsight.decisionhistory.controller.api;
 
 import com.akademi.finsight.common.constants.ApiEndpoints;
 import com.akademi.finsight.common.response.ApiStandardResponse;
-import com.akademi.finsight.fund.dto.request.AttachStressTestRequest;
-import com.akademi.finsight.fund.dto.response.DecisionRecordResponse;
+import com.akademi.finsight.decisionhistory.dto.request.AttachStressTestRequest;
+import com.akademi.finsight.decisionhistory.dto.response.DecisionRecordResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;

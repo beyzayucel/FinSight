@@ -1,15 +1,20 @@
-package com.akademi.finsight.fund.service.impl;
+package com.akademi.finsight.decisionhistory.service.impl;
 
-import com.akademi.finsight.fund.dto.response.AdminDecisionRecordResponse;
+import com.akademi.finsight.decisionhistory.dto.response.AdminDecisionRecordResponse;
+import com.akademi.finsight.decisionhistory.dto.response.DecisionRecordResponse;
 import com.akademi.finsight.fund.decision.entity.AiRecommendation;
-import com.akademi.finsight.fund.entity.DecisionType;
+import com.akademi.finsight.decisionhistory.entity.DecisionType;
 import com.akademi.finsight.fund.decision.entity.ManualScenario;
 import com.akademi.finsight.fund.decision.entity.RecommendationStatus;
+import com.akademi.finsight.decisionhistory.mapper.DecisionRecordAssembler;
+import com.akademi.finsight.fund.exception.AiRecommendationNotFoundException;
+import com.akademi.finsight.fund.exception.FundErrorType;
+import com.akademi.finsight.fund.exception.FundValidationException;
 import com.akademi.finsight.fund.decision.repository.AiRecommendationRepository;
 import com.akademi.finsight.fund.decision.repository.AiRecommendationSpecification;
 import com.akademi.finsight.fund.decision.repository.ManualScenarioRepository;
 import com.akademi.finsight.fund.decision.repository.ManualScenarioSpecification;
-import com.akademi.finsight.fund.service.AdminDecisionService;
+import com.akademi.finsight.decisionhistory.service.AdminDecisionService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Sort;
@@ -33,6 +38,7 @@ public class AdminDecisionServiceImpl implements AdminDecisionService {
 
     private final AiRecommendationRepository aiRecommendationRepository;
     private final ManualScenarioRepository manualScenarioRepository;
+    private final DecisionRecordAssembler decisionRecordAssembler;
 
     @Override
     @Transactional(readOnly = true)
@@ -49,6 +55,22 @@ public class AdminDecisionServiceImpl implements AdminDecisionService {
 
         log.info("Admin decision report retrieved. recordCount: {}", report.size());
         return report;
+    }
+
+    @Override
+    @Transactional(readOnly = true)
+    public DecisionRecordResponse getDecisionDetail(UUID decisionId, DecisionType type) {
+        log.info("Fetching admin decision detail. decisionId: {}, type: {}", decisionId, type);
+
+        if (type == DecisionType.MANUAL) {
+            ManualScenario scenario = manualScenarioRepository.findById(decisionId)
+                                                              .orElseThrow(() -> new FundValidationException(FundErrorType.MANUAL_SCENARIO_NOT_FOUND));
+            return decisionRecordAssembler.fromManualScenario(scenario);
+        }
+
+        AiRecommendation recommendation = aiRecommendationRepository.findById(decisionId)
+                                                                     .orElseThrow(AiRecommendationNotFoundException::new);
+        return decisionRecordAssembler.fromAiRecommendation(recommendation);
     }
 
     private Stream<AdminDecisionRecordResponse> findAiRecommendations(UUID userId, DecisionType type, Instant since) {

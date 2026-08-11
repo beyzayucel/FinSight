@@ -1,4 +1,4 @@
-package com.akademi.finsight.bootstrap;
+package com.akademi.finsight.user.config;
 
 import com.akademi.finsight.user.validation.InternationalPhone;
 import jakarta.validation.constraints.NotBlank;

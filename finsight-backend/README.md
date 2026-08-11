@@ -46,11 +46,10 @@ src/main/java/com/akademi/finsight/
 ├── notification/    Kafka tabanlı bildirim + e-posta gönderimi
 ├── audit/           Hassas işlemlerin denetim (audit) kaydı
 ├── monitoring/      Metrik / gözlemlenebilirlik altyapısı
-├── common/          Ortak config, yanıt zarfı, mapper'lar, maskeleme, sabitler
-└── bootstrap/       Açılış seed'leri ve uygulama başlangıcı
+└── common/          Ortak config, yanıt zarfı, mapper'lar, maskeleme, sabitler, Java migration'lar
 
 src/main/resources/
-├── db/migration/    Flyway sürümlü migration'lar (V<n>__*.sql)
+├── db/migration/    Flyway sürümlü SQL migration'lar (V<n>__*.sql)
 ├── fund-chat/       Chatbot bilgi tabanı (dil bazlı intents.json / faq.json)
 └── model/           ONNX model dosyaları
 ```
@@ -76,8 +75,10 @@ Varsayılan adresler (dev):
 | Prometheus | http://localhost:9090 |
 | Grafana | http://localhost:3001 |
 
-Şema, açılışta Flyway tarafından otomatik oluşturulur/güncellenir. Admin hesabı `.env` içindeki
-`ADMIN_*` değerlerinden seed edilir.
+Şema, açılışta Flyway tarafından otomatik oluşturulur/güncellenir. Admin hesabı da Flyway ile,
+`.env` içindeki `ADMIN_*` değerlerinden seed edilir
+(`common/migration/V28__Seed_admin_user`; parola BCrypt'lenmesi gerektiği için Java tabanlı
+migration). Aynı e-posta ya da kullanıcı adı zaten varsa seed atlanır.
 
 ## 4. Geliştirme Akışı
 

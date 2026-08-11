@@ -1,6 +1,6 @@
-package com.akademi.finsight.fund.dto.response;
+package com.akademi.finsight.decisionhistory.dto.response;
 
-import com.akademi.finsight.fund.entity.DecisionType;
+import com.akademi.finsight.decisionhistory.entity.DecisionType;
 
 import java.time.Instant;
 import java.util.UUID;

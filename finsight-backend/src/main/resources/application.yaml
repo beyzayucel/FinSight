@@ -5,7 +5,7 @@ spring:
   application:
     name: finsight
   profiles:
-    active: ${SPRING_PROFILES_ACTIVE:dev}
+    active: ${SPRING_PROFILES_ACTIVE:prod}
   config:
     import: optional:file:.env[.properties]
   lifecycle:
@@ -185,6 +185,9 @@ fund:
     performance-comparison:
       max-size: ${PERF_CACHE_MAX_SIZE}
       expire-hours: ${PERF_CACHE_EXPIRE_HOURS}
+    decision-history:
+      max-size: ${DECISION_HISTORY_CACHE_MAX_SIZE}
+      expire-hours: ${DECISION_HISTORY_CACHE_EXPIRE_HOURS}
 
 fund-chat:
   session-ttl: ${FUND_CHAT_SESSION_TTL:1h}

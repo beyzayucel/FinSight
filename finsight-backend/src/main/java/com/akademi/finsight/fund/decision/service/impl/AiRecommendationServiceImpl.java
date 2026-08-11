@@ -290,7 +290,9 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
 
     @Override
     @Transactional
-    @CacheEvict(cacheManager = "caffeineCacheManager", cacheNames = CacheNames.PERFORMANCE_COMPARISON, allEntries = true)
+    @CacheEvict(cacheManager = "caffeineCacheManager",
+                cacheNames = {CacheNames.PERFORMANCE_COMPARISON, CacheNames.DECISION_HISTORY},
+                allEntries = true)
     public void submitRecommendationDecision(UUID recommendationId, String email, RecommendationStatus status, String note) {
         log.info("Submitting decision for AI recommendation ID: {}, status: {}, user: {}", recommendationId, status, MaskType.EMAIL.mask(email));
 

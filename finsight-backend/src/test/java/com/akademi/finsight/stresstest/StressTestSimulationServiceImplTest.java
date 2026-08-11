@@ -3,7 +3,7 @@ package com.akademi.finsight.stresstest;
 import com.akademi.finsight.fund.entity.Fund;
 import com.akademi.finsight.fund.exception.FundNotFoundException;
 import com.akademi.finsight.fund.repository.FundRepository;
-import com.akademi.finsight.fund.service.DecisionHistoryService;
+import com.akademi.finsight.decisionhistory.service.DecisionHistoryService;
 import com.akademi.finsight.stresstest.dto.request.PortfolioDataDto;
 import com.akademi.finsight.stresstest.dto.response.ModelInferenceResult;
 import com.akademi.finsight.stresstest.dto.response.StressTestInferenceResponseDto;

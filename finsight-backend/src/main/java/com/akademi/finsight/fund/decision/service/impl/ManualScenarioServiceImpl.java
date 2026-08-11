@@ -54,7 +54,9 @@ public class ManualScenarioServiceImpl implements ManualScenarioService {
 
     @Override
     @Transactional
-    @CacheEvict(cacheManager = "caffeineCacheManager", cacheNames = CacheNames.PERFORMANCE_COMPARISON, allEntries = true)
+    @CacheEvict(cacheManager = "caffeineCacheManager",
+                cacheNames = {CacheNames.PERFORMANCE_COMPARISON, CacheNames.DECISION_HISTORY},
+                allEntries = true)
     public void applyManualScenario(String email, ManualScenarioRequest manualScenario) {
         log.info("Starting to apply manual scenario for user email: {}, fundId: {}", MaskType.EMAIL.mask(email), manualScenario.getFundId());
 

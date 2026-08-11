@@ -1,0 +1,23 @@
+package com.akademi.finsight.notification.model;
+
+/**
+ * Bildirim tipleri. Her tip yalnizca sablon anahtarini tasir.
+ */
+public enum NotificationType {
+    VERIFICATION_EMAIL("notification.verificationEmail"),
+    OTP_EMAIL("notification.otpEmail"),
+    ACCOUNT_LOCKED_EMAIL("notification.accountLockedEmail"),
+    PASSWORD_RESET_EMAIL("notification.passwordResetEmail"),
+    PASSWORD_CHANGED_EMAIL("notification.passwordChangedEmail"),
+    OTP_ABUSE_LOCKED_EMAIL("notification.otpAbuseLockedEmail");
+
+    private final String templateKey;
+
+    NotificationType(String templateKey) {
+        this.templateKey = templateKey;
+    }
+
+    public String templateKey() {
+        return templateKey;
+    }
+}

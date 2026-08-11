@@ -1,0 +1,50 @@
+{
+  "fallback": "Bu soruyu cevaplayacak veriye sahip değilim. Fonun toplam değeri, günlük ve dönemsel getirisi, benchmark farkı, varlık dağılımı ve hisse kırılımı hakkında soru sorabilirsin.",
+  "entries": [
+    {
+      "id": "greeting",
+      "keywords": ["merhaba", "selam", "gunaydin", "iyi gunler", "nasilsin"],
+      "answer": "Merhaba! Fon panosundaki verilerle ilgili sorularını cevaplayabilirim: toplam değer, günlük ve dönemsel getiri, benchmark karşılaştırması, varlık dağılımı ve hisse kırılımı."
+    },
+    {
+      "id": "capabilities",
+      "keywords": ["neler yapabilirsin", "ne sorabilirim", "yardim", "nasil kullanilir"],
+      "answer": "Şunları sorabilirsin: fonun toplam portföy değeri, günlük getiri, seçtiğin dönemdeki kümülatif getiri, benchmark ile fark, varlık dağılımı, en yüksek ağırlıklı hisseler ve verilerin hangi tarihe ait olduğu."
+    },
+    {
+      "id": "bps-explained",
+      "keywords": ["baz puan nedir", "bps nedir", "baz puan ne demek"],
+      "answer": "Baz puan (bps), yüzdenin yüzde biridir. 100 baz puan = %1. Benchmark farkını baz puanla göstermemizin sebebi küçük farkları net ifade edebilmek."
+    },
+    {
+      "id": "benchmark-explained",
+      "keywords": ["benchmark nedir", "karsilastirma olcutu", "endeks nedir"],
+      "answer": "Benchmark, fonun performansının kıyaslandığı referans endekstir. Fonun getirisi benchmark'ın üzerindeyse fon o dönemde referansından daha iyi performans göstermiş demektir."
+    },
+    {
+      "id": "cumulative-explained",
+      "keywords": ["kumulatif getiri nedir", "kumulatif ne demek"],
+      "answer": "Kümülatif getiri, dönem başından veri tarihine kadar biriken toplam yüzde getiridir. Günlük getirilerin basit toplamı değildir, bileşik etkiyi içerir."
+    },
+    {
+      "id": "stock-period",
+      "keywords": ["hisse kirilimi neden eski", "hisse verisi ne zaman", "portfoy bildirimi"],
+      "answer": "Hisse kırılımı fonun portföy bildirim dönemine aittir ve aylık güncellenir. Bu yüzden diğer sayılardan daha eski bir döneme ait olabilir."
+    },
+    {
+      "id": "no-advice",
+      "keywords": ["alayim mi", "satayim mi", "yatirim yapmali", "tavsiye", "ne onerirsin", "ne yapmaliyim"],
+      "answer": "Yatırım tavsiyesi veremem; ben yalnızca panodaki verileri açıklıyorum. Dağılım önerilerini incelemek veya kendi senaryonu simüle etmek istersen menüden \"AI Önerisi & Karar\" sayfasına gidebilirsin."
+    },
+    {
+      "id": "future-forecast",
+      "keywords": ["gelecek", "tahmin", "yukselir mi", "duser mi", "ne olacak"],
+      "answer": "Gelecek getiri tahmini yapmıyorum, sadece geçmiş ve mevcut verileri açıklayabilirim. İleriye dönük dağılım senaryolarını \"AI Önerisi & Karar\" sayfasından inceleyebilirsin."
+    },
+    {
+      "id": "scenario-redirect",
+      "keywords": ["senaryo", "simulasyon", "dagilimi degistir", "agirlik degistir", "ne olurdu"],
+      "answer": "Senaryo kurma ve ağırlık değiştirme bu sohbetin dışında. Menüdeki \"AI Önerisi & Karar\" sayfasından kendi dağılımını simüle edebilir, AI'ın ürettiği öneriyi kabul veya reddedebilirsin."
+    }
+  ]
+}

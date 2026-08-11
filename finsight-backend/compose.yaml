@@ -1,0 +1,141 @@
+name: finsight
+
+services:
+  # Uygulamanin veritabani artik Troya (bkz. .env DB_*). Bu servis yalnizca
+  # `docker compose --profile localdb up -d` ile, lokalde calismak istendiginde ayaga kalkar.
+  # org.springframework.boot.ignore: calisiyor olsa bile Spring Boot bu servisten
+  # datasource uretmesin -- baglanti bilgisi tek kaynaktan, .env'den gelsin.
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: finsight-mssql
+    profiles: ["localdb"]
+    labels:
+      org.springframework.boot.ignore: "true"
+    networks:
+      - finsight-net
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: "${LOCALDB_PASSWORD}"
+      MSSQL_PID: "${MSSQL_PID:-Developer}"
+    ports:
+      - "${LOCALDB_PORT:-1433}:1433"
+    volumes:
+      - finsight-mssql-data:/var/opt/mssql
+    healthcheck:
+      test: /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "${LOCALDB_PASSWORD}" -C -Q "SELECT 1" -b -o /dev/null
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+
+  mssql-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    platform: linux/amd64
+    container_name: finsight-mssql-init
+    profiles: ["localdb"]
+    networks:
+      - finsight-net
+    depends_on:
+      mssql:
+        condition: service_healthy
+    entrypoint: /opt/mssql-tools18/bin/sqlcmd -S mssql -U sa -P "${LOCALDB_PASSWORD}" -C -Q "IF DB_ID('${LOCALDB_NAME}') IS NULL CREATE DATABASE [${LOCALDB_NAME}]"
+    restart: "no"
+
+  redis:
+    image: redis:7-alpine
+    container_name: finsight-redis
+    networks:
+      - finsight-net
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - finsight-redis-data:/data
+    healthcheck:
+      test: redis-cli ping | grep -q PONG
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: apache/kafka:3.9.0
+    container_name: finsight-kafka
+    networks:
+      - finsight-net
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: PLAINTEXT://:9092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_LOG_RETENTION_HOURS: 168
+      CLUSTER_ID: finsight-dev-cluster-001
+    ports:
+      - "${KAFKA_PORT}:9092"
+    volumes:
+      - finsight-kafka-data:/var/lib/kafka/data
+    healthcheck:
+      test: /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null 2>&1
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: finsight-kafka-ui
+    networks:
+      - finsight-net
+    depends_on:
+      kafka:
+        condition: service_healthy
+    environment:
+      KAFKA_CLUSTERS_0_NAME: finsight-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+    ports:
+      - "${KAFKA_UI_PORT}:8080"
+
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: finsight-prometheus
+    networks:
+      - finsight-net
+    ports:
+      - "${PROMETHEUS_PORT}:9090"
+    volumes:
+      - ./src/main/resources/monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - finsight-prometheus-data:/prometheus
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: finsight-grafana
+    networks:
+      - finsight-net
+    depends_on:
+      - prometheus
+    ports:
+      - "${GRAFANA_PORT}:3000"
+    volumes:
+      - finsight-grafana-data:/var/lib/grafana
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD}
+
+networks:
+  finsight-net:
+    driver: bridge
+
+volumes:
+  finsight-mssql-data:
+  finsight-redis-data:
+  finsight-kafka-data:
+  finsight-prometheus-data:
+  finsight-grafana-data:

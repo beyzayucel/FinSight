@@ -13,6 +13,7 @@ import com.akademi.finsight.fund.decision.entity.*;
 import com.akademi.finsight.fund.dto.response.FundDistributionResponse;
 import com.akademi.finsight.fund.dto.response.FundPeriodMetricResponse;
 import com.akademi.finsight.fund.dto.response.FundResponse;
+import com.akademi.finsight.fund.dto.response.FundStockWeightResponse;
 import com.akademi.finsight.fund.exception.AiRecommendationNotFoundException;
 import com.akademi.finsight.fund.exception.FundErrorType;
 import com.akademi.finsight.fund.exception.FundValidationException;
@@ -140,9 +141,9 @@ public class AiRecommendationServiceImpl implements AiRecommendationService {
             return;
         }
 
-        List<com.akademi.finsight.fund.dto.response.FundStockWeightResponse> items = breakdown.items();
+        List<FundStockWeightResponse> items = breakdown.items();
         BigDecimal othersWeight = BigDecimal.ZERO;
-        List<com.akademi.finsight.fund.dto.response.FundStockWeightResponse> activeStocks = new ArrayList<>();
+        List<FundStockWeightResponse> activeStocks = new ArrayList<>();
 
         for (var item : items) {
             if (OTHERS_ASSET_CODE.equalsIgnoreCase(item.assetCode()) || OTHERS_ASSET_CODE_TR.equalsIgnoreCase(item.assetCode())) {
